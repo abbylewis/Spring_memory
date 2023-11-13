@@ -25,6 +25,7 @@ library(multcompView)
 library(ggpubr)
 library(viridis)
 library(MASS)
+source("monthly_correlations.R")
 
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
@@ -90,210 +91,50 @@ many_lake_temp_sum <- with_temp%>%
   filter(!mon=="mean_temp")%>%
   mutate(mon = month(as.Date(paste0("2022-",substr(mon,6,8),"-01"), format = "%Y-%b-%d")),
          Year = ifelse(mon>=9,Year+1,Year))
-
-# ----- DO -----
-many_lake_stat <- many_lake_temp_sum%>%
-  filter(!is.na(DO_mgL_HYPO),!is.na(mon), !is.na(value))%>%
-  group_by(LakeID)%>%
-  mutate(hypoxic = ifelse(max(DO_mgL_HYPO)<1,"yes","no"))%>%
-  filter(hypoxic=="no")%>%
-  group_by(LakeID, mon)%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(do_temp = pcor.test(DO_mgL_HYPO,value,Year,method = "spearman")$estimate,
-            )
-
-labs = c("N:     Sep\nS:     Mar","Oct\nApr","Nov\nMay","Dec\nJun","Jan\nJul","Feb\nAug","Mar\nSep","Apr\nOct","May\nNov","Jun\nDec","Jul\nJan","Aug\nFeb")
-
-anova_res <- aov(do_temp~as.factor(mon),data=many_lake_stat)
-length(unique(many_lake_stat$LakeID))
-summary(anova_res)
-tukey <- TukeyHSD(anova_res)
-cld <- multcompLetters4(anova_res,tukey)$`as.factor(mon)`$Letters
-cld_df <- data.frame(cld = cld, mon = names(cld))%>%
-  mutate(mon = factor(as.numeric(mon), levels = c(9:12,1:8), labels = labs))
-
+# ---
 
 jpeg("../Figures/DO and temp by month.jpg", width = 6, height = 4, res = 300, units = "in")
-do_temp_data <- many_lake_stat%>%
-  group_by(mon)%>%
-  mutate(p = wilcox.test(do_temp)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(9:12,1:8),labels = labs))
-do_temp <- do_temp_data%>%
-  ggplot(aes(x=mon, y = do_temp))+
-  geom_boxplot(aes(color=p<0.001))+
-  geom_text(aes(x = mon, label = cld, y = 1.08),
-            data = cld_df)+
-  #geom_text(aes(label = paste0("n = ",n), y = max(do_temp)))+ #n is the same across all
-  geom_hline(yintercept=0)+
-  ylim(-1,1.08)+
-  xlab("Air temp. month")+
-  ylab(paste0("Correlation with\nlate-summer DO\n(n = ",unique(do_temp_data$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey50","#FB8B24"))+
-  theme(axis.text.x = element_text(hjust = ifelse(levels(do_temp_data$mon) == "N:     Sep\nS:     Mar", .8, .5)))
+do_temp <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
+  filter(hypoxic=="no") %>%
+  monthly_correlations("DO_mgL_HYPO", "value", "hypolimnetic DO", alpha = 0.001)
 do_temp
 dev.off()
 
-many_lake_temp_sum <- with_temp%>%
-  pivot_longer(cols = contains("temp", ignore.case = F), names_to = "mon")%>%
-  filter(!mon=="mean_temp")%>%
-  mutate(mon = month(as.Date(paste0("2022-",substr(mon,6,8),"-01"), format = "%Y-%b-%d")),
-         Year = ifelse(mon>=9,Year+1,Year))
-
-# ----- AF -----
-many_lake_stat <- many_lake_temp_sum%>%
-  filter(!is.na(AF),!is.na(mon), !is.na(value))%>%
-  group_by(LakeID)%>%
+jpeg("../Figures/AF and temp by month.jpg", width = 6, height = 4, res = 300, units = "in")
+do_temp_af <- many_lake_temp_sum %>%
   mutate(oxic = ifelse(max(AF, na.rm = T) == 0, "yes", "no"))%>%
-  filter(oxic == "no")%>%
-  group_by(LakeID, mon)%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(do_temp = pcor.test(AF, value, Year, method = "spearman")$estimate,
-            )
-
-labs = c("N:     Sep\nS:     Mar", "Oct\nApr", "Nov\nMay", "Dec\nJun", 
-         "Jan\nJul", "Feb\nAug", "Mar\nSep", "Apr\nOct", "May\nNov",
-         "Jun\nDec", "Jul\nJan", "Aug\nFeb")
-
-anova_res <- aov(do_temp~as.factor(mon),data=many_lake_stat)
-length(unique(many_lake_stat$LakeID))
-summary(anova_res)
-tukey <- TukeyHSD(anova_res)
-cld <- multcompLetters4(anova_res,tukey)$`as.factor(mon)`$Letters
-cld_df <- data.frame(cld = cld, mon = names(cld))%>%
-  mutate(mon = factor(as.numeric(mon), levels = c(9:12,1:8), labels = labs))
-
-
-jpeg("../Figures/AF and temp by month.jpg", width = 6, height = 3, res = 300, units = "in")
-do_temp_data <- many_lake_stat%>%
-  group_by(mon)%>%
-  mutate(p = wilcox.test(do_temp)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(9:12,1:8),labels = labs))
-do_temp_af <- do_temp_data%>%
-  ggplot(aes(x=mon, y = do_temp))+
-  geom_boxplot(aes(color=p<0.001))+
-  geom_text(aes(x = mon, label = cld, y = 1.08),
-            data = cld_df)+
-  #geom_text(aes(label = paste0("n = ",n), y = max(do_temp)))+ #n is the same across all
-  geom_hline(yintercept=0)+
-  ylim(-1,1.08)+
-  xlab("Air temp. month")+
-  ylab(paste0("Correlation with\nanoxic factor\n(n = ",unique(do_temp_data$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey50","#FB8B24"))+
-  theme(axis.text.x = element_text(hjust = ifelse(levels(do_temp_data$mon) == "N:     Sep\nS:     Mar", .8, .5)))
+  filter(oxic == "no") %>%
+  monthly_correlations("AF", "value", "anoxic factor", alpha = 0.001)
 do_temp_af
 dev.off()
 
-
-# ----- Hypo temp -----
-
-many_lake_stat <- many_lake_temp_sum%>%
-  filter(!is.na(strat_Temp_C_HYPO),!is.na(mon), !is.na(value))%>%
-  group_by(LakeID, mon)%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(temp_temp = pcor.test(strat_Temp_C_HYPO,value,Year,method = "spearman")$estimate,
-            )
-anova_res <- aov(temp_temp~as.factor(mon),data=many_lake_stat)
-summary(anova_res)
-length(unique(many_lake_stat$LakeID))
-tukey <- TukeyHSD(anova_res)
-cld <- multcompLetters4(anova_res,tukey)$`as.factor(mon)`$Letters
-cld_df <- data.frame(cld = cld, mon = names(cld))%>%
-  mutate(mon = factor(as.numeric(mon), levels = c(9:12,1:8), labels = labs))
-
-temp_temp_data <- many_lake_temp_sum%>%
-  group_by(LakeID, mon)%>%
-  filter(!is.na(strat_Temp_C_HYPO),!is.na(mon), !is.na(value))%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(temp_temp = pcor.test(strat_Temp_C_HYPO,value,Year,method = "spearman")$estimate,
-            )%>%
-  group_by(mon)%>%
-  mutate(p = wilcox.test(temp_temp)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(9:12,1:8), labels = labs))
-
 jpeg("../Figures/Air and strat hypo temp by month.jpg", width = 6, height = 4, res = 300, units = "in")
-temp_temp <- temp_temp_data%>%
-  ggplot(aes(x=mon, y = temp_temp))+
-  geom_boxplot(aes(color=p<0.001))+
-  geom_text(aes(x = mon, label = cld, y = 1.08),
-            data = cld_df)+
-  geom_hline(yintercept=0)+
-  xlab("Air temp. month")+
-  ylab(paste0("Correlation with\nstratified average hypo.\ntemp. (n = ",unique(temp_temp_data$n),")"))+
-  theme_bw()+
-  ylim(-1,1.08)+
-  scale_color_manual(values = c("grey50","#FB8B24"))+
-  theme(axis.text.x = element_text(hjust = ifelse(levels(temp_temp_data$mon) == "N:     Sep\nS:     Mar", .8, .5)))
+temp_temp <- monthly_correlations(many_lake_temp_sum,
+                                  "strat_Temp_C_HYPO", "value", 
+                                  "hypolimnetic temperature", alpha = 0.001)
 temp_temp
 dev.off()
 
-# ----- VHOD -----
-
-many_lake_stat <- many_lake_temp_sum%>%
-  filter(!is.na(DO_demand_mgLd_HYPO),!is.na(mon), !is.na(value))%>%
-  group_by(LakeID, mon)%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(temp_demand = pcor.test(DO_demand_mgLd_HYPO,value,Year,method = "spearman")$estimate,
-            )
-anova_res <- aov(temp_demand~as.factor(mon),data=many_lake_stat)
-summary(anova_res)
-length(unique(many_lake_stat$LakeID))
-tukey <- TukeyHSD(anova_res)
-cld <- multcompLetters4(anova_res,tukey)$`as.factor(mon)`$Letters
-cld_df <- data.frame(cld = cld, mon = names(cld))%>%
-  mutate(mon = factor(as.numeric(mon), levels = c(9:12,1:8), labels = labs))
-
 jpeg("../Figures/Demand and air temp by month.jpg", width = 6, height = 4, res = 300, units = "in")
-temp_demand_data <- many_lake_temp_sum%>%
-  group_by(LakeID, mon)%>%
-  filter(!is.na(DO_demand_mgLd_HYPO),!is.na(mon), !is.na(value))%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(demand_temp = pcor.test(DO_demand_mgLd_HYPO,value,Year,method = "spearman")$estimate,
-            )%>%
-  group_by(mon)%>%
-  mutate(p = wilcox.test(demand_temp)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(9:12,1:8),labels = labs))
-   
-temp_demand <- temp_demand_data%>%
-  ggplot(aes(x=mon, y = demand_temp))+
-  geom_boxplot(aes(color=p<0.001))+
-  geom_text(aes(x = mon, label = cld, y = 1.08),
-            data = cld_df)+
-  geom_hline(yintercept=0)+
-  xlab("Air temp. month")+
-  ylab(paste0("\nCorrelation with\nVHOD (n = ",unique(temp_demand_data$n),")"))+
-  theme_bw()+
-  ylim(-1,1.08)+
-  scale_color_manual(values = c("grey50","#FB8B24"))+
-  theme(axis.text.x = element_text(hjust = ifelse(levels(temp_demand_data$mon) == "N:     Sep\nS:     Mar", .8, .5)))
+temp_demand <- monthly_correlations(many_lake_temp_sum, 
+                                    "DO_demand_mgLd_HYPO", "value", 
+                                    "VHOD", alpha = 0.001)
 temp_demand
 dev.off()
 
+#Quick check to see if this shows up for TP --> not really
+jpeg("../Figures/TP and air temp by month.jpg", width = 6, height = 4, res = 300, units = "in")
+temp_tp <- monthly_correlations(many_lake_temp_sum, 
+                                    "strat_TP_ugL_HYPO", "value", 
+                                    "hypolimnetic TP", alpha = 0.05)
+temp_tp
+dev.off()
+
 jpeg("../Figures/Monthly correlations.jpg", width = 5, height = 8, res = 300, units = "in")
-ggarrange(temp_temp+theme(axis.title.x = element_blank()),temp_demand+theme(axis.title.x = element_blank()),do_temp,
+ggarrange(temp_temp+theme(axis.title.x = element_blank()),
+          temp_demand+theme(axis.title.x = element_blank()),
+          do_temp,
           common.legend = T, legend = "bottom",nrow=3, labels = "auto", align = "hv")
 dev.off()
 
@@ -310,112 +151,24 @@ dev.off()
 
 Epi and hypo temp and DO
 ```{r}
-many_lake_temp_sum <- with_temp%>%
-  pivot_longer(cols = contains("temp", ignore.case = F), names_to = "mon")%>%
-  filter(!mon=="mean_temp")%>%
-  mutate(mon = month(as.Date(paste0("2022-",substr(mon,6,8),"-01"), format = "%Y-%b-%d")),
-         Year = ifelse(mon>=9,Year+1,Year))
-
-# DO
-many_lake_stat <- many_lake_temp_sum%>%
-  filter(!is.na(DO_mgL_EPI),!is.na(mon), !is.na(value))%>%
-  group_by(LakeID)%>%
-  mutate(hypoxic = ifelse(max(DO_mgL_EPI)<1,"yes","no"))%>%
-  filter(hypoxic=="no")%>%
-  group_by(LakeID, mon)%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(do_temp = pcor.test(DO_mgL_EPI,value,Year,method = "spearman")$estimate,
-            )
-
-labs = c("N:     Sep\nS:     Mar","Oct\nApr","Nov\nMay","Dec\nJun","Jan\nJul","Feb\nAug","Mar\nSep","Apr\nOct","May\nNov","Jun\nDec","Jul\nJan","Aug\nFeb")
-
-anova_res <- aov(do_temp~as.factor(mon),data=many_lake_stat)
-length(unique(many_lake_stat$LakeID))
-summary(anova_res)
-tukey <- TukeyHSD(anova_res)
-cld <- multcompLetters4(anova_res,tukey)$`as.factor(mon)`$Letters
-cld_df <- data.frame(cld = cld, mon = names(cld))%>%
-  mutate(mon = factor(as.numeric(mon), levels = c(9:12,1:8), labels = labs))
-
-
 jpeg("../Figures/DO and temp by month - EPI.jpg", width = 6, height = 4, res = 300, units = "in")
-do_temp_data <- many_lake_stat%>%
-  group_by(mon)%>%
-  mutate(p = wilcox.test(do_temp)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(9:12,1:8),labels = labs))
-do_temp <- do_temp_data%>%
-  ggplot(aes(x=mon, y = do_temp))+
-  geom_boxplot(aes(color=p<0.001))+
-  geom_text(aes(x = mon, label = cld, y = 1.08),
-            data = cld_df)+
-  #geom_text(aes(label = paste0("n = ",n), y = max(do_temp)))+ #n is the same across all
-  geom_hline(yintercept=0)+
-  ylim(-1,1.08)+
-  xlab("Air temp. month")+
-  ylab(paste0("Correlation with\nlate-summer epi. DO\n(n = ",unique(do_temp_data$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey50","#FB8B24"))+
-  theme(axis.text.x = element_text(hjust = ifelse(levels(do_temp_data$mon) == "N:     Sep\nS:     Mar", .8, .5)))
-do_temp
+do_temp_epi <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_EPI, na.rm = T)<1,"yes","no"))%>%
+  filter(hypoxic=="no") %>%
+  monthly_correlations("DO_mgL_EPI", "value", "epilimnetic DO", alpha = 0.001)
+do_temp_epi
 dev.off()
 
-
-######## Epi temp
-
-many_lake_stat <- many_lake_temp_sum%>%
-  filter(!is.na(Temp_C_EPI),!is.na(mon), !is.na(value))%>%
-  group_by(LakeID, mon)%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(temp_temp = pcor.test(Temp_C_EPI,value,Year,method = "spearman")$estimate,
-            )
-anova_res <- aov(temp_temp~as.factor(mon),data=many_lake_stat)
-summary(anova_res)
-length(unique(many_lake_stat$LakeID))
-tukey <- TukeyHSD(anova_res)
-cld <- multcompLetters4(anova_res,tukey)$`as.factor(mon)`$Letters
-cld_df <- data.frame(cld = cld, mon = names(cld))%>%
-  mutate(mon = factor(as.numeric(mon), levels = c(9:12,1:8), labels = labs))
-
-temp_temp_data <- many_lake_temp_sum%>%
-  group_by(LakeID, mon)%>%
-  filter(!is.na(Temp_C_EPI),!is.na(mon), !is.na(value))%>%
-  mutate(nyear = length(unique(Year)))%>%
-  filter(nyear>=10,
-         #max(value)-min(value)>2
-         )%>%
-  dplyr::summarize(temp_temp = pcor.test(Temp_C_EPI, value,Year,method = "spearman")$estimate,
-            )%>%
-  group_by(mon)%>%
-  mutate(p = wilcox.test(temp_temp)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(9:12,1:8), labels = labs))
-unique(temp_temp_data$LakeID)
-
 jpeg("../Figures/Air and epi temp by month.jpg", width = 6, height = 4, res = 300, units = "in")
-temp_temp_epi <- temp_temp_data%>%
-  ggplot(aes(x=mon, y = temp_temp))+
-  geom_boxplot(aes(color=p<0.001))+
-  geom_text(aes(x = mon, label = cld, y = 1.08),
-            data = cld_df)+
-  geom_hline(yintercept=0)+
-  xlab("Air temp. month")+
-  ylab(paste0("Correlation with\nsummer epi.\ntemp. (n = ",unique(temp_temp_data$n),")"))+
-  theme_bw()+
-  ylim(-1,1.08)+
-  scale_color_manual(values = c("grey50","#FB8B24"))+
-  theme(axis.text.x = element_text(hjust = ifelse(levels(temp_temp_data$mon) == "N:     Sep\nS:     Mar", .8, .5)))
-temp_temp
+temp_temp_epi <- monthly_correlations(many_lake_temp_sum,
+                                  "Temp_C_EPI", "value", 
+                                  "epilimnetic temperature", alpha = 0.001)
+temp_temp_epi
 dev.off()
 
 jpeg("../Figures/Monthly correlations - EPI.jpg", width = 5, height = 5, res = 300, units = "in")
-ggarrange(temp_temp+theme(axis.title.x = element_blank()),do_temp,
+ggarrange(temp_temp_epi+theme(axis.title.x = element_blank()),
+          do_temp_epi,
           common.legend = T, legend = "bottom",nrow=2, labels = "auto", align = "hv")
 dev.off()
 
