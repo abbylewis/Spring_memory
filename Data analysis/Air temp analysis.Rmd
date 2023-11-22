@@ -179,6 +179,38 @@ ggarrange(temp_temp_epi + theme(axis.title.x = element_blank()),
 dev.off()
 ```
 
+AGU figures
+```{r}
+temp_temp_epi_agu <- monthly_correlations_talk(many_lake_temp_sum,
+                                  "Temp_C_EPI", "value", 
+                                  "surface-water temperature", alpha = 0.001)
+
+temp_temp_agu <- monthly_correlations_talk(many_lake_temp_sum,
+                                  "strat_Temp_C_HYPO", "value", 
+                                  "bottom-water temperature", alpha = 0.001)
+
+jpeg("../Figures/Monthly correlations - EPI vs HYPO AGU.jpg", width = 5, height = 5, res = 300, units = "in")
+ggarrange(temp_temp_epi_agu + theme(axis.title.x = element_blank()),
+          temp_temp_agu,
+          common.legend = T, legend = "bottom",nrow=2, labels = "auto", align = "hv")
+dev.off()
+
+do_temp_agu <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
+  filter(hypoxic=="no") %>%
+  monthly_correlations_talk("DO_mgL_HYPO", "value", "bottom-water DO", alpha = 0.001)
+
+temp_demand_agu <- monthly_correlations_talk(many_lake_temp_sum, 
+                                    "DO_demand_mgLd_HYPO", "value", 
+                                    "oxygen demand", alpha = 0.001)
+
+jpeg("../Figures/Monthly correlations - VHOD and DO AGU.jpg", width = 5, height = 5, res = 300, units = "in")
+ggarrange(temp_demand_agu + theme(axis.title.x = element_blank()),
+          do_temp_agu,
+          common.legend = T, legend = "bottom",nrow=2, labels = "auto", align = "hv")
+dev.off()
+```
+
 
 ```{r}
 library(ggthemes)
@@ -299,7 +331,7 @@ temp_temp_data <- many_lake_temp_sum%>%
 
 strat_avgs = read.csv("../Compiled data/stratified_averages.csv")%>%
   group_by(LakeID) %>%
-  summarize(buoyancy_freq = mean(buoyancy_freq, na.rm = T))
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
 
 temp_temp_data %>% 
   left_join(strat_avgs) %>%
@@ -307,7 +339,7 @@ temp_temp_data %>%
   ggplot(aes(y = Month_4 - Month_8, x = buoyancy_freq)) +
   geom_point() +
   geom_smooth() +
-  stat_poly_eq(use_label(c("eq", "p")), coef.digits = 2) +
+  ggpmisc::stat_poly_eq(ggpmisc::use_label(c("eq", "p")), coef.digits = 2) +
   ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
 ```
 
