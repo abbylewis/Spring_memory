@@ -178,6 +178,16 @@ plot_wi_trend_multimodel(climate_narr_trends,
 
 Probably way easier to do this with facets
 ```{r}
+library(ggthemes)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+#remotes::install_github("ropensci/rnaturalearthhires")
+library(rnaturalearthhires)
+library(ggspatial)
+library(viridis)
+library(ggpubr)
+
 all_trends <- climate_narr_trends%>%
   mutate(Model = "NARR") %>%
   full_join(climate_era5_trends %>% mutate(Model = "ERA5")) %>%
