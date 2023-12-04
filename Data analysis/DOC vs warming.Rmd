@@ -259,7 +259,7 @@ all_data %>%
 ```
 
 ```{r}
-library(openair)
+library(trend)
 sen_slope_custom <- function(df,var){
   output = df%>%
     group_by(LakeID)%>%
@@ -269,16 +269,15 @@ sen_slope_custom <- function(df,var){
               min_year = NA,
               max_year = NA)
   for(lake in unique(df$LakeID)){
-    print(paste(lake))
     filt = df %>%
       filter(LakeID==lake) %>%
       mutate(date = as.POSIXct(paste0(Year,"-01-01"))) %>%
       ungroup()%>%
       dplyr::select(-Year)
     if(length(unique(year(filt$date)))>=10){#Only calculate a trend if there are 10 years of data
-      sen = TheilSen(filt, pollutant = var, avg.time = "year", plot = F)$data$res2
-      output$trend[output$LakeID==lake]<-sen$slope[1]
-      output$sig[output$LakeID==lake]<-sen$p[1]
+      sen = trend::sens.slope(filt[[var]])
+      output$trend[output$LakeID==lake]<-sen$estimates[1]
+      output$sig[output$LakeID==lake]<-sen$p.value[1]
       output$min_year[output$LakeID==lake]<-min(year(filt$date))
       output$max_year[output$LakeID==lake]<-max(year(filt$date))
     }
@@ -288,6 +287,7 @@ sen_slope_custom <- function(df,var){
 
 secchi_sen <- sen_slope_custom(secchi_annual,"secchi")
 hypo_sen <- sen_slope_custom(all_data %>% filter(!is.na(hypo_depth_HYPO)),"hypo_depth_HYPO")
+warming_sen <- sen_slope_custom(all_data %>% filter(!is.na(warming_rate)),"warming_rate")
 hypo_sen_pct <- sen_slope_custom(all_data %>% 
                                filter(!is.na(hypo_depth_HYPO)) %>%
                                mutate(hypo_depth_pct = hypo_depth_HYPO/MaximumDepth_m),
@@ -316,6 +316,7 @@ hypo_sen %>%
 dev.off()
 
 write.csv(secchi_sen, "secchi_trends.csv", row.names = F)
+write.csv(warming_sen, "warming_sen.csv", row.names = F)
 write.csv(hypo_sen, "hypo_depth_trends.csv", row.names = F)
 write.csv(hypo_sen_pct, "hypo_depth_pct_trends.csv", row.names = F)
 ```
@@ -324,7 +325,7 @@ write.csv(hypo_sen_pct, "hypo_depth_pct_trends.csv", row.names = F)
 secchi_sen <- read_csv("secchi_trends.csv")
 hypo_sen <- read_csv("hypo_depth_trends.csv")
 hypo_sen_pct <- read_csv("hypo_depth_pct_trends.csv")
-warming <- read.csv("warming_sen.csv")
+warming_sen <- read.csv("warming_sen.csv")
 
 secchi_sen %>%
   filter(!is.na(trend)) %>%
@@ -350,7 +351,7 @@ hypo_sen_pct %>%
   theme_bw()+
   xlab("Hypo depth trend (%/decade)")
 
-warming %>%
+warming_sen %>%
   mutate(var = "warming") %>%
   filter(sig<0.05) %>%
   full_join(secchi_sen %>% 
@@ -363,7 +364,7 @@ warming %>%
   ggplot(aes(y = warming, x = secchi))+
   geom_point()
 
-warming %>%
+warming_sen %>%
   mutate(var = "warming") %>%
   #filter(sig<0.05) %>%
   full_join(hypo_sen %>% 
@@ -375,6 +376,33 @@ warming %>%
   pivot_wider(names_from = var, values_from = trend) %>%
   ggplot(aes(y = warming, x = hypo))+
   geom_point()
+
+warming_sen %>%
+  left_join(lat_long) %>%
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), 
+                                "Northeast", "Other"))) %>%
+  filter(!Region == "Other") %>%
+  ggplot(aes(x = trend, fill = Region))+
+  geom_vline(xintercept = 0, color = "grey30") +
+  geom_density(alpha = 0.5) +
+  theme_bw()
+
+warming_sen %>%
+  left_join(lat_long) %>%
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), 
+                                "Northeast", "Other"))) %>%
+  filter(!Region == "Other",
+         !is.na(trend)) %>%
+  ggplot(aes(y = trend, x = Region, fill = Region))+
+  geom_hline(yintercept = 0, color = "grey30") +
+  geom_violin(alpha = 0.5, draw_quantiles = .5) +
+  theme_bw()+
+  stat_compare_means() +
+  ylab("Decadal trend in within-season\nbottom-water warming rates")
 ```
 
 ```{r}
