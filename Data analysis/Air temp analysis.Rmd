@@ -5,15 +5,12 @@ date: "2023-05-22"
 output: html_document
 ---
 
-This file analyzes the effect of variation in air temperature on hypolimnetic temperature and DO. 
+This file analyzes the effect of variation in air temperature on hypolimnetic temperature and DO.
 
-Table of contents:
-Step 1: Load packages and data
-Step 2: Generate temp anomaly summary fig
-Step 3: Analyze the effect of monthly air temperature on hypolimnetic DO, VHOD, and temp dynamics
-
+Table of contents: Step 1: Load packages and data Step 2: Generate temp anomaly summary fig Step 3: Analyze the effect of monthly air temperature on hypolimnetic DO, VHOD, and temp dynamics
 
 Step 1: Load packages and data
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
@@ -25,6 +22,7 @@ library(multcompView)
 library(ggpubr)
 library(viridis)
 library(MASS)
+library(see)
 source("monthly_correlations.R")
 
 #Load saved data
@@ -34,8 +32,8 @@ with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
 if (!dir.exists("../Figures")){dir.create("../Figs")}
 ```
 
-
 Step 2: Generate temp anomaly summary fig
+
 ```{r}
 zscore <- function(data, na.rm = T){(data-mean(data, na.rm = na.rm))/sd(data, na.rm = na.rm)}
 do_anomaly_stat <- with_temp%>%
@@ -83,8 +81,8 @@ do_air_sum%>%
 dev.off()
 ```
 
-
 Step 3: Analyze the effect of monthly air temperature on hypolimnetic DO, VHOD, and temp dynamics
+
 ```{r}
 many_lake_temp_sum <- with_temp%>%
   pivot_longer(cols = contains("temp", ignore.case = F), names_to = "mon")%>%
@@ -148,8 +146,8 @@ ggarrange(temp_temp + theme(axis.title.x = element_blank()),
 dev.off()
 ```
 
-
 Epi and hypo temp and DO
+
 ```{r}
 jpeg("../Figures/DO and temp by month - EPI.jpg", width = 6, height = 4, res = 300, units = "in")
 do_temp_epi <- many_lake_temp_sum %>%
@@ -180,19 +178,27 @@ dev.off()
 ```
 
 AGU figures
+
 ```{r}
 temp_temp_epi_agu <- monthly_correlations_talk(many_lake_temp_sum,
                                   "Temp_C_EPI", "value", 
-                                  "surface-water temperature", alpha = 0.001)
+                                  "surface-water temperature", alpha = 0.001,
+                                  highlight = c(6.5, 8.5))
 
 temp_temp_agu <- monthly_correlations_talk(many_lake_temp_sum,
                                   "strat_Temp_C_HYPO", "value", 
-                                  "bottom-water temperature", alpha = 0.001)
+                                  "bottom-water temperature", alpha = 0.001,
+                                  highlight = c(1.5, 4.5))
 
 jpeg("../Figures/Monthly correlations - EPI vs HYPO AGU.jpg", 
      width = 5, height = 5, res = 300, units = "in")
-ggarrange(temp_temp_epi_agu + theme(axis.title.x = element_blank()),
-          temp_temp_agu,
+ggarrange(temp_temp_epi_agu + 
+            theme(axis.title.x = element_blank()) +
+            ggtitle("Summer epilimnetic temperature") +
+            ylab("Correlation"),
+          temp_temp_agu +
+            ggtitle("Summer hypolimnetic temperature") +
+            ylab("Correlation"),
           common.legend = T, legend = "bottom",nrow=2, align = "hv")
 dev.off()
 
@@ -239,11 +245,13 @@ dev.off()
 do_temp_agu <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
   filter(hypoxic=="no") %>%
-  monthly_correlations_talk("DO_mgL_HYPO", "value", "bottom-water DO", alpha = 0.001)
+  monthly_correlations_talk("DO_mgL_HYPO", "value", "bottom-water DO", 
+                            alpha = 0.001, highlight = c(1.5, 4.5))
 
 temp_demand_agu <- monthly_correlations_talk(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "value", 
-                                    "oxygen demand", alpha = 0.001)
+                                    "oxygen demand", alpha = 0.001,
+                                    highlight = c(1.5, 4.5))
 
 do_temp_agu_spring_summer <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
@@ -256,8 +264,13 @@ temp_demand_agu_spring_summer <- monthly_correlations_spring_summer(many_lake_te
                                   "oxygen demand", alpha = 0.001)
 
 jpeg("../Figures/Monthly correlations - VHOD and DO AGU.jpg", width = 5, height = 5, res = 300, units = "in")
-ggarrange(temp_demand_agu + theme(axis.title.x = element_blank()),
-          do_temp_agu,
+ggarrange(temp_demand_agu + 
+            theme(axis.title.x = element_blank()) +
+            ggtitle("Summer VHOD") +
+            ylab("Correlation"),
+          do_temp_agu +
+            ggtitle("Summer hypo. DO") +
+            ylab("Correlation"),
           common.legend = T, legend = "bottom",nrow=2, align = "hv")
 dev.off()
 
@@ -286,7 +299,58 @@ ggarrange(temp_demand_agu_aug + theme(axis.title.x = element_blank()),
           common.legend = T, legend = "bottom",nrow=2, align = "hv")
 dev.off()
 ```
+AGU figures
 
+```{r}
+many_lake_temp_sum_region <- 
+  many_lake_temp_sum %>%
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), 
+                                "Northeast", "Other")))
+temp_temp_epi_midwest <- monthly_correlations_talk(many_lake_temp_sum_region %>%
+                                                     filter(Region=="Midwest"),
+                                  "Temp_C_EPI", "value", 
+                                  "surface-water temperature", alpha = 0.001,
+                                  highlight = c(6.5, 8.5))
+
+temp_temp_epi_northeast <- monthly_correlations_talk(many_lake_temp_sum_region %>%
+                                                     filter(Region=="Northeast"),
+                                  "Temp_C_EPI", "value", 
+                                  "surface-water temperature", alpha = 0.001,
+                                  highlight = c(6.5, 8.5))
+
+temp_temp_midwest <- monthly_correlations_talk(many_lake_temp_sum_region %>%
+                                                     filter(Region=="Midwest"),
+                                  "strat_Temp_C_HYPO", "value", 
+                                  "bottom-water temperature", alpha = 0.001,
+                                  highlight = c(1.5, 4.5))
+
+temp_temp_northeast <- monthly_correlations_talk(many_lake_temp_sum_region %>%
+                                                     filter(Region=="Northeast"),
+                                  "strat_Temp_C_HYPO", "value", 
+                                  "bottom-water temperature", alpha = 0.001,
+                                  highlight = c(1.5, 4.5))
+
+jpeg("../Figures/Monthly correlations - EPI vs HYPO regional.jpg", 
+     width = 8, height = 5, res = 300, units = "in")
+ggarrange(temp_temp_epi_midwest + 
+            theme(axis.title.x = element_blank()) +
+            ggtitle("Summer epilimnetic temperature\n(Midwest)") +
+            ylab("Correlation"),
+          temp_temp_epi_northeast + 
+            theme(axis.title.x = element_blank()) +
+            ggtitle("Summer epilimnetic temperature\n(Northeast)") +
+            ylab("Correlation"),
+          temp_temp_midwest +
+            ggtitle("Summer hypolimnetic temperature\n(Midwest)") +
+            ylab("Correlation"),
+          temp_temp_northeast +
+            ggtitle("Summer hypolimnetic temperature\n(Northeast)") +
+            ylab("Correlation"),
+          common.legend = T, legend = "bottom", nrow=2, ncol = 2, align = "h")
+dev.off()
+```
 
 ```{r}
 library(ggthemes)
@@ -339,6 +403,7 @@ to_plot %>%
 ```
 
 Map
+
 ```{r}
 for_states <- to_plot
 states <- ne_states(returnclass = "sf",country = "United States of America")
@@ -394,6 +459,7 @@ us_map = ggplot(data = world) +
 us_map
 ```
 
+OG BF plot
 ```{r}
 temp_temp_data <- many_lake_temp_sum%>%
   group_by(LakeID, mon)%>%
@@ -409,6 +475,47 @@ strat_avgs = read.csv("../Compiled data/stratified_averages.csv")%>%
   group_by(LakeID) %>%
   summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
 
+hypo_temp_temp_data <- temp_temp_data %>% 
+  left_join(strat_avgs) %>%
+  pivot_wider(names_from = mon, values_from = temp_temp, names_prefix = "Month_")  %>%
+  mutate(dif = Month_4 - Month_8)
+
+hypo_temp_temp_data%>%
+  ggplot(aes(y = Month_4 - Month_8, x = buoyancy_freq)) +
+  geom_hline(yintercept = 0) +
+  geom_point() +
+  geom_smooth() +
+  ggpmisc::stat_poly_eq(ggpmisc::use_label(c("eq", "p")), coef.digits = 2) +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
+
+library(segmented)
+seg_reg <- segmented(lm(dif~buoyancy_freq, data = hypo_temp_temp_data), seg.Z = ~buoyancy_freq)
+my.fitted <- fitted(seg_reg)
+my.model <- data.frame(buoyancy_freq = hypo_temp_temp_data$buoyancy_freq, dif = my.fitted)
+
+hypo_temp_temp_data%>%
+  ggplot(aes(y = Month_4 - Month_8, x = buoyancy_freq)) +
+  geom_hline(yintercept = 0) +
+  geom_point() +
+  geom_line(data = my.model, aes(y = dif, x = buoyancy_freq), color = "blue", lwd=2) +
+  geom_vline(xintercept = seg_reg$psi[[2]], color = "blue", lty = "dashed") +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
+
+#--- EPI
+temp_temp_data <- many_lake_temp_sum%>%
+  group_by(LakeID, mon)%>%
+  filter(!is.na(Temp_C_EPI),!is.na(mon), !is.na(value))%>%
+  mutate(nyear = length(unique(Year)))%>%
+  filter(nyear>=10,
+         #max(value)-min(value)>2
+         )%>%
+  dplyr::summarize(temp_temp = pcor.test(Temp_C_EPI,value,Year,method = "spearman")$estimate,
+            )
+
+strat_avgs = read.csv("../Compiled data/stratified_averages.csv")%>%
+  group_by(LakeID) %>%
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
+
 temp_temp_data %>% 
   left_join(strat_avgs) %>%
   pivot_wider(names_from = mon, values_from = temp_temp, names_prefix = "Month_") %>%
@@ -416,60 +523,153 @@ temp_temp_data %>%
   geom_point() +
   geom_smooth() +
   ggpmisc::stat_poly_eq(ggpmisc::use_label(c("eq", "p")), coef.digits = 2) +
-  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
+  ylab("Relative correlation between epi. temp\nand spring vs summer air temp")
 ```
 
+BF plot with spring and summer
 ```{r}
-lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
-lat_long = lat_long %>%
-  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota"), "Midwest", NA),
-         Region = ifelse(StateOrProvince %in% c("New York", "NY", "Maine", 
-                                                "New Hampshire", "NH", "Vermont"), 
-                         "Northeast", Region),
-         Region = ifelse(Country == "Sweden", "Sweden", Region)) 
-
-variable <- sym("Temp_C_HYPO")
-value <- sym("value")
-name <- "hypo. temp"
-alpha = 0.001
-
-many_lake_stat <- many_lake_temp_sum %>%
-  filter(!is.na(!!variable), !is.na(mon), !is.na(!!value))%>%
-  group_by(LakeID, mon)%>%
+temp_temp_data <- many_lake_temp_sum%>%
+  mutate(season = ifelse(mon %in% c(2:4), "Spring",
+                         ifelse(mon %in% c(7:8), "Summer", "Neither"))) %>%
+  filter(!season == "Neither") %>%
+  group_by(LakeID, season, Year)%>%
+  mutate(strat_Temp_C_HYPO = mean(strat_Temp_C_HYPO, na.rm = T),
+         value = mean(value, na.rm = T)) %>%
+  filter(!is.na(strat_Temp_C_HYPO),!is.na(value))%>%
+  group_by(LakeID, season) %>%
   mutate(nyear = length(unique(Year)))%>%
   filter(nyear>=10,
          #max(value)-min(value)>2
-  )%>%
-  dplyr::summarize(monthly_correlation = ppcor::pcor.test(!!variable, !!value, 
-                                                          Year, method = "spearman")$estimate,
-  )%>%
-  filter(mon < 9) %>%
+         )%>%
+  dplyr::summarize(temp_temp = pcor.test(strat_Temp_C_HYPO,value,Year,method = "spearman")$estimate,
+            )
+
+strat_avgs = read.csv("../Compiled data/stratified_averages.csv")%>%
+  group_by(LakeID) %>%
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
+
+temp_temp_sp_su <- temp_temp_data %>% 
+  left_join(strat_avgs) %>%
+  pivot_wider(names_from = season, values_from = temp_temp) %>%
+  mutate(dif = Spring - Summer) %>%
+  filter(!is.na(buoyancy_freq))
+
+temp_temp_sp_su %>%
+  ggplot(aes(y = Spring - Summer, x = buoyancy_freq)) +
+  geom_point() +
+  geom_smooth() +
+  ggpmisc::stat_poly_eq(ggpmisc::use_label(c("eq", "p")), coef.digits = 2) +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
+
+library(segmented)
+seg_reg <- segmented(lm(dif~buoyancy_freq, data = temp_temp_sp_su), seg.Z = ~buoyancy_freq)
+my.fitted <- fitted(seg_reg)
+my.model <- data.frame(buoyancy_freq = temp_temp_sp_su$buoyancy_freq, dif = my.fitted)
+jpeg("../Figures/temp_temp_sp_su.jpeg", width = 5, height = 5, units = "in", res = 300)
+temp_temp_sp_su %>%
+  ggplot(aes(y = Spring - Summer, x = buoyancy_freq)) +
+  geom_hline(yintercept = 0) +
+  geom_point() +
+  geom_line(data = my.model, aes(y = dif, x = buoyancy_freq), color = "blue", lwd=2) +
+  geom_vline(xintercept = seg_reg$psi[[2]], color = "blue", lty = "dashed") +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp") +
+  theme_bw() +
+  xlab("Median buoyancy frequency at the thermocline (1/s)")
+dev.off()
+
+jpeg("../Figures/temp_temp_sp_su_regional.jpeg", width = 5, height = 5, units = "in", res = 300)
+temp_temp_sp_su %>%
   left_join(lat_long) %>%
-  filter(!is.na(Region))
-
-labs = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug")
-
-wilcox <- many_lake_stat%>%
-  group_by(mon, Region)%>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value,
-         n = n(),
-         mon = factor(mon, levels = c(1:8),labels = labs)) %>%
-  mutate(Region = paste0(Region, " (n = ",n,")"))
-fig <- wilcox %>%
-  ggplot(aes(x=mon, y = monthly_correlation))+
-  geom_boxplot(aes(color=p<alpha))+
-  #geom_text(aes(label = paste0("n = ",n), y = max(do_temp)))+ #n is the same across all
-  geom_hline(yintercept=0)+
-  ylim(-1,1.08)+
-  xlab("Air temperature month")+
-  ylab(paste0("Correlation with\n",name))+
-  theme_bw()+
-  scale_color_manual(values = c("grey50","#FB8B24"), breaks = c(F, T))+
-  theme(axis.text.x = element_text(hjust = .5))+
-  labs(color = paste0("p < ",alpha))+
-  facet_wrap(~Region, ncol = 1)
-jpeg("../Figures/Correlation with hypo. temp by region.jpeg", width = 6, height = 8, units = "in", res = 300)
-fig
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), 
+                                "Northeast", "Other"))) %>%
+  ggplot(aes(y = Spring - Summer, x = buoyancy_freq, color = Region)) +
+  geom_hline(yintercept = 0) +
+  geom_point() +
+  geom_line(data = my.model, aes(y = dif, x = buoyancy_freq), color = "blue", lwd=2) +
+  geom_vline(xintercept = seg_reg$psi[[2]], color = "blue", lty = "dashed") +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp") +
+  theme_bw() +
+  xlab("Median buoyancy frequency at the thermocline (1/s)")
 dev.off()
 ```
 
+Including unstrat
+```{r}
+all_inc_unstrat <- read.csv("../Compiled data/summer_averages_wi_surface.csv")
+with_temp_unstrat <- all_inc_unstrat %>%
+  pivot_wider(names_from = Layer, values_from = TP_ugL:TN_date)
+all_climate <- read.csv("../Compiled data/historical_temp_output_era5.csv")
+
+many_lake_temp_sum_all <- all_climate %>%
+  rename(mon = Month,
+         value = Temp_C) %>%
+  mutate(Year = ifelse(mon>=9,Year+1,Year)) %>%
+  full_join(with_temp_unstrat)
+
+temp_temp_data <- many_lake_temp_sum_all %>%
+  group_by(LakeID, mon)%>%
+  filter(!is.na(Temp_C_BOT),!is.na(mon), !is.na(value))%>%
+  mutate(nyear = length(unique(Year)))%>%
+  filter(nyear>=10,
+         #max(value)-min(value)>2
+         )%>%
+  dplyr::summarize(temp_temp = pcor.test(Temp_C_BOT,value,Year,method = "spearman")$estimate,
+            )
+
+bf = all_inc_unstrat %>%
+  group_by(LakeID) %>%
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
+
+temp_temp_data %>% 
+  left_join(bf) %>%
+  pivot_wider(names_from = mon, values_from = temp_temp, names_prefix = "Month_") %>%
+  ggplot(aes(y = Month_4 - Month_8, x = buoyancy_freq)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ggpmisc::stat_poly_eq(ggpmisc::use_label(c("eq", "p")), coef.digits = 2) +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
+```
+
+Including unstrat, seasons
+```{r}
+all_inc_unstrat <- read.csv("../Compiled data/summer_averages_wi_surface.csv")
+with_temp_unstrat <- all_inc_unstrat %>%
+  pivot_wider(names_from = Layer, values_from = TP_ugL:TN_date)
+all_climate <- read.csv("../Compiled data/historical_temp_output_era5.csv")
+
+many_lake_temp_sum_all <- all_climate %>%
+  rename(mon = Month,
+         value = Temp_C) %>%
+  mutate(Year = ifelse(mon>=9,Year+1,Year)) %>%
+  full_join(with_temp_unstrat)
+
+temp_temp_data <- many_lake_temp_sum_all  %>%
+  mutate(season = ifelse(mon %in% c(2:4), "Spring",
+                         ifelse(mon %in% c(7:8), "Summer", "Neither"))) %>%
+  filter(!season == "Neither") %>%
+  group_by(LakeID, season, Year) %>%
+  mutate(Temp_C_BOT = mean(Temp_C_BOT, na.rm = T)) %>%
+  filter(!is.na(Temp_C_BOT), !is.na(mon), !is.na(value))%>%
+  group_by(LakeID, season) %>%
+  mutate(nyear = length(unique(Year)))%>%
+  filter(nyear>=10,
+         #max(value)-min(value)>2
+         )%>%
+  dplyr::summarize(temp_temp = pcor.test(Temp_C_BOT,value,Year,method = "spearman")$estimate,
+            )
+
+bf = all_inc_unstrat %>%
+  group_by(LakeID) %>%
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
+
+temp_temp_data %>% 
+  left_join(bf) %>%
+  pivot_wider(names_from = season, values_from = temp_temp) %>%
+  ggplot(aes(y = Spring - Summer, x = buoyancy_freq)) +
+  geom_point() +
+  geom_smooth() +
+  ggpmisc::stat_poly_eq(ggpmisc::use_label(c("eq", "p")), coef.digits = 2) +
+  ylab("Relative correlation between hypo. temp\nand spring vs summer air temp")
+```
