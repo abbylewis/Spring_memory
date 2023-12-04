@@ -251,7 +251,7 @@ ALL <- spring_era5_trends_limited %>%
 library(ggpmisc)
 library(ggallin)
 library(ggpubr)
-#jpeg("temp_trend_seasons_limited.jpg", width = 6, height = 6, units = "in", res = 300)
+#jpeg("../Figures/temp_trend_seasons_limited.jpg", width = 6, height = 6, units = "in", res = 300)
 trend_seasons <- ALL %>%
   filter(layer %in% c("epi_mean", "hypo_mean")) %>%
   mutate(layer = ifelse(layer == "epi_mean", "Summer surface-water temp.", "Summer bottom-water temp."),
@@ -354,7 +354,7 @@ ALL <- era5_seas %>%
 
 library(ggpmisc)
 
-jpeg("temp_trend_seasons.jpg", width = 6, height = 6, units = "in", res = 300)
+jpeg("../Figures/temp_trend_seasons.jpg", width = 6, height = 6, units = "in", res = 300)
 trend_seasons <- ALL %>%
   filter(source == "era5means",
          layer %in% c("summer_epi_mean", "summer_hypo_mean")) %>%
@@ -456,6 +456,38 @@ with_temp %>%
   filter(LakeID == "386") %>%
   ggplot(aes(x = Year, y = Temp_C_EPI)) +
   geom_point() 
+
+jpeg("../Figures/temp_trend_seasons_warming.jpg", width = 6, height = 6, units = "in", res = 300)
+trend_seasons <- ALL %>%
+  filter(source == "era5means",
+         layer %in% c("summer_epi_mean", "summer_hypo_mean")) %>%
+  mutate(layer = ifelse(layer == "summer_epi_mean", "Summer surface-water temp.", "Summer bottom-water temp."),
+         layer = factor(layer, levels = c("Summer surface-water temp.", "Summer bottom-water temp."))) %>%
+  mutate(season = ifelse(season == "Spring", "Spring air temp.", "Summer air temp.")) %>%
+  filter(!is.na(air_temp), 
+         !is.na(water_temp)) %>%
+  left_join(lat_long) %>%
+  filter(Latitude_DD > 0) %>%
+  left_join(warming_sen) %>%
+  ggplot(aes(x = air_temp, y = water_temp)) +
+  geom_hline(yintercept = 0, color = "grey75") +
+  geom_vline(xintercept = 0, color = "grey75") +
+  geom_abline(slope = 1, color = "black")+
+  geom_point(aes(color = sig < 0.05 & trend < 0), alpha = 0.5) +
+  geom_smooth(method = "lm", color = "#e0775f", data = . %>% 
+                filter(season == "Summer air temp." & layer == "Summer surface-water temp.")) +
+  geom_smooth(method = "lm", color = "#e0775f", data = . %>% 
+                filter(season == "Spring air temp." & layer == "Summer surface-water temp.")) +
+  geom_smooth(method = "lm", color = "#2b3990", data = . %>% 
+                filter(season == "Spring air temp." & layer == "Summer bottom-water temp.")) +
+  facet_grid(rows = vars(layer), cols = vars(season))+
+  stat_poly_eq(use_label(c("eq", "p")), coef.digits = 2) +
+  xlab("Air temperature trend (ºC/y)") +
+  ylab("Water temperature trend (ºC/y)") +
+  labs(color = "significant negative\nwarming rate trend")+
+  theme_bw()
+trend_seasons
+dev.off()
 ```
 
 ```{r}
