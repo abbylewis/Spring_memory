@@ -80,7 +80,7 @@ climate_era5_trends <- sen_slope_months(climate_era5 %>% filter(Year > 1980),
                                         "Temp_C")
 ```
 
-Lots of code here that could be deleted since I switched to facets
+Map
 ```{r}
 library(ggthemes)
 library(sf)
@@ -92,107 +92,9 @@ library(ggspatial)
 library(viridis)
 library(ggpubr)
 
-# Function to plot a map of a given month with a given dataset
-plot_wi_trend_monthly <- function(temp_trends,
-                                  month,
-                                  min = NULL,
-                                  max = NULL) {
-  
-  if(is.null(min)) {min = min(temp_trends$trend)*10} else {min = min*10} #per decade
-  if(is.null(max)) {max = max(temp_trends$trend)*10} else {max = max*10}
-  
-  for_states <- temp_trends%>%
-    filter(Month==month)%>%
-    left_join(lat_long)
-  states <- ne_states(returnclass = "sf",country = "United States of America")
-  
-  us_map = ggplot(data = states) +
-    geom_sf() +
-    coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
-    geom_point(data = for_states, 
-               aes(Longitude_DD, Latitude_DD, fill = trend*10),
-               shape = 21, color = "white", size = 2.8, alpha  =.5, stroke = .4)+
-    theme_bw()+
-    theme(plot.margin = margin(0, 0, 0, 0, "cm"),
-      legend.box.background = element_rect(fill = "white", color = "white"))+
-    scale_fill_viridis(name = "Air temperature trend\n(ºC/decade)",
-                       limits = c(min,max), option = "H")+
-    theme(axis.title.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text = element_blank(),
-          axis.ticks = element_blank())+
-    ggtitle(paste0(month.name[month]))
-  us_map
-}
-
-plot_wi_trend_multimonth <- function(temp_trends, months = NULL, min = NULL, max = NULL) {
-  if(is.null(months)){months <- unique(temp_trends$Month)}
-  if(is.null(min)) {min = min(temp_trends$trend, na.rm = T)}
-  if(is.null(max)) {max = max(temp_trends$trend, na.rm = T)}
-  n_months <- length(unique(months))
-  plot_list <- vector(mode='list', length=n_months)
-  for(i in 1:n_months) {
-    plot <- plot_wi_trend_monthly(temp_trends,
-                                  months[i],
-                                  min = min,
-                                  max = max)
-    plot_list[[i]] <- plot
-  }
-  return(plot_list)
-}
-
-plot_wi_trend_multimodel <- function(temp_trends1, 
-                                     temp_trends2,
-                                     temp_trends3 = NULL) {
-  
-  full <- rbind(temp_trends1, temp_trends2, temp_trends3)
-  if(is.null(months)){months <- unique(full$Month)}
-  min <- min(full$trend, na.rm = T)
-  max <- max(full$trend, na.rm = T)
-  n_models <- ifelse(is.null(temp_trends3), 2, 3)
-  plot_list <- vector(mode='list', length=n_models*length(months))
-  plot_list[1:length(months)] <- plot_wi_trend_multimonth(temp_trends1, 
-                                                          months = months,
-                                                          min = min,
-                                                          max = max)
-  plot_list[(length(months)+1):(2*length(months))] <- plot_wi_trend_multimonth(temp_trends2, 
-                                                          months = months,
-                                                          min = min,
-                                                          max = max)
-  if(!is.null(temp_trends3)){
-    plot_list[(2*length(months)+1):(3*length(months))] <- plot_wi_trend_multimonth(temp_trends3, 
-                                                          months = months,
-                                                          min = min,
-                                                          max = max)
-  }
-  do.call(ggarrange, c(plot_list[1:length(plot_list)], 
-                       ncol = length(months), 
-                       nrow = n_models,
-                       common.legend = T))
-}
-
-plot_wi_trend_multimodel(climate_narr_trends, 
-                         climate_era5_trends, 
-                         climate_jra55_trends)
-```
-
-Probably way easier to do this with facets
-```{r}
-library(ggthemes)
-library(sf)
-library(rnaturalearth)
-library(rnaturalearthdata)
-#remotes::install_github("ropensci/rnaturalearthhires")
-library(rnaturalearthhires)
-library(ggspatial)
-library(viridis)
-library(ggpubr)
-
-all_trends <- climate_narr_trends%>%
-  mutate(Model = "NARR") %>%
-  full_join(climate_era5_trends %>% mutate(Model = "ERA5")) %>%
-  full_join(climate_jra55_trends %>% mutate(Model = "JRA55")) %>%
-  mutate(Month = factor(Month, 
+all_trends <- climate_era5_trends %>% 
+  mutate(Model = "ERA5",
+         Month = factor(Month, 
                         levels = unique(Month), 
                         labels = month.abb[unique(Month)],
                         ordered = T))
@@ -204,7 +106,7 @@ for_states <- all_trends%>%
   left_join(lat_long)
 states <- ne_states(returnclass = "sf",country = "United States of America")
 
-us_map = ggplot(data = states) +
+wi_map = ggplot(data = states) +
   geom_sf(fill = "white") +
   coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
   geom_point(data = for_states, 
@@ -223,56 +125,32 @@ us_map = ggplot(data = states) +
         plot.margin = margin(0, 0, 0, 0, "cm"),
         panel.background = element_rect(fill = "grey80"),
         legend.position = "bottom")+
-  facet_grid(rows = vars(Model), cols = vars(Month))
+  facet_grid(cols = vars(Month))
 jpeg("../Figures/temperature_trends.jpeg", width = 8, height = 3.5, units = "in", res = 300)
-us_map
+wi_map
 dev.off()
 
-us_map
-
-hists = all_trends%>%
-  mutate(trend = trend*10)%>%
-  ggplot(aes(x = trend, fill = Model))+
-  geom_density(alpha = 1, linewidth = 0.1)+
+nh_map = ggplot(data = states) +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-76,-67))+
+  geom_point(data = for_states, 
+             aes(Longitude_DD, Latitude_DD, fill = trend*10),
+             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
   theme_bw()+
-  coord_cartesian(ylim=c(0, 10))+
-  scale_x_continuous(breaks = c(-0.8,0,0.8), name = "Air temperature trend (ºC/decade)")+
-  geom_vline(xintercept = 0)+
-  scale_fill_viridis_d()+
+  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
+                       colours = c("blue","white","red"),
+                       limits = c(-abs_max, abs_max))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.background = element_rect(fill = "grey80"),
+        legend.position = "bottom")+
   facet_grid(cols = vars(Month))
 
-library(patchwork)
-jpeg("../Figures/temperature_trends_hist.jpeg", width = 10, height = 5, units = "in", res = 300)
-wrap_plots(us_map+theme(legend.position = "right"), hists, ncol = 1, heights = c(2,1))
-dev.off()
-
-hists2 = all_trends%>%
-  mutate(trend = trend*10)%>%
-  ggplot(aes(x = trend, fill = Model))+
-  geom_density()+
-  theme_bw()+
-  scale_x_continuous(breaks = c(-0.9,0,0.9), name = "Air temperature trend (ºC/decade)")+
-  geom_vline(xintercept = 0)+
-  scale_fill_viridis_d()+
-  facet_wrap(~Month)
-
-jpeg("../Figures/temperature_trends_hist_only.jpeg", width = 6, height = 5, units = "in", res = 300)
-hists2
-dev.off()
-
-
-hists3 = all_trends%>%
-  mutate(trend = trend*10)%>%
-  ggplot(aes(x = trend, fill = Model))+
-  geom_density()+
-  theme_bw()+
-  scale_x_continuous(breaks = c(-0.9,0,0.9), name = "Air temperature trend (ºC/decade)")+
-  geom_vline(xintercept = 0)+
-  scale_fill_viridis_d()+
-  facet_grid(cols = vars(Month), rows = vars(Model), scales = "free_y")
-
-jpeg("../Figures/temperature_trends_hist_all.jpeg", width = 10, height = 5, units = "in", res = 300)
-wrap_plots(us_map+theme(legend.position = "right"), hists3, ncol = 1)
+jpeg("../Figures/temperature_trends_wi_ne.jpeg", width = 8, height = 5, units = "in", res = 300)
+ggarrange(wi_map, nh_map, ncol = 1, nrow = 2, common.legend = TRUE, legend = "bottom")
 dev.off()
 ```
 
