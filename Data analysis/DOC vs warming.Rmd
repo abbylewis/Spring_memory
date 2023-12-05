@@ -79,7 +79,7 @@ secchi <- read_csv("../External data/Secchi_Data.csv")
 strat_data <- read_csv("../Compiled data/Stratified_period_data_with_thermo.csv") 
 
 strat_dates <- strat_data%>%
-  select(LakeID, Date_start, Date_end, Year) %>%
+  dplyr::select(LakeID, Date_start, Date_end, Year) %>%
   unique()
 
 secchi_annual <- secchi %>%
@@ -319,6 +319,21 @@ write.csv(secchi_sen, "secchi_trends.csv", row.names = F)
 write.csv(warming_sen, "warming_sen.csv", row.names = F)
 write.csv(hypo_sen, "hypo_depth_trends.csv", row.names = F)
 write.csv(hypo_sen_pct, "hypo_depth_pct_trends.csv", row.names = F)
+
+secchi_sen %>%
+  left_join(lat_long) %>%
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), 
+                                "Northeast", "Other"))) %>%
+  filter(!Region == "Other",
+         !is.na(trend)) %>%
+  ggplot(aes(y = trend, x = Region, fill = Region))+
+  geom_hline(yintercept = 0, color = "grey30") +
+  geom_violin(alpha = 0.5, draw_quantiles = .5) +
+  theme_bw()+
+  stat_compare_means() +
+  ylab("Decadal trend in secchi")
 ```
 
 ```{r}
@@ -359,7 +374,7 @@ warming_sen %>%
                      var = "secchi")%>%
               filter(sig < 0.05)
               )%>%
-  select(LakeID, trend, var) %>%
+  dplyr::select(LakeID, trend, var) %>%
   pivot_wider(names_from = var, values_from = trend) %>%
   ggplot(aes(y = warming, x = secchi))+
   geom_point()
@@ -372,7 +387,7 @@ warming_sen %>%
                      var = "hypo")#%>%
               #filter(sig < 0.05)
               )%>%
-  select(LakeID, trend, var) %>%
+  dplyr::select(LakeID, trend, var) %>%
   pivot_wider(names_from = var, values_from = trend) %>%
   ggplot(aes(y = warming, x = hypo))+
   geom_point()
@@ -480,7 +495,7 @@ summer_layers %>%
   facet_wrap(~Year)+
   ggtitle("Annabessacook Lake")
 
-warming_with_lat <- warming %>%
+warming_with_lat <- warming_sen %>%
   left_join(lat_long)
 
 hypo_with_lat <- hypo_sen %>%
