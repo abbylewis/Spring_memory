@@ -81,6 +81,9 @@ renamer = function(text_vect){
     if(text=="DO_date_HYPO")       output[i]="Oxygen measurement\ndate (lake-year mean)"
     if(text=="SA_vol_ratio_HYPO")  output[i]="Hypo. surface area\nto volume ratio"
     if(text=="AF")                 output[i]="Anoxic factor"
+    if(text=="log_max_depth")      output[i]="Maximum depth"
+    if(text=="log_SA")             output[i]="Surface area"
+    if(text=="Latitude_DD")        output[i]="Latitude"
     i = i+1
   }
   return(output)
@@ -128,6 +131,51 @@ renamer_poster = function(text_vect){
 # AIC model selection
 ###
 
+# LM model selection
+aic_calculator_lm = function(dataset,responses,potential_drivers,interaction="+"){
+  drivers = c(paste(potential_drivers, collapse = " "))
+  dataset = dataset%>%
+    ungroup()%>%
+    dplyr::select(all_of(c(potential_drivers,responses,"LakeID")))%>%
+    filter(if_all(where(is.numeric),is.finite))%>%
+    mutate(across(-LakeID,zscore))
+  
+  for(response in responses){
+    if(sum(complete.cases(dataset))>0){
+      model = lm(as.formula(paste0(response, "~", paste0(paste0(potential_drivers, collapse = interaction)))), data = dataset)
+      AICcs = c(MuMIn::AICc(model))
+    } else{
+      AICcs = c(NA)
+    }
+    for (num_drivers in 1:(length(potential_drivers)-1)){
+      driver_matrix = combn(potential_drivers,num_drivers)
+      for(option_num in 1:ncol(driver_matrix)){
+        if(sum(complete.cases(dataset[c(response,driver_matrix[,option_num])]))>0){
+          model = lm(as.formula(paste0(response, "~", paste0(paste0(driver_matrix[,option_num], collapse = interaction)))), data = dataset)
+          AICcs = c(AICcs, MuMIn::AICc(model))
+        } else{
+          AICcs = c(AICcs, NA)
+        }
+        drivers = c(drivers, paste(driver_matrix[,option_num], collapse = " "))
+      }
+    }
+    if(response == responses[1]){
+      output = data.frame(drivers,AICcs)
+      colnames(output)=c("drivers",response)
+    } else{
+      output[response] = AICcs
+    }
+  }
+  output = output%>%
+    filter(!is.na(get(responses)))
+  
+  for(response in responses){
+    best_val = min(output[response][!is.na(output[response])&output[response]>-Inf])
+    print(paste0(response, ":"))
+    print(paste0(output$drivers[output[response]<=best_val+2],": AIC = ",round(output[response][output[response]<=best_val+2])))
+  }
+}
+
 # LMER model selection
 aic_calculator_lmer = function(dataset,responses,potential_drivers,interaction="+"){
   drivers = c(paste(potential_drivers, collapse = " "))
@@ -140,7 +188,7 @@ aic_calculator_lmer = function(dataset,responses,potential_drivers,interaction="
   for(response in responses){
     if(sum(complete.cases(dataset))>0){
       model = lmer(as.formula(paste0(response, "~", paste0(paste0(potential_drivers, collapse = interaction),"+(1|LakeID)"))), data = dataset)
-      AICcs = c(AICc(model))
+      AICcs = c(MuMIn::AICc(model))
     } else{
       AICcs = c(NA)
     }
@@ -149,7 +197,7 @@ aic_calculator_lmer = function(dataset,responses,potential_drivers,interaction="
       for(option_num in 1:ncol(driver_matrix)){
         if(sum(complete.cases(dataset[c(response,driver_matrix[,option_num])]))>0){
           model = lmer(as.formula(paste0(response, "~", paste0(paste0(driver_matrix[,option_num], collapse = interaction), "+(1|LakeID)"))), data = dataset)
-          AICcs = c(AICcs, AICc(model))
+          AICcs = c(AICcs, MuMIn::AICc(model))
         } else{
           AICcs = c(AICcs, NA)
         }
@@ -185,7 +233,7 @@ aic_calculator_onevar = function(dataset,responses,potential_drivers){
     AICcs = c()
     for(i in 1:length(potential_drivers)){
       model = lm(as.formula(paste0(response, "~", potential_drivers[i])), data = dataset)
-      AICcs = c(AICcs, AICc(model))
+      AICcs = c(AICcs, MuMIn::AICc(model))
     }
     if(response == responses[1]){
       output = data.frame(potential_drivers,AICcs)
@@ -334,4 +382,34 @@ plot_effects_by_lake_lmer_ridge = function(all_lakes, var_name, mod, poster = F)
          plot = p2,
          width = 4, height = 4, units = "in",bg="white")
   return(p2+ggtitle(var_name))
+}
+
+plot_effects_lm = function(mod, var_name, save = F, poster = F){
+  effects = data.frame(summary(mod)$coefficients)%>%
+    rename(std_error = Std..Error)
+  effects$Var = row.names(effects)
+  confs = data.frame(confint(mod))
+  confs$Var = row.names(confs)
+  effects2 = effects%>%
+    left_join(confs)%>%
+    rename(xmin = X2.5..,
+           xmax = X97.5..)
+  p = effects2%>%
+    filter(!Var=="(Intercept)")%>%
+    mutate(Var = if(poster){renamer_poster(Var)}else{renamer(Var)},
+           Var = factor(Var, levels = Var[order(abs(Estimate))]))%>%
+    ggplot(aes(y = Var,x=Estimate))+
+    geom_vline(xintercept = 0)+
+    geom_point()+
+    geom_errorbar(aes(xmin=xmin, xmax = xmax),width=0.1)+
+    ggtitle(var_name,
+            subtitle = paste0("n = ",length(summary(mod)$residuals)," lakes"))+
+    theme_bw()+
+    theme(axis.title.y = element_blank())
+  if(save == T){
+    var_name_save = gsub("\\/","",var_name)
+    ggsave(paste0("../Figures/MLR/Parameter estimate-",var_name_save,".jpeg"),
+           width = 4, height = 4, units = "in")
+  }
+  return(p)
 }
