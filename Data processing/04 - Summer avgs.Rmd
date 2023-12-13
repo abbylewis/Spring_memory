@@ -67,10 +67,10 @@ unique(missing_depth_and_interval$LakeID)
 Step 3: Filter to summer period and calculate thermocline depths
 ```{r}
 full_trimmed <- full%>%
-  filter(((Latitude_DD>0)&Date_22>=as.Date("2022-07-15")&Date_22<=as.Date("2022-08-31"))|
-           ((Latitude_DD<0)&Date_22>=as.Date("2022-01-15")&Date_22<=as.Date("2022-02-28")))%>%
+  filter(((Latitude_DD>0)&Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31"))|
+           ((Latitude_DD<0)&Date_22>=as.Date("2022-01-01")&Date_22<=as.Date("2022-02-28")))%>%
   dplyr::select(-Date_22)%>%
-  mutate(start_date = ifelse(Latitude_DD>0,"2022-07-15","2022-01-15"))
+  mutate(start_date = ifelse(Latitude_DD>0,"2022-07-01","2022-01-01"))
 
 #Calculate thermocline depths
 thermo_depths <- full_trimmed%>%
