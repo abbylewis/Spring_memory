@@ -72,11 +72,11 @@ sen_slope_months <- function(df, var, months = 1:12) {
   return(output)
 }
 
-climate_narr_trends <- sen_slope_months(climate_narr %>% filter(Year > 1980), 
+climate_narr_trends <- sen_slope_months(climate_narr %>% filter(Year >= 1980), 
                                         "Temp_C") #takes ~10 seconds
-climate_jra55_trends <- sen_slope_months(climate_jra55 %>% filter(Year > 1980), 
+climate_jra55_trends <- sen_slope_months(climate_jra55 %>% filter(Year >= 1980), 
                                          "Temp_C")
-climate_era5_trends <- sen_slope_months(climate_era5 %>% filter(Year > 1980), 
+climate_era5_trends <- sen_slope_months(climate_era5 %>% filter(Year >= 1980), 
                                         "Temp_C")
 ```
 
@@ -106,31 +106,10 @@ for_states <- all_trends%>%
   left_join(lat_long)
 states <- ne_states(returnclass = "sf",country = "United States of America")
 
-wi_map = ggplot(data = states) +
-  geom_sf(fill = "white") +
-  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
-  geom_point(data = for_states, 
-             aes(Longitude_DD, Latitude_DD, fill = trend*10),
-             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
-  theme_bw()+
-  #scale_fill_viridis(name = "Air temperature trend\n(ºC/decade)",
-  #                   limits = c(min,max), option = "H")+
-  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
-                       colours = c("blue","white","red"),
-                       limits = c(-abs_max, abs_max))+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.background = element_rect(fill = "grey80"),
-        legend.position = "bottom")+
-  facet_grid(cols = vars(Month))
-jpeg("../Figures/temperature_trends.jpeg", width = 8, height = 3.5, units = "in", res = 300)
-wi_map
-dev.off()
-
+plot_nh <- function(for_states){
+  world <- ne_countries(scale = "medium", returnclass = "sf")
 nh_map = ggplot(data = states) +
+  geom_sf(fill = "grey98", color = "grey80", data = world) +
   geom_sf(fill = "white") +
   coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-76,-67))+
   geom_point(data = for_states, 
@@ -145,12 +124,72 @@ nh_map = ggplot(data = states) +
         axis.text = element_blank(),
         axis.ticks = element_blank(),
         plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.background = element_rect(fill = "grey80"),
-        legend.position = "bottom")+
-  facet_grid(cols = vars(Month))
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank(),
+        legend.position = "bottom",
+        strip.text = element_blank())+
+  facet_grid(rows = vars(Month))
+}
 
-jpeg("../Figures/temperature_trends_wi_ne.jpeg", width = 8, height = 5, units = "in", res = 300)
-ggarrange(wi_map, nh_map, ncol = 1, nrow = 2, common.legend = TRUE, legend = "bottom")
+plot_wi <- function(for_states){
+  wi_map = ggplot(data = states) +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
+  geom_point(data = for_states, 
+             aes(Longitude_DD, Latitude_DD, fill = trend*10),
+             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
+  theme_minimal()+
+  #scale_fill_viridis(name = "Air temperature trend\n(ºC/decade)",
+  #                   limits = c(min,max), option = "H")+
+  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
+                       colours = c("blue","white","red"),
+                       limits = c(-abs_max, abs_max))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        legend.position = "bottom",
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank(),
+        panel.border=element_rect(fill=NA, colour="black")) +
+  facet_grid(rows = vars(Month), switch = "y")
+  return(wi_map)
+}
+
+wi_half1 <- plot_wi(for_states %>% filter(Month %in% c(month.abb[seq(1, 12, by = 2)])))
+wi_half2 <- plot_wi(for_states %>% filter(Month %in% c(month.abb[seq(2, 12, by = 2)])))
+nh_half1 <- plot_nh(for_states %>% filter(Month %in% c(month.abb[seq(1, 12, by = 2)])))
+nh_half2 <- plot_nh(for_states %>% filter(Month %in% c(month.abb[seq(2, 12, by = 2)])))
+wi_spring <- plot_wi(for_states %>% 
+                       filter(Month %in% c(month.abb[2:4]))%>%
+                       mutate(Month = "Spring"))
+wi_summer <- plot_wi(for_states %>% 
+                       filter(Month %in% c(month.abb[7:8]))%>%
+                       mutate(Month = "Summer"))
+wi_annual <- plot_wi(for_states %>% 
+                       mutate(Month = "Mean annual"))
+nh_spring <- plot_nh(for_states %>% 
+                       filter(Month %in% c(month.abb[2:4]))%>%
+                       mutate(Month = "Spring"))
+nh_summer <- plot_nh(for_states %>% 
+                       filter(Month %in% c(month.abb[7:8]))%>%
+                       mutate(Month = "Summer"))
+nh_annual <- plot_nh(for_states %>% 
+                       mutate(Month = "Mean annual"))
+
+jpeg("../Figures/temperature_trends_wi_ne.jpeg", height = 6, width = 4.5, units = "in", res = 300)
+ggarrange(wi_half1, nh_half1, plot_spacer(), wi_half2, nh_half2, 
+          ncol = 5, nrow = 1, widths = c(1,1,0.1,1,1),
+          common.legend = TRUE, legend = "bottom")
+dev.off()
+
+jpeg("../Figures/temperature_trends_wi_ne_sum.jpeg", height = 4.5, width = 3, units = "in", res = 300)
+ggarrange(wi_spring, nh_spring, 
+          wi_summer, nh_summer, 
+          wi_annual, nh_annual,
+          ncol = 2, nrow = 3,
+          common.legend = TRUE, legend = "bottom")
 dev.off()
 ```
 
