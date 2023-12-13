@@ -74,7 +74,8 @@ monthly_correlations_talk <- function(wi_lakes_all_data,
                                       variable, 
                                       value, 
                                       name, 
-                                      alpha = 0.001) {
+                                      alpha = 0.001,
+                                      highlight = NULL) {
   #Parse variable name
   variable <- sym(variable)
   value <- sym(value)
@@ -104,18 +105,27 @@ monthly_correlations_talk <- function(wi_lakes_all_data,
     mutate(p = wilcox.test(monthly_correlation)$p.value,
            n = n(),
            mon = factor(mon, levels = c(1:8),labels = labs))
-  fig <- wilcox %>%
-    ggplot(aes(x=mon, y = monthly_correlation))+
-    geom_boxplot(aes(color=p<alpha))+
+  fig_start <- wilcox %>%
+    ggplot()+
+    geom_violin(aes(x = mon, y = monthly_correlation, color=p<alpha), 
+                         draw_quantiles = 0.5)
+  if(!is.null(highlight)){
+    fig_start <- fig_start + 
+      geom_rect(aes(xmin = highlight[[1]], xmax = highlight[[2]], ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) }
+  fig <- fig_start + 
+    geom_violin(aes(x = mon, y = monthly_correlation, color=p<alpha), 
+                         draw_quantiles = 0.5)+
     geom_text(aes(x = mon, label = cld, y = 1.08),
               data = cld_df)+
     #geom_text(aes(label = paste0("n = ",n), y = max(do_temp)))+ #n is the same across all
     geom_hline(yintercept=0)+
     ylim(-1,1.08)+
     xlab("Air temperature month")+
-    ylab(paste0("Correlation with\n",name,"\n(n = ",unique(wilcox$n),")"))+
+    ylab("Correlation")+
+    ggtitle(paste0(name,"(n = ",unique(wilcox$n),")"))+
     theme_bw()+
-    scale_color_manual(values = c("grey50","#FB8B24"), breaks = c(F, T))+
+    scale_color_manual(values = c("grey40","#0FA9E6"), breaks = c(F, T))+
     theme(axis.text.x = element_text(hjust = .5))+
     labs(color = paste0("p < ",alpha))
   return(fig)
