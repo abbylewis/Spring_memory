@@ -1,0 +1,160 @@
+---
+title: "Air temp analysis"
+author: "Abby Lewis"
+date: "2023-05-22"
+output: html_document
+---
+
+This file analyzes the effect of variation in air temperature on hypolimnetic temperature and DO.
+
+Table of contents: Step 1: Load packages and data Step 2: Generate temp anomaly summary fig Step 3: Analyze the effect of monthly air temperature on hypolimnetic DO, VHOD, and temp dynamics
+
+Step 1: Load packages and data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(mosaic)
+library(ggallin)
+library(ppcor)
+library(multcompView)
+library(ggpubr)
+library(viridis)
+library(MASS)
+library(see)
+source("monthly_correlations.R")
+
+#Load saved data
+with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
+daily_temp <- daily_temp_raw %>%
+  dplyr::select(-Lat, -Lon) %>%
+  mutate(Year = year(Date))
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figures")){dir.create("../Figs")}
+```
+
+Step 3: Analyze the effect of daily air temperature on hypolimnetic DO, VHOD, and temp dynamics
+
+```{r}
+many_lake_temp_sum <- with_temp%>%
+  left_join(daily_temp) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year))
+# ---
+
+do_temp <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
+  filter(hypoxic=="no") %>%
+  monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
+do_temp_fig <- do_temp %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.2)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer hypo. DO ","(n = ",unique(do_temp$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/DO and temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
+do_temp_fig
+dev.off()
+
+temp_demand <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "Summer VHOD ", alpha = 0.001)
+temp_demand_fig  <- temp_demand %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.2)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer VHOD ","(n = ",unique(temp_demand$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/Demand and air temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
+temp_demand_fig
+dev.off()
+
+
+epi_temp <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_EPI", "Temp_C", 
+                                    "Summer epi. temperature ", alpha = 0.001)
+epi_temp_fig  <- epi_temp %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.2)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer epi. temperature ","(n = ",unique(epi_temp$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/Epi and air temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
+epi_temp_fig
+dev.off()
+
+
+hypo_temp <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_HYPO", "Temp_C", 
+                                    "Summer hypo. temperature ", alpha = 0.001)
+hypo_temp_fig  <- hypo_temp %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.2)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer hypo. temperature ","(n = ",unique(hypo_temp$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/Hypo and air temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
+hypo_temp_fig
+dev.off()
+
+jpeg("../Figures/Monthly correlations - all daily.jpg", width = 8, height = 5, res = 300, units = "in")
+ggarrange(epi_temp_fig + theme(axis.title.x = element_blank()),
+          hypo_temp_fig + 
+            theme(axis.title.x = element_blank()),
+          temp_demand_fig,
+          do_temp_fig,
+          common.legend = T, legend = "bottom", nrow=2, ncol = 2, align = "h", labels = "auto")
+dev.off()
+```
