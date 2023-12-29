@@ -30,6 +30,8 @@ with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
 daily_temp <- daily_temp_raw %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Lat < 0, Date - months(6), Date)) %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date))
 
@@ -158,3 +160,228 @@ ggarrange(epi_temp_fig + theme(axis.title.x = element_blank()),
           common.legend = T, legend = "bottom", nrow=2, ncol = 2, align = "h", labels = "auto")
 dev.off()
 ```
+
+Step 4: Rolling means
+
+```{r}
+many_lake_temp_sum <- with_temp %>%
+  left_join(daily_temp) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+# ---
+
+do_temp_roll <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
+  filter(hypoxic=="no") %>%
+  monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
+do_temp_roll_fig <- do_temp_roll %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.1)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer hypo. DO ","(n = ",unique(do_temp$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/DO and temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
+do_temp_roll_fig
+dev.off()
+
+temp_demand_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "Summer VHOD ", alpha = 0.001)
+temp_demand_roll_fig  <- temp_demand_roll %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.1)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer VHOD ","(n = ",unique(temp_demand$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/Demand and air temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
+temp_demand_roll_fig
+dev.off()
+
+
+epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_EPI", "Temp_C", 
+                                    "Summer epi. temperature ", alpha = 0.001)
+epi_temp_roll_fig  <- epi_temp_roll %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.1)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer epi. temperature ","(n = ",unique(epi_temp$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/Epi and air temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
+epi_temp_roll_fig
+dev.off()
+
+
+hypo_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_HYPO", "Temp_C", 
+                                    "Summer hypo. temperature ", alpha = 0.001)
+hypo_temp_roll_fig  <- hypo_temp_roll %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, data = data.frame()) + 
+  geom_point(aes(color = p<alpha, 
+                 x = as.Date("2022-01-01") + days(doy),
+                 y = monthly_correlation),
+             alpha = 0.1)+
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  ylim(-1,1)+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  ggtitle(paste0("Summer hypo. temperature ","(n = ",unique(hypo_temp$n),")"))+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha))
+jpeg("../Figures/Hypo and air temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
+hypo_temp_roll_fig
+dev.off()
+
+jpeg("../Figures/Monthly correlations - all daily roll mean.jpg", width = 8, height = 5, res = 300, units = "in")
+ggarrange(epi_temp_roll_fig + theme(axis.title.x = element_blank()),
+          hypo_temp_roll_fig + 
+            theme(axis.title.x = element_blank()),
+          temp_demand_roll_fig,
+          do_temp_roll_fig,
+          common.legend = T, legend = "bottom", nrow=2, ncol = 2, align = "h", labels = "auto")
+dev.off()
+```
+
+```{r}
+do_temp_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) %>%
+  full_join(temp_demand_roll %>% 
+              mutate(var = "Summer VHOD")) %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey80", alpha = 0.5, 
+            data = data.frame(var = c("Summer hypo. temperature",
+                                      "Summer hypo. DO",
+                                      "Summer VHOD"))) +
+  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
+                fill = "grey90", alpha = 0.5, 
+            data = data.frame(var = c("Summer epi. temperature"))) +
+  geom_hline(yintercept=0)+
+  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
+              color = "pink")+
+  xlab("Air temperature month")+
+  ylab("Correlation")+
+  theme_bw()+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  labs(color = paste0("p < ",alpha)) +
+  facet_wrap(~var, ncol = 2) 
+
+alpha <- 0.001
+
+all <- do_temp_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) %>%
+  full_join(temp_demand_roll %>% 
+              mutate(var = "Summer VHOD")) %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+
+group_fun <- function(sig) {
+  group <- rep(1, length(sig))
+  for (i in 2:length(sig)) {
+    if(sig[i] == sig[i - 1]) {
+      group[i] <- group[i - 1]
+    } else {
+      group[i] <- group[i - 1] + 1
+    }
+  }
+  return(group)
+}
+
+all_plot <- all %>%
+  group_by(var) %>%
+  mutate(n = max(n), #Some lakes are missing from January because our air temp only goes back to 1980
+         var = paste0(var, " (n = ",n,")")) %>%
+  group_by(var, doy, sig) %>%
+  summarise(mean = mean(monthly_correlation, na.rm = T),
+            sd = sd(monthly_correlation, na.rm = T)) 
+
+all_plot$group <- 1
+for(i in 1:length(unique(all_plot$var))){
+  all_plot$group[all_plot$var == unique(all_plot$var)[i]] <- group_fun(all_plot$sig[all_plot$var == unique(all_plot$var)[i]])
+}
+
+empty_df <- data.frame(var = unique(all_plot$var))
+
+colored_sd <- all_plot %>%
+  ggplot()+
+  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
+                fill = "grey90", alpha = 0.5, 
+            data = empty_df) +
+  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
+                fill = "grey90", alpha = 0.5, 
+            data = empty_df) +
+  geom_hline(yintercept=0)+
+  geom_ribbon(aes(x = as.Date("2022-01-01") + days(doy), 
+                  ymin = mean - sd, ymax = mean + sd,
+                  fill = sig, group = group),
+              alpha = 0.2) +
+  geom_line(aes(x = as.Date("2022-01-01") + days(doy), y = mean)) +
+  geom_text(aes(x = as.Date("2022-03-15") , y = 0.8, label = paste0("Spring")), 
+            size = 3, color = "grey30",
+            data = empty_df) +
+  geom_text(aes(x = as.Date("2022-08-01") , y = 0.8, label = paste0("Summer")), 
+            size = 3, color = "grey30",
+            data = empty_df) +
+  xlab("Air temperature date \n(right-aligned 30-day rolling mean)")+
+  ylab("Correlation")+
+  theme_bw()+
+  scale_fill_manual(values = c("grey40","#0FA9E6"))+
+  labs(fill = paste0("p < ",alpha)) +
+  facet_wrap(~var, ncol = 2) 
+
+jpeg("../Figures/Monthly correlations - all daily roll mean sd.jpg", width = 8, height = 5, res = 300, units = "in")
+colored_sd
+dev.off()
+```
+
