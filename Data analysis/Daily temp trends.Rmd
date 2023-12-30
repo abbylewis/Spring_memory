@@ -1,0 +1,242 @@
+---
+title: "Temp trend maps"
+author: "Abby Lewis"
+date: "2023-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(trend) #switched from open air 7 Nov 2023
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figures")){dir.create("../Figs")}
+```
+
+```{r}
+lat_long = read.csv("https://pasta-s.lternet.edu/package/data/eml/edi/1029/9/fadd3eaa25b5fdd1fc4efba70e660579")
+
+climate_era5 = read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
+
+climate_era5_format <- climate_era5 %>%
+  mutate(doy = yday(Date),
+         Year = year(Date))
+
+climate_era5_roll <- climate_era5_format %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA)) %>%
+  filter(doy < yday(as.Date("2022-08-31")),
+         !is.na(Temp_C))
+```
+
+```{r}
+sen_slope_climate <- function(df,var){
+  df <- df %>%
+    mutate(date = ymd_hms(paste(Year,"-01-01 00:00:00")))
+  output = df %>%
+    group_by(LakeID)%>%
+    dplyr::summarize(n = n(),
+                     trend = NA,
+                     sig = NA,
+                     min_year = NA,
+                     max_year = NA)
+  for(lake in unique(df$LakeID)){
+      filt = df%>%
+        filter(LakeID==lake)
+      if(length(unique(filt$Year))>=5){
+        sen = trend::sens.slope(filt[[var]])
+        output$trend[output$LakeID==lake]<-sen$estimates[1]
+        output$sig[output$LakeID==lake]<-sen$p.value[1]
+        output$min_year[output$LakeID==lake]<-min(year(filt$date))
+        output$max_year[output$LakeID==lake]<-max(year(filt$date))
+      }
+  }
+  return(output)
+}
+
+sen_slope_doys <- function(df, var, doys) {
+  output <- sen_slope_climate(df%>%filter(doy == doys[1]), var)%>%
+    mutate(doy = doys[1])
+  
+  if(length(doys)>1){
+    for (doy_n in doys[2:length(doys)]) {
+      output <- rbind(output, 
+                      sen_slope_climate(df %>% filter(doy == doy_n), var)%>%
+                        mutate(doy = doy_n)
+    )
+    }
+  }
+  
+  write.csv(output, paste0("../Compiled data/", 
+                           deparse(substitute(df)), "_",
+                           deparse(substitute(var)), "_daily.csv"), 
+              row.names = F)
+  return(output)
+}
+
+climate_era5_trends <- sen_slope_doys(climate_era5_roll, 
+                                        "Temp_C",
+                                        doys = 1:max(climate_era5_roll$doy))
+
+all_plot <- climate_era5_trends %>%
+  left_join(lat_long) %>%
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), "NE", "Other"))) %>%
+    group_by(doy, Region)%>%
+    summarize(p = wilcox.test(trend)$p.value,
+           n = n(),
+           mean = mean(trend, na.rm = T),
+           sd = sd(trend, na.rm = T),
+           sig = ifelse(p < alpha, T, F))
+
+all_plot$group <- 1
+for(i in 1:length(unique(all_plot$Region))){
+  all_plot$group[all_plot$Region == unique(all_plot$Region)[i]] <- group_fun(all_plot$sig[all_plot$Region == unique(all_plot$Region)[i]])
+}
+
+empty_df <- data.frame()
+
+all_plot1 <- all_plot %>%
+  mutate(DateTime = as.Date("2022-01-01") + days(doy))
+
+all_plot2 <- all_plot %>%
+  ungroup() %>%
+  mutate(DateTime = as.Date("2022-01-01") + days(doy) + hours(23) + minutes(59),
+         mean = ifelse(!is.na(lead(Region)) & lead(Region) == Region, lead(mean), mean), #to get smooth lines
+         sd = ifelse(lead(Region) == Region, lead(Region), sd))
+
+all_plot1 %>%
+  full_join(all_plot2) %>%
+  mutate(DateTime = as.Date("2022-01-01") + doy) %>%
+  ggplot()+
+  geom_hline(yintercept=0)+
+  geom_ribbon(aes(x = DateTime, 
+                  ymin = mean - sd, ymax = mean + sd,
+                  fill = sig, group = group),
+              alpha = 0.5) +
+  geom_line(aes(x = DateTime, y = mean)) +
+  xlab("Date")+
+  ylab("Air temperature trend (ºC/y)")+
+  theme_bw()+
+  scale_fill_manual(values = c("grey40","#0FA9E6"))+
+  labs(fill = paste0("p < ",alpha)) +
+  facet_wrap(~Region)
+```
+
+Map
+```{r}
+library(ggthemes)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+#remotes::install_github("ropensci/rnaturalearthhires")
+library(rnaturalearthhires)
+library(ggspatial)
+library(viridis)
+library(ggpubr)
+
+all_trends <- climate_era5_trends %>% 
+  mutate(Model = "ERA5",
+         Month = factor(Month, 
+                        levels = unique(Month), 
+                        labels = month.abb[unique(Month)],
+                        ordered = T))
+min = min(all_trends$trend)*10
+max = max(all_trends$trend)*10
+abs_max = max(abs(c(min,max)))
+
+for_states <- all_trends%>%
+  left_join(lat_long)
+states <- ne_states(returnclass = "sf",country = "United States of America")
+
+plot_nh <- function(for_states){
+  world <- ne_countries(scale = "medium", returnclass = "sf")
+nh_map = ggplot(data = states) +
+  geom_sf(fill = "grey98", color = "grey80", data = world) +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-76,-67))+
+  geom_point(data = for_states, 
+             aes(Longitude_DD, Latitude_DD, fill = trend*10),
+             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
+                       colours = c("blue","white","red"),
+                       limits = c(-abs_max, abs_max))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank(),
+        legend.position = "bottom",
+        strip.text = element_blank())+
+  facet_grid(rows = vars(Month))
+}
+
+plot_wi <- function(for_states){
+  wi_map = ggplot(data = states) +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
+  geom_point(data = for_states, 
+             aes(Longitude_DD, Latitude_DD, fill = trend*10),
+             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
+  theme_minimal()+
+  #scale_fill_viridis(name = "Air temperature trend\n(ºC/decade)",
+  #                   limits = c(min,max), option = "H")+
+  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
+                       colours = c("blue","white","red"),
+                       limits = c(-abs_max, abs_max))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        legend.position = "bottom",
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank(),
+        panel.border=element_rect(fill=NA, colour="black")) +
+  facet_grid(rows = vars(Month), switch = "y")
+  return(wi_map)
+}
+
+wi_half1 <- plot_wi(for_states %>% filter(Month %in% c(month.abb[seq(1, 12, by = 2)])))
+wi_half2 <- plot_wi(for_states %>% filter(Month %in% c(month.abb[seq(2, 12, by = 2)])))
+nh_half1 <- plot_nh(for_states %>% filter(Month %in% c(month.abb[seq(1, 12, by = 2)])))
+nh_half2 <- plot_nh(for_states %>% filter(Month %in% c(month.abb[seq(2, 12, by = 2)])))
+wi_spring <- plot_wi(for_states %>% 
+                       filter(Month %in% c(month.abb[2:4]))%>%
+                       mutate(Month = "Spring"))
+wi_summer <- plot_wi(for_states %>% 
+                       filter(Month %in% c(month.abb[7:8]))%>%
+                       mutate(Month = "Summer"))
+wi_annual <- plot_wi(for_states %>% 
+                       mutate(Month = "Mean annual"))
+nh_spring <- plot_nh(for_states %>% 
+                       filter(Month %in% c(month.abb[2:4]))%>%
+                       mutate(Month = "Spring"))
+nh_summer <- plot_nh(for_states %>% 
+                       filter(Month %in% c(month.abb[7:8]))%>%
+                       mutate(Month = "Summer"))
+nh_annual <- plot_nh(for_states %>% 
+                       mutate(Month = "Mean annual"))
+
+jpeg("../Figures/temperature_trends_wi_ne.jpeg", height = 6, width = 4.5, units = "in", res = 300)
+ggarrange(wi_half1, nh_half1, plot_spacer(), wi_half2, nh_half2, 
+          ncol = 5, nrow = 1, widths = c(1,1,0.1,1,1),
+          common.legend = TRUE, legend = "bottom")
+dev.off()
+
+jpeg("../Figures/temperature_trends_wi_ne_sum.jpeg", height = 4.5, width = 3, units = "in", res = 300)
+ggarrange(wi_spring, nh_spring, 
+          wi_summer, nh_summer, 
+          wi_annual, nh_annual,
+          ncol = 2, nrow = 3,
+          common.legend = TRUE, legend = "bottom")
+dev.off()
+```
+
