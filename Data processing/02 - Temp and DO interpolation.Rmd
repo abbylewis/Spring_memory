@@ -37,6 +37,7 @@ Step 2: QAQC
 Load data from EDI and run QAQC
 ```{r}
 #import data
+#options(timeout=300) may be needed depending on internet connection speed
 to_profiles_all <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/caf59a118a1490e7cb1a219c55b920f9")
 to_profiles_all$Date <- as.Date(to_profiles_all$Date)
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") #Metadata
@@ -315,6 +316,106 @@ ploto <- ggplot(interpolatedvalues.do)+
 ```
 
 
+Step 4.5: Interpolate DO pSat, following Jane et al. (2021)
+(note: this will take up to 30 minutes to run all lakes)
+```{r}
+#Prep for interpolation
+
+#Filter to profiles with at least 3 measurements
+to_profiles_cleaning1 <- to_profiles_depth_checked %>%
+  filter(!is.na(DO_sat))%>%
+  group_by(LakeID,Date) %>% 
+  filter(length(unique(Depth_m)) > 2,#less than three measurement depths
+         )%>%
+  mutate(crit = min(Depth_m)) %>% 
+  ungroup() %>%
+  filter(crit <= 3)#remove profiles where the shallowest value is larger than 3
+
+#take care of all the non-zeros
+nozeros <- to_profiles_cleaning1 %>% 
+  group_by(LakeID,Date) %>%
+  mutate(crit=min(Depth_m)) %>% 
+  ungroup() %>%
+  filter(crit != 0)
+
+#change anything Depth <0.5 to 0 (remove them first)
+nozeros_case1<-nozeros %>% 
+  filter(crit <= 0.5)%>%
+  mutate(Depth_m = ifelse(Depth_m == crit,0,Depth_m))
+
+#add additional 0m measurement for depths between 0.5 and 3
+nozeros_case2_zeros<-nozeros %>% 
+  filter(crit>0.5) %>% 
+  filter(crit<=3) %>%
+  ungroup() %>%
+  filter(Depth_m==crit) %>% #only take the lowest value
+  mutate(Depth_m=0) %>% unique()
+nozeros_case2 <- nozeros %>% 
+  filter(crit>0.5) %>% 
+  filter(crit<=3) %>%
+  full_join(nozeros_case2_zeros)
+
+
+to_profiles_cleaning2 <- to_profiles_cleaning1 %>% 
+  filter(crit==0) %>%
+  ungroup() %>%
+  rbind(nozeros_case1) %>%
+  rbind(nozeros_case2) %>% 
+  arrange(LakeID,Date,Depth_m)  %>%
+  group_by(LakeID,Date) %>% 
+  mutate(somany=n_distinct(Depth_m)) %>% 
+  ungroup() %>% filter(somany >= 2)%>%
+  dplyr::select(-somany, -crit)
+
+interp_do_sat <- function(lake,to_profiles_cleaning2){
+  alldates<-to_profiles_cleaning2 %>% dplyr::select(LakeID,Date,Depth_m,DO_sat) %>%
+    filter(LakeID==lake) %>%
+    dplyr::select(Date) %>% unique() %>% unlist() %>% as.vector()
+  
+  lake_data <- to_profiles_cleaning2 %>%
+    filter(LakeID == lake)
+  
+  interpolatedvalues.do_sat <- furrr::future_map(alldates, 
+                                                 run_all_dates_do_sat, 
+                                                 lake_data, lake) |> 
+    list_rbind()
+  
+  return(interpolatedvalues.do_sat)
+}
+
+run_all_dates_do_sat <- function(alldates,lake_data,lake){
+  profile <- lake_data %>% filter(Date==alldates)
+  
+  interpolated.depths <- seq(from=0, to= max(profile$Depth_m))
+  
+  datamatrix_ <- data.frame(depths = profile$Depth_m, values = profile$DO_sat) %>%
+    group_by(depths) %>% 
+    dplyr::summarize(valuemean=mean(values)) %>% 
+    ungroup() %>% 
+    as.matrix()
+  
+  interpolated.do_sats <- pchip(xi = datamatrix_[,1], 
+                            yi = datamatrix_[,2],
+                            x = interpolated.depths)
+  
+  output <- data.frame(LakeID = lake,
+                      Date = alldates,
+                      Depth_m = interpolated.depths,
+                      DO_sat = interpolated.do_sats)
+  return(output)
+}
+
+laken <- to_profiles_cleaning2$LakeID %>% unique()
+
+interpolatedvalues.do_sat <- furrr::future_map(laken, interp_do_sat, to_profiles_cleaning2) |> list_rbind()
+
+ploto_sat <- ggplot(interpolatedvalues.do_sat)+
+  geom_line(aes(y = DO_sat, x = -Depth_m, group = Date))+
+  facet_wrap(LakeID~., scales="free")+
+  coord_flip()
+```
+
+
 Step 5: Interpolate temperature
 (note: this will take up to 30 minutes to run all lakes)
 ```{r}
@@ -421,9 +522,9 @@ plott<-ggplot(interpolatedvalues.t)+
 
 Step 6: Combine DO and temp
 ```{r}
-database.interp <- full_join(interpolatedvalues.t,
-                             interpolatedvalues.do,
-          by = c("LakeID", "Depth_m", "Date"))%>%
+database.interp <- interpolatedvalues.t %>%
+  full_join(interpolatedvalues.do, by = c("LakeID", "Depth_m", "Date")) %>%
+  full_join(interpolatedvalues.do_sat, by = c("LakeID", "Depth_m", "Date")) %>%
   mutate(Date = as.Date(Date, origin = "1970-01-01"))
 
 ## export
