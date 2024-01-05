@@ -306,6 +306,9 @@ do_temp_roll %>%
                 fill = "grey90", alpha = 0.5, 
             data = data.frame(var = c("Summer epi. temperature"))) +
   geom_hline(yintercept=0)+
+  geom_line(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation, 
+                group = LakeID, color = p < alpha),
+            alpha = 0.2, lwd = 0.1)+
   geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
               color = "pink")+
   xlab("Air temperature month")+
@@ -412,5 +415,159 @@ all_plot1 %>%
   ggplot(aes(x = DateTime, y = value, color = name)) +
   geom_line()+
   facet_grid(cols = vars(var), rows = vars(name), scales = "free")
+
+all_plot1 %>%
+  group_by(var) %>%
+  summarize(max = max(mean, na.rm = T),
+            min = min(mean, na.rm = T),
+            max_doy = doy[mean == max],
+            min_doy = doy[mean == min]) %>%
+  mutate(max_doy = as.Date("2022-01-01") + days(max_doy),
+         min_doy = as.Date("2022-01-01") + days(min_doy))
+
+dates_to_plot <- do_temp_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) %>%
+  full_join(temp_demand_roll %>% 
+              mutate(var = "Summer VHOD")) %>%
+  group_by(var, LakeID) %>%
+  summarize(max = max(monthly_correlation, na.rm = T),
+            min = min(monthly_correlation, na.rm = T),
+            max_doy = doy[which.max(monthly_correlation)],
+            min_doy = doy[which.min(monthly_correlation)]) 
+
+dates_to_plot %>%
+  mutate(max_doy = ifelse(var == "Summer hypo. DO", min_doy, max_doy)) %>%
+  ggplot(aes(x = as.Date("2022-01-01") + max_doy))+
+  geom_histogram(binwidth = 7)+
+  facet_wrap(~var, scales = "free_y")+
+  xlab("Date of strongest correlation")+
+  theme_bw()
+
+library(ggridges)
+dates_to_plot %>%
+  left_join(lat_long) %>%
+  filter(abs(Latitude_DD) > 30) %>%
+  mutate(max_doy = ifelse(var == "Summer hypo. DO", min_doy, max_doy)) %>%
+  ggplot(aes(x = as.Date("2022-01-01") + max_doy, 
+             y = var))+
+  geom_density_ridges(
+      quantile_lines = TRUE,
+      jittered_points = TRUE,
+      alpha = 1,
+      point_alpha = 1,
+      fill = "grey96",
+      point_color = "grey50",
+      point_fill = "white",
+      #aes(point_fill = Var),
+      point_shape = 21,
+      scale=0.9)+
+  stat_density_ridges(
+      quantile_lines = TRUE,
+      geom = "density_ridges_gradient", calc_ecdf = TRUE,aes(fill = factor(after_stat(quantile))),
+      scale=0.9)+
+  xlab("Date of strongest correlation")+
+  theme_bw()+
+  xlim(as.Date(c("2022-01-01", "2022-08-31")))+
+  scale_fill_viridis_d(alpha=0.1)+
+  theme(legend.position = "none",
+        axis.text.y = element_text(vjust = 0),
+        axis.title.y = element_blank())
+
+dates_to_plot %>%
+  filter(var == "Summer hypo. temperature") %>%
+  summarize(median(max_doy))
 ```
+
+```{r}
+many_lake_temp_sum <- with_temp %>%
+  left_join(daily_temp) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+
+jpeg("../Figures/Summer otsego.jpg", res = 300, width = 4, height = 4, units = "in")
+many_lake_temp_sum %>%
+  filter(LakeID == "124",
+         doy == 225) %>%
+  ggplot(aes(x = Temp_C, y = Temp_C_EPI))+
+  geom_point()+
+  xlab("Mean air temperature July 15 - August 14")+
+  ggtitle("Otsego")+
+  ylab("Summer epilimnetic temperature")+
+  theme_bw()
+dev.off()
+
+jpeg("../Figures/Winter otsego.jpg", res = 300, width = 4, height = 4, units = "in")
+many_lake_temp_sum %>%
+  filter(LakeID == "124",
+         doy == 59) %>%
+  ggplot(aes(x = Temp_C, y = Temp_C_EPI))+
+  geom_point()+
+  xlab("Mean air temperature March 1 - March 30")+
+  ggtitle("Otsego")+
+  ylab("Summer epilimnetic temperature")+
+  theme_bw()
+dev.off()
+
+jpeg("../Figures/Summer all.jpg", res = 300, width = 4, height = 4, units = "in")
+epi_temp_roll %>%
+  filter(doy == 225) %>%
+  ggplot(aes(x = monthly_correlation, y = doy))+
+  geom_density_ridges(
+      quantile_lines = TRUE,
+      jittered_points = TRUE,
+      alpha = 1,
+      point_alpha = 1,
+      fill = "grey96",
+      point_color = "grey50",
+      point_fill = "white",
+      #aes(point_fill = Var),
+      point_shape = 21,
+      scale=0.9)+
+  stat_density_ridges(
+      quantile_lines = TRUE,
+      geom = "density_ridges", calc_ecdf = TRUE,
+      scale=0.9, alpha = 0)+
+  xlab("Spearman's correlation")+
+  ylab("Density")+
+  theme_bw()+
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),)+
+  ggtitle("July 15 - August 14 air temp.")
+dev.off()
+
+jpeg("../Figures/Winter all.jpg", res = 300, width = 4, height = 4, units = "in")
+epi_temp_roll %>%
+  filter(doy == 58) %>%
+  ggplot(aes(x = monthly_correlation, y = doy))+
+  geom_density_ridges(
+      quantile_lines = TRUE,
+      jittered_points = TRUE,
+      alpha = 1,
+      point_alpha = 1,
+      fill = "grey96",
+      point_color = "grey50",
+      point_fill = "white",
+      #aes(point_fill = Var),
+      point_shape = 21,
+      scale=0.9)+
+  stat_density_ridges(
+      quantile_lines = TRUE,
+      geom = "density_ridges", calc_ecdf = TRUE,
+      scale=0.9, alpha = 0)+
+  xlab("Spearman's correlation")+
+  ylab("Density")+
+  theme_bw()+
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),)+
+  ggtitle("March 1 - March 30 air temp.")
+dev.off()
+```
+
 
