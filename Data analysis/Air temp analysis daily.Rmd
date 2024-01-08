@@ -35,131 +35,10 @@ daily_temp <- daily_temp_raw %>%
          Date = as.Date(Date, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date))
+rm(daily_temp_raw)
 
 # Make a directory for Figures if there isn't one
 if (!dir.exists("../Figures")){dir.create("../Figs")}
-```
-
-Step 3: Analyze the effect of daily air temperature on hypolimnetic DO, VHOD, and temp dynamics
-
-```{r}
-many_lake_temp_sum <- with_temp%>%
-  left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year))
-# ---
-
-do_temp <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
-  filter(hypoxic=="no") %>%
-  monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
-do_temp_fig <- do_temp %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.2)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer hypo. DO ","(n = ",unique(do_temp$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/DO and temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
-do_temp_fig
-dev.off()
-
-temp_demand <- monthly_correlations_doy(many_lake_temp_sum, 
-                                    "DO_demand_mgLd_HYPO", "Temp_C", 
-                                    "Summer VHOD ", alpha = 0.001)
-temp_demand_fig  <- temp_demand %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.2)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer VHOD ","(n = ",unique(temp_demand$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/Demand and air temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
-temp_demand_fig
-dev.off()
-
-
-epi_temp <- monthly_correlations_doy(many_lake_temp_sum, 
-                                    "Temp_C_EPI", "Temp_C", 
-                                    "Summer epi. temperature ", alpha = 0.001)
-epi_temp_fig  <- epi_temp %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.2)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer epi. temperature ","(n = ",unique(epi_temp$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/Epi and air temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
-epi_temp_fig
-dev.off()
-
-
-hypo_temp <- monthly_correlations_doy(many_lake_temp_sum, 
-                                    "Temp_C_HYPO", "Temp_C", 
-                                    "Summer hypo. temperature ", alpha = 0.001)
-hypo_temp_fig  <- hypo_temp %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.2)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer hypo. temperature ","(n = ",unique(hypo_temp$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/Hypo and air temp by day.jpg", width = 6, height = 4, res = 300, units = "in")
-hypo_temp_fig
-dev.off()
-
-jpeg("../Figures/Monthly correlations - all daily.jpg", width = 8, height = 5, res = 300, units = "in")
-ggarrange(epi_temp_fig + theme(axis.title.x = element_blank()),
-          hypo_temp_fig + 
-            theme(axis.title.x = element_blank()),
-          temp_demand_fig,
-          do_temp_fig,
-          common.legend = T, legend = "bottom", nrow=2, ncol = 2, align = "h", labels = "auto")
-dev.off()
 ```
 
 Step 4: Rolling means
@@ -171,152 +50,35 @@ many_lake_temp_sum <- with_temp %>%
          Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
   arrange(Date) %>%
-  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+  mutate(Temp_C = zoo::rollmean(Temp_C, 50, align = "right", fill = NA))
 # ---
 
 do_temp_roll <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T)<1,"yes","no"))%>%
   filter(hypoxic=="no") %>%
   monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
-do_temp_roll_fig <- do_temp_roll %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.1)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer hypo. DO ","(n = ",unique(do_temp$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/DO and temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
-do_temp_roll_fig
-dev.off()
 
 temp_demand_roll <- monthly_correlations_doy(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "Temp_C", 
                                     "Summer VHOD ", alpha = 0.001)
-temp_demand_roll_fig  <- temp_demand_roll %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.1)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer VHOD ","(n = ",unique(temp_demand$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/Demand and air temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
-temp_demand_roll_fig
-dev.off()
-
 
 epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
                                     "Summer epi. temperature ", alpha = 0.001)
-epi_temp_roll_fig  <- epi_temp_roll %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.1)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer epi. temperature ","(n = ",unique(epi_temp$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/Epi and air temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
-epi_temp_roll_fig
-dev.off()
 
+epi_do_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "DO_mgL_EPI", "Temp_C", 
+                                    "Summer epi. temperature ", alpha = 0.001)
+
+#I don't think worth including chl-a. Potentially a negative correlation in summer, no real other patterns
+#epi_chla_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+#                                    "Chla_ugL_EPI", "Temp_C", 
+#                                    "Summer epi. chl-a ", alpha = 0.001)
+# I've also tried EPI TP and HYPO TP, no clear patterns
 
 hypo_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_HYPO", "Temp_C", 
                                     "Summer hypo. temperature ", alpha = 0.001)
-hypo_temp_roll_fig  <- hypo_temp_roll %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, data = data.frame()) + 
-  geom_point(aes(color = p<alpha, 
-                 x = as.Date("2022-01-01") + days(doy),
-                 y = monthly_correlation),
-             alpha = 0.1)+
-  geom_hline(yintercept=0)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  ylim(-1,1)+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  ggtitle(paste0("Summer hypo. temperature ","(n = ",unique(hypo_temp$n),")"))+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha))
-jpeg("../Figures/Hypo and air temp by day roll mean.jpg", width = 6, height = 4, res = 300, units = "in")
-hypo_temp_roll_fig
-dev.off()
-
-jpeg("../Figures/Monthly correlations - all daily roll mean.jpg", width = 8, height = 5, res = 300, units = "in")
-ggarrange(epi_temp_roll_fig + theme(axis.title.x = element_blank()),
-          hypo_temp_roll_fig + 
-            theme(axis.title.x = element_blank()),
-          temp_demand_roll_fig,
-          do_temp_roll_fig,
-          common.legend = T, legend = "bottom", nrow=2, ncol = 2, align = "h", labels = "auto")
-dev.off()
-```
-
-```{r}
-do_temp_roll %>%
-  mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
-              mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
-              mutate(var = "Summer hypo. temperature")) %>%
-  full_join(temp_demand_roll %>% 
-              mutate(var = "Summer VHOD")) %>%
-  ggplot()+
-  geom_rect(aes(xmin = as.Date("2022-02-01"), xmax = as.Date("2022-04-30"), ymin = -Inf, ymax = Inf), 
-                fill = "grey80", alpha = 0.5, 
-            data = data.frame(var = c("Summer hypo. temperature",
-                                      "Summer hypo. DO",
-                                      "Summer VHOD"))) +
-  geom_rect(aes(xmin = as.Date("2022-07-01"), xmax = as.Date("2022-08-31"), ymin = -Inf, ymax = Inf), 
-                fill = "grey90", alpha = 0.5, 
-            data = data.frame(var = c("Summer epi. temperature"))) +
-  geom_hline(yintercept=0)+
-  geom_line(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation, 
-                group = LakeID, color = p < alpha),
-            alpha = 0.2, lwd = 0.1)+
-  geom_smooth(aes(x = as.Date("2022-01-01") + days(doy), y = monthly_correlation),
-              color = "pink")+
-  xlab("Air temperature month")+
-  ylab("Correlation")+
-  theme_bw()+
-  scale_color_manual(values = c("grey40","#0FA9E6"))+
-  labs(color = paste0("p < ",alpha)) +
-  facet_wrap(~var, ncol = 2) 
 
 alpha <- 0.001
 
@@ -324,11 +86,21 @@ all <- do_temp_roll %>%
   mutate(var = "Summer hypo. DO") %>%
   full_join(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
+  full_join(epi_do_roll %>%
+              mutate(var = "Summer epi. DO")) %>%
   full_join(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
   full_join(temp_demand_roll %>% 
               mutate(var = "Summer VHOD")) %>%
   mutate(sig = ifelse(p < alpha, T, F))
+
+write.csv(all, "../Compiled data/Correlations - 30 day rolling mean.csv", row.names = F)
+```
+
+Plots of rolling means
+
+```{r}
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv")
 
 group_fun <- function(sig) {
   group <- rep(1, length(sig))
@@ -355,7 +127,12 @@ for(i in 1:length(unique(all_plot$var))){
   all_plot$group[all_plot$var == unique(all_plot$var)[i]] <- group_fun(all_plot$sig[all_plot$var == unique(all_plot$var)[i]])
 }
 
-empty_df <- data.frame(var = unique(all_plot$var))
+empty_df <- data.frame(var = unique(all_plot$var)) %>%
+  filter(!var == "Summer epi. DO (n = 397)") %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature (n = 413)",
+                                      "Summer hypo. temperature (n = 368)",
+                                      "Summer VHOD (n = 194)",
+                                      "Summer hypo. DO (n = 286)")))
 
 all_plot1 <- all_plot %>%
   mutate(DateTime = as.Date("2022-01-01") + days(doy))
@@ -368,13 +145,19 @@ all_plot2 <- all_plot %>%
 
 colored_sd <- all_plot1 %>%
   full_join(all_plot2) %>%
-  ggplot()+
-  #geom_rect(aes(xmin = as_datetime("2022-02-01"), xmax = as_datetime("2022-04-30"), 
+  filter(!var == "Summer epi. DO (n = 397)") %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature (n = 413)",
+                                      "Summer hypo. temperature (n = 368)",
+                                      "Summer VHOD (n = 194)",
+                                      "Summer hypo. DO (n = 286)"))) %>%
+  ggplot() + 
+  #geom_rect(aes(xmin = as_datetime("2022-03-01"), 
+  #              xmax = as_datetime("2022-05-31"), 
   #              ymin = -Inf, ymax = Inf), 
   #              fill = "grey80", alpha = 0.3, 
   #          data = empty_df) +
-  #geom_rect(aes(xmin = as_datetime("2022-02-01") + days(30), 
-  #              xmax = as_datetime("2022-04-30") + days(30), 
+  #geom_rect(aes(xmin = as_datetime("2022-03-01") + days(30), 
+  #              xmax = as_datetime("2022-05-31") + days(30), 
   #              ymin = -Inf, ymax = Inf), 
   #              fill = "grey80", alpha = 0.3, 
   #          data = empty_df) +
@@ -388,6 +171,7 @@ colored_sd <- all_plot1 %>%
   #              fill = "grey80", alpha = 0.3, 
   #          data = empty_df) +
   geom_hline(yintercept=0)+
+  geom_vline(xintercept = as_datetime("2022-04-21"), color = "grey50", lty = "dashed")+
   geom_ribbon(aes(x = DateTime, 
                   ymin = mean - sd, ymax = mean + sd,
                   fill = sig, group = group),
@@ -409,7 +193,9 @@ colored_sd <- all_plot1 %>%
 jpeg("../Figures/Monthly correlations - all daily roll mean sd.jpg", width = 8, height = 5, res = 300, units = "in")
 colored_sd
 dev.off()
+```
 
+```{r}
 all_plot1 %>%
   pivot_longer(cols = c(mean, sd)) %>%
   ggplot(aes(x = DateTime, y = value, color = name)) +
@@ -481,6 +267,181 @@ dates_to_plot %>%
   filter(var == "Summer hypo. temperature") %>%
   summarize(median(max_doy))
 ```
+
+```{r}
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+dates_to_plot <- do_temp_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) %>%
+  full_join(temp_demand_roll %>% 
+              mutate(var = "Summer VHOD")) %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(var, LakeID, season) %>%
+  summarize(max_doy = doy[which.max(abs(monthly_correlation))]) 
+
+dates_to_plot %>%
+  left_join(lat_long) %>%
+  #filter(abs(Latitude_DD) > 30) %>%
+  ggplot(aes(x = as.Date("2022-01-01") + max_doy))+
+  geom_histogram(binwidth = 2)+
+  xlab("Date of strongest correlation")+
+  theme_bw() +
+  facet_grid(cols = vars(season), rows = vars(var), scales = "free_x")
+```
+
+```{r}
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+memory <- all %>% 
+  filter(!var == "Summer epi. DO") %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature",
+                                      "Summer hypo. temperature",
+                                      "Summer VHOD",
+                                      "Summer hypo. DO"),
+                      labels = c("Summer\nepi. temperature",
+                                      "Summer\nhypo. temperature",
+                                      "Summer\nVHOD",
+                                      "Summer\nhypo. DO")),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, p) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (spring - summer)) 
+
+memory_plot <- memory %>%
+  ggplot(aes(x = var, y = M, color = p < 0.001))+
+  geom_hline(yintercept = 0)+
+  geom_boxplot()+
+  ylab("Relative correlation with spring vs. summer air temp")+
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+jpeg("../Figures/Monthly correlations - sum.jpg", width = 6, height = 4, res = 300, units = "in")
+memory_plot
+dev.off()
+
+summer_avgs = read.csv("../Compiled data/summer_averages_wi.csv")%>%
+  group_by(LakeID) %>%
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
+
+mean_temps <- with_temp %>%
+  mutate(spring_temp = (temp_mar + temp_apr + temp_may)/3,
+         summer_temp = (temp_july + temp_aug)/2) %>%
+  group_by(LakeID) %>%
+  summarize(spring_temp = mean(spring_temp, na.rm = T),
+            summer_temp = mean(summer_temp, na.rm = T))
+
+memory %>%
+  left_join(summer_avgs) %>%
+  ggplot(aes(x = buoyancy_freq, y = M))+
+  geom_hline(yintercept = 0)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  ylab("Relative correlation with spring vs. summer air temp")+
+  theme_bw() +
+  facet_wrap(~var)
+
+source("lmer_functions.R")
+mem_lm <- memory %>%
+  left_join(summer_avgs) %>%
+  left_join(mean_temps) %>%
+  left_join(lat_long) %>%
+  mutate(log_SA = log(SurfaceArea_ha),
+         log_max_depth = log(MaximumDepth_m)) %>%
+  pivot_wider(names_from = var, values_from = M) %>%
+  rename(epi_temp = `Summer\nepi. temperature`,
+         hypo_temp = `Summer\nhypo. temperature`,
+         hypo_do = `Summer\nhypo. DO`,
+         vhod = `Summer\nVHOD`)
+
+responses <- c("epi_temp")
+potential_drivers <- c("log_SA", 
+                       "log_max_depth", 
+                       "Latitude_DD",
+                       "buoyancy_freq",
+                       "summer_temp",
+                       "spring_temp"
+                      )
+aic_calculator_lm(mem_lm,responses,potential_drivers, interaction = "+")
+selected_drivers <- c("Latitude_DD")
+std_data <-standardize_data(mem_lm,responses,selected_drivers)
+mod_lm <- lm(epi_temp~Latitude_DD, data = std_data) 
+summary(mod_lm)
+plot_effects_lm(mod_lm,"Spring memory effect - summer epi. temperature") 
+mem_lm %>%
+  ggplot(aes(x = SurfaceArea_ha, y = hypo_temp, color = buoyancy_freq))+
+  scale_x_log10()+
+  geom_smooth(method = "lm")+
+  scale_color_viridis_c()+
+  geom_point()
+
+responses <- c("hypo_temp")
+potential_drivers <- c("log_SA", 
+                       "log_max_depth", 
+                       #"Latitude_DD",
+                       "buoyancy_freq"#,
+                       #"summer_temp",
+                       #"spring_temp"
+                      )
+aic_calculator_lm_mult(mem_lm,responses,potential_drivers, interaction = "*")
+selected_drivers <- c("log_SA", "buoyancy_freq", "summer_temp")
+std_data <-standardize_data(mem_lm,responses,selected_drivers)
+mod_lm <- lm(hypo_temp~log_SA*buoyancy_freq*summer_temp, data = std_data) 
+summary(mod_lm)
+MuMIn::AICc(mod_lm) #need to also include non-interaction models in the AICc selection
+plot_effects_lm(mod_lm,"Spring memory effect - summer hypo. temperature") 
+
+mem_lm_df <- mem_lm%>%
+    ungroup()%>%
+    dplyr::select(all_of(c(potential_drivers,responses,"LakeID")))%>%
+    filter(if_all(where(is.numeric),is.finite))%>%
+    mutate(across(-LakeID,zscore))
+fm1 <- lm(hypo_temp ~ log_SA*log_max_depth*buoyancy_freq, 
+          data = mem_lm_df,
+          na.action = "na.fail")
+dd <- MuMIn::dredge(fm1)
+subset(dd, delta < 2)
+
+responses <- c("hypo_do")
+potential_drivers <- c("log_SA", 
+                       "log_max_depth", 
+                       "Latitude_DD",
+                       "buoyancy_freq",
+                       "summer_temp",
+                       "spring_temp"
+                      )
+aic_calculator_lm(mem_lm,responses,potential_drivers, interaction = "+")
+selected_drivers <- c("log_SA", "buoyancy_freq", "summer_temp")
+std_data <-standardize_data(mem_lm,responses,selected_drivers)
+mod_lm <- lm(hypo_do~log_SA+buoyancy_freq+summer_temp, data = std_data) 
+summary(mod_lm)
+plot_effects_lm(mod_lm,"Spring memory effect - summer hypo. DO") 
+
+responses <- c("vhod")
+potential_drivers <- c("log_SA", 
+                       "log_max_depth", 
+                       "Latitude_DD",
+                       "buoyancy_freq",
+                       "summer_temp",
+                       "spring_temp"
+                      )
+aic_calculator_lm(mem_lm,responses,potential_drivers, interaction = "+")
+selected_drivers <- c("buoyancy_freq")
+std_data <-standardize_data(mem_lm,responses,selected_drivers)
+mod_lm <- lm(vhod~buoyancy_freq, data = std_data) 
+summary(mod_lm)
+```
+
 
 ```{r}
 many_lake_temp_sum <- with_temp %>%
