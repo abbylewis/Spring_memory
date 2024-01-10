@@ -28,6 +28,15 @@ source("monthly_correlations.R")
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figures")){dir.create("../Figs")}
+```
+
+Step 4: Rolling means
+
+```{r}
+library(rMR)
 daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
 daily_temp <- daily_temp_raw %>%
   mutate(Date = as.Date(Date),
@@ -37,20 +46,27 @@ daily_temp <- daily_temp_raw %>%
   mutate(Year = year(Date))
 rm(daily_temp_raw)
 
-# Make a directory for Figures if there isn't one
-if (!dir.exists("../Figures")){dir.create("../Figs")}
-```
-
-Step 4: Rolling means
-
-```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
   mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+         Year = ifelse(month(Date) >= 9, Year + 1, Year),
+         DO_sat_EPI = ifelse(is.na(DO_sat_EPI),
+                             rMR::DO.saturation(DO_mgL_EPI, 
+                                                Temp_C_EPI, 
+                                                elevation.m = Elevation_m,
+                                                salinity = 0,
+                                                salinity.units = "uS"),
+                             DO_sat_EPI),
+         DO_sat_HYPO = ifelse(is.na(DO_sat_HYPO),
+                             rMR::DO.saturation(DO_mgL_HYPO, 
+                                                Temp_C_HYPO, 
+                                                elevation.m = Elevation_m,
+                                                salinity = 0,
+                                                salinity.units = "uS"),
+                             DO_sat_HYPO)) %>%
   group_by(LakeID) %>%
   arrange(Date) %>%
-  mutate(Temp_C = zoo::rollmean(Temp_C, 50, align = "right", fill = NA))
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 # ---
 
 do_temp_roll <- many_lake_temp_sum %>%
@@ -68,7 +84,15 @@ epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum,
 
 epi_do_roll <- monthly_correlations_doy(many_lake_temp_sum, 
                                     "DO_mgL_EPI", "Temp_C", 
-                                    "Summer epi. temperature ", alpha = 0.001)
+                                    "Summer epi. DO ", alpha = 0.001)
+
+epi_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "DO_sat_EPI", "Temp_C", 
+                                    "Summer epi. DO (saturation) ", alpha = 0.001)
+
+hypo_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+                                    "DO_sat_HYPO", "Temp_C", 
+                                    "Summer hypo. DO (saturation) ", alpha = 0.001)
 
 #I don't think worth including chl-a. Potentially a negative correlation in summer, no real other patterns
 #epi_chla_roll <- monthly_correlations_doy(many_lake_temp_sum, 
@@ -80,8 +104,6 @@ hypo_temp_roll <- monthly_correlations_doy(many_lake_temp_sum,
                                     "Temp_C_HYPO", "Temp_C", 
                                     "Summer hypo. temperature ", alpha = 0.001)
 
-alpha <- 0.001
-
 all <- do_temp_roll %>%
   mutate(var = "Summer hypo. DO") %>%
   full_join(epi_temp_roll %>%
@@ -92,15 +114,100 @@ all <- do_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
   full_join(temp_demand_roll %>% 
               mutate(var = "Summer VHOD")) %>%
-  mutate(sig = ifelse(p < alpha, T, F))
+  full_join(epi_do_sat_roll %>%
+              mutate(var = "Summer epi. DO sat")) %>%
+  full_join(hypo_do_sat_roll %>%
+              mutate(var = "Summer hypo. DO sat"))
 
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean.csv", row.names = F)
 ```
 
+```{r}
+source("plot_single_var.R")
+epi_temp <- plot_single_var("Summer epi. temperature")
+epi_do_sat <- plot_single_var("Summer epi. DO sat")
+hypo_temp <- plot_single_var("Summer hypo. temperature")
+hypo_do <- plot_single_var("Summer hypo. DO")
+hypo_vhod <- plot_single_var("Summer VHOD")
+
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+
+memory <- all %>% 
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer epi. DO sat",
+                    "Summer hypo. temperature",
+                    "Summer VHOD",
+                    "Summer hypo. DO")) %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature",
+                                      "Summer epi. DO sat",
+                                      "Summer hypo. temperature",
+                                      "Summer hypo. DO",
+                                      "Summer VHOD"),
+                      labels = c("Summer\nepi. temperature",
+                                 "Summer\nepi. DO sat",
+                                 "Summer\nhypo. temperature",
+                                 "Summer\nhypo. DO",
+                                 "Summer\nVHOD")),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, p) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (spring - summer)) 
+
+memory_plot <- memory %>%
+  ggplot(aes(y = var, x = M, color = p < alpha))+
+  geom_vline(xintercept = 0)+
+  geom_boxplot()+
+  xlab("Relative correlation with\nspring vs. summer air temp")+
+  theme_bw() +
+  scale_y_discrete(limits=rev) +
+  theme(axis.title.y = element_blank())+
+  scale_color_manual(values = c("grey40","#0FA9E6"))
+
+jpeg("../Figures/Monthly correlations - sum.jpg", width = 3, height = 2.5, res = 300, units = "in")
+memory_plot + theme(legend.position = "none")
+dev.off()
+
+library(patchwork)
+ggarrange(epi_temp +
+            ylim(-0.5, 0.75)+
+            theme(axis.title.x = element_blank(),
+                  axis.ticks.x = element_blank(),
+                  axis.text.x = element_blank()),
+          epi_do_sat +
+            ylim(-0.5, 0.75)+
+            theme(axis.title.y = element_blank(),
+                  axis.title.x = element_blank(),
+                  axis.ticks = element_blank(),
+                  axis.text = element_blank()),
+          memory_plot,
+          hypo_temp +
+            ylim(-0.5, 0.75),
+          hypo_do + 
+            ylim(-0.5, 0.75) +
+            theme(axis.title.y = element_blank(),
+                  axis.ticks.y = element_blank(),
+                  axis.text.y = element_blank()),
+          hypo_vhod + 
+            ylim(-0.5, 0.75) +
+            theme(axis.title.y = element_blank(),
+                  axis.ticks.y = element_blank(),
+                  axis.text.y = element_blank()),
+          common.legend = T, legend = "bottom")
+```
+
+
 Plots of rolling means
 
 ```{r}
-all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv")
+alpha <- 0.001
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F))
 
 group_fun <- function(sig) {
   group <- rep(1, length(sig))
@@ -145,11 +252,100 @@ all_plot2 <- all_plot %>%
 
 colored_sd <- all_plot1 %>%
   full_join(all_plot2) %>%
+  filter(var %in% c("Summer epi. temperature (n = 413)",
+                    "Summer epi. DO sat (n = 423)",
+                    "Summer hypo. temperature (n = 368)",
+                    "Summer VHOD (n = 194)",
+                    "Summer hypo. DO (n = 286)")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer epi. temperature (n = 413)",
+                                 "Summer epi. DO sat (n = 423)",
+                                 "Summer hypo. temperature (n = 368)",
+                                 "Summer hypo. DO (n = 286)",
+                                 "Summer VHOD (n = 194)"),
+                      labels = c("Summer epi. temperature, n = 413",
+                                 "Summer epi. DO % sat, n = 423",
+                                 "Summer hypo. temperature, n = 368",
+                                 "Summer hypo. DO conc, n = 286",
+                                 "Summer VHOD, n = 194")),
+         layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
+  ggplot() + 
+  geom_hline(yintercept=0)+
+  geom_vline(xintercept = as_datetime("2022-04-21"), color = "grey50", lty = "dashed")+
+  geom_ribbon(aes(x = DateTime, 
+                  ymin = mean - sd, ymax = mean + sd,
+                  fill = sig, group = group),
+              alpha = 0.5) +
+  geom_line(aes(x = DateTime, y = mean)) +
+  xlab("Air temperature date \n(right-aligned 30-day rolling mean)")+
+  ylab("Correlation")+
+  theme_bw()+
+  scale_fill_manual(values = c("grey40","#0FA9E6"))+
+  labs(fill = paste0("p < ",alpha)) +
+  ggh4x::facet_manual(~var, design = "AB#
+               CDE") +
+  theme(legend.position = "bottom",
+        strip.background = element_blank())
+
+jpeg("../Figures/Monthly correlations - all daily roll mean sd.jpg", width = 8, height = 5, res = 300, units = "in")
+colored_sd
+dev.off()
+```
+
+```{r}
+alpha <- 0.0001
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+
+group_fun <- function(sig) {
+  group <- rep(1, length(sig))
+  for (i in 2:length(sig)) {
+    if(sig[i] == sig[i - 1]) {
+      group[i] <- group[i - 1]
+    } else {
+      group[i] <- group[i - 1] + 1
+    }
+  }
+  return(group)
+}
+
+all_plot <- all %>%
+  group_by(var) %>%
+  mutate(n = max(n), #Some lakes are missing from January because our air temp only goes back to 1980
+         var = paste0(var, " (n = ",n,")")) %>%
+  group_by(var, doy, sig) %>%
+  summarise(mean = mean(monthly_correlation, na.rm = T),
+            sd = sd(monthly_correlation, na.rm = T)) %>%
+  mutate(sig = ifelse(abs(mean) > 0.2, T, F))
+
+all_plot$group <- 1
+for(i in 1:length(unique(all_plot$var))){
+  all_plot$group[all_plot$var == unique(all_plot$var)[i]] <- group_fun(all_plot$sig[all_plot$var == unique(all_plot$var)[i]])
+}
+
+empty_df <- data.frame(var = unique(all_plot$var)) %>%
   filter(!var == "Summer epi. DO (n = 397)") %>%
   mutate(var = factor(var, levels = c("Summer epi. temperature (n = 413)",
                                       "Summer hypo. temperature (n = 368)",
                                       "Summer VHOD (n = 194)",
-                                      "Summer hypo. DO (n = 286)"))) %>%
+                                      "Summer hypo. DO (n = 286)")))
+
+all_plot1 <- all_plot %>%
+  mutate(DateTime = as.Date("2022-01-01") + days(doy))
+
+all_plot2 <- all_plot %>%
+  ungroup() %>%
+  mutate(DateTime = as.Date("2022-01-01") + days(doy) + hours(23) + minutes(59),
+         mean = ifelse(!is.na(lead(var)) & lead(var) == var, lead(mean), mean), #to get smooth lines
+         sd = ifelse(lead(var) == var, lead(sd), sd))
+
+colored_sd <- all_plot1 %>%
+  full_join(all_plot2) %>%
+  #filter(!var == "Summer epi. DO (n = 397)") %>%
+  #mutate(var = factor(var, levels = c("Summer epi. temperature (n = 413)",
+  #                                    "Summer hypo. temperature (n = 368)",
+  #                                    "Summer VHOD (n = 194)",
+  #                                    "Summer hypo. DO (n = 286)"))) %>%
   ggplot() + 
   #geom_rect(aes(xmin = as_datetime("2022-03-01"), 
   #              xmax = as_datetime("2022-05-31"), 
@@ -299,15 +495,21 @@ dates_to_plot %>%
 sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 memory <- all %>% 
-  filter(!var == "Summer epi. DO") %>%
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer epi. DO sat",
+                    "Summer hypo. temperature",
+                    "Summer VHOD",
+                    "Summer hypo. DO")) %>%
   mutate(var = factor(var, levels = c("Summer epi. temperature",
+                                      "Summer epi. DO sat",
                                       "Summer hypo. temperature",
                                       "Summer VHOD",
                                       "Summer hypo. DO"),
-                      labels = c("Summer\nepi. temperature",
-                                      "Summer\nhypo. temperature",
-                                      "Summer\nVHOD",
-                                      "Summer\nhypo. DO")),
+                      labels = c("Summer epi. temperature",
+                                 "Summer epi. DO sat",
+                                 "Summer hypo. temperature",
+                                 "Summer VHOD",
+                                 "Summer hypo. DO")),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(var) %>%
@@ -318,18 +520,6 @@ memory <- all %>%
   pivot_wider(names_from = season, values_from = max) %>%
   mutate(M = (spring - summer)) 
 
-memory_plot <- memory %>%
-  ggplot(aes(x = var, y = M, color = p < 0.001))+
-  geom_hline(yintercept = 0)+
-  geom_boxplot()+
-  ylab("Relative correlation with spring vs. summer air temp")+
-  theme_bw() +
-  theme(axis.title.x = element_blank())
-
-jpeg("../Figures/Monthly correlations - sum.jpg", width = 6, height = 4, res = 300, units = "in")
-memory_plot
-dev.off()
-
 summer_avgs = read.csv("../Compiled data/summer_averages_wi.csv")%>%
   group_by(LakeID) %>%
   summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
@@ -339,107 +529,143 @@ mean_temps <- with_temp %>%
          summer_temp = (temp_july + temp_aug)/2) %>%
   group_by(LakeID) %>%
   summarize(spring_temp = mean(spring_temp, na.rm = T),
-            summer_temp = mean(summer_temp, na.rm = T))
+            summer_temp = mean(summer_temp, na.rm = T),
+            annual_temp = mean(mean_temp, na.rm = T),
+            tp = mean(TP_ugL_EPI, na.rm = T))
 
-memory %>%
+mem_plot <- memory %>%
+  filter(var %in% c("Summer hypo. temperature",
+                    "Summer hypo. DO")) %>%
   left_join(summer_avgs) %>%
+  left_join(lat_long) %>%
+  mutate(SA_class = ifelse(SurfaceArea_ha > 100, "> 100 ha", "≤ 100 ha")) %>%
+  filter(!is.na(SurfaceArea_ha)) %>%
   ggplot(aes(x = buoyancy_freq, y = M))+
   geom_hline(yintercept = 0)+
-  geom_point()+
-  geom_smooth(method = "lm")+
-  ylab("Relative correlation with spring vs. summer air temp")+
+  geom_point(aes(color = SA_class))+
+  geom_smooth(method = "lm", aes(color = SA_class))+
+  ylab("Relative correlation with\nspring vs. summer air temp")+
+  #stat_cor(label.y = 0.7) +
   theme_bw() +
+  xlab("Maximum buoyancy frequency (1/s)")+
+  scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
   facet_wrap(~var)
+```
 
-source("lmer_functions.R")
+```{r}
 mem_lm <- memory %>%
   left_join(summer_avgs) %>%
   left_join(mean_temps) %>%
   left_join(lat_long) %>%
   mutate(log_SA = log(SurfaceArea_ha),
-         log_max_depth = log(MaximumDepth_m)) %>%
+         log_max_depth = log(MaximumDepth_m),
+         log_tp = log(tp),
+         temp_dif = summer_temp-spring_temp) %>%
   pivot_wider(names_from = var, values_from = M) %>%
-  rename(epi_temp = `Summer\nepi. temperature`,
-         hypo_temp = `Summer\nhypo. temperature`,
-         hypo_do = `Summer\nhypo. DO`,
-         vhod = `Summer\nVHOD`)
+  rename(epi_temp = `Summer epi. temperature`,
+         hypo_temp = `Summer hypo. temperature`,
+         hypo_do = `Summer hypo. DO`,
+         vhod = `Summer VHOD`,
+         epi_do_sat = `Summer epi. DO sat`)
 
 responses <- c("epi_temp")
-potential_drivers <- c("log_SA", 
-                       "log_max_depth", 
-                       "Latitude_DD",
-                       "buoyancy_freq",
-                       "summer_temp",
-                       "spring_temp"
-                      )
-aic_calculator_lm(mem_lm,responses,potential_drivers, interaction = "+")
-selected_drivers <- c("Latitude_DD")
-std_data <-standardize_data(mem_lm,responses,selected_drivers)
-mod_lm <- lm(epi_temp~Latitude_DD, data = std_data) 
-summary(mod_lm)
-plot_effects_lm(mod_lm,"Spring memory effect - summer epi. temperature") 
-mem_lm %>%
-  ggplot(aes(x = SurfaceArea_ha, y = hypo_temp, color = buoyancy_freq))+
-  scale_x_log10()+
-  geom_smooth(method = "lm")+
-  scale_color_viridis_c()+
-  geom_point()
+potential_drivers <- c("log_SA", "log_max_depth", "buoyancy_freq")
+mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
+fm1 <- lm(epi_temp ~ log_SA*log_max_depth*buoyancy_freq, 
+          data = mem_lm_df,
+          na.action = "na.fail")
+dd <- MuMIn::dredge(fm1)
+subset(dd, delta < 2)
+#Intercept only model is best
+
+responses <- c("epi_do_sat")
+mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
+fm1 <- lm(epi_do_sat ~ log_SA*log_max_depth*buoyancy_freq, 
+          data = mem_lm_df,
+          na.action = "na.fail")
+dd <- MuMIn::dredge(fm1)
+subset(dd, delta < 2)
+#intercept only model is equivalent
 
 responses <- c("hypo_temp")
-potential_drivers <- c("log_SA", 
-                       "log_max_depth", 
-                       #"Latitude_DD",
-                       "buoyancy_freq"#,
-                       #"summer_temp",
-                       #"spring_temp"
-                      )
-aic_calculator_lm_mult(mem_lm,responses,potential_drivers, interaction = "*")
-selected_drivers <- c("log_SA", "buoyancy_freq", "summer_temp")
-std_data <-standardize_data(mem_lm,responses,selected_drivers)
-mod_lm <- lm(hypo_temp~log_SA*buoyancy_freq*summer_temp, data = std_data) 
-summary(mod_lm)
-MuMIn::AICc(mod_lm) #need to also include non-interaction models in the AICc selection
-plot_effects_lm(mod_lm,"Spring memory effect - summer hypo. temperature") 
-
-mem_lm_df <- mem_lm%>%
-    ungroup()%>%
-    dplyr::select(all_of(c(potential_drivers,responses,"LakeID")))%>%
-    filter(if_all(where(is.numeric),is.finite))%>%
-    mutate(across(-LakeID,zscore))
+mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
 fm1 <- lm(hypo_temp ~ log_SA*log_max_depth*buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
+mod_lm_temp <- lm(hypo_temp~log_SA+buoyancy_freq+log_max_depth+log_max_depth:log_SA, 
+             data = mem_lm_df) 
+temp <- plot_effects_lm(mod_lm_temp,"Relative correlation\nsummer hypo. temp") 
 
 responses <- c("hypo_do")
-potential_drivers <- c("log_SA", 
-                       "log_max_depth", 
-                       "Latitude_DD",
-                       "buoyancy_freq",
-                       "summer_temp",
-                       "spring_temp"
-                      )
-aic_calculator_lm(mem_lm,responses,potential_drivers, interaction = "+")
-selected_drivers <- c("log_SA", "buoyancy_freq", "summer_temp")
-std_data <-standardize_data(mem_lm,responses,selected_drivers)
-mod_lm <- lm(hypo_do~log_SA+buoyancy_freq+summer_temp, data = std_data) 
-summary(mod_lm)
-plot_effects_lm(mod_lm,"Spring memory effect - summer hypo. DO") 
+mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
+fm1 <- lm(hypo_do ~ log_SA*log_max_depth*buoyancy_freq, 
+          data = mem_lm_df,
+          na.action = "na.fail")
+dd <- MuMIn::dredge(fm1)
+subset(dd, delta < 2)
+mod_lm_do <- lm(hypo_do~log_SA+buoyancy_freq, data = mem_lm_df) 
+do <- plot_effects_lm(mod_lm,"Relative correlation\nsummer hypo. DO") 
 
 responses <- c("vhod")
-potential_drivers <- c("log_SA", 
-                       "log_max_depth", 
-                       "Latitude_DD",
-                       "buoyancy_freq",
-                       "summer_temp",
-                       "spring_temp"
-                      )
-aic_calculator_lm(mem_lm,responses,potential_drivers, interaction = "+")
-selected_drivers <- c("buoyancy_freq")
-std_data <-standardize_data(mem_lm,responses,selected_drivers)
-mod_lm <- lm(vhod~buoyancy_freq, data = std_data) 
-summary(mod_lm)
+mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
+fm1 <- lm(vhod ~ log_SA*log_max_depth*buoyancy_freq, 
+          data = mem_lm_df,
+          na.action = "na.fail")
+dd <- MuMIn::dredge(fm1)
+subset(dd, delta < 2)
+#Intercept only model is best
+
+#Plot temp and DO together
+#Temp first
+effects_temp = data.frame(summary(mod_lm_temp)$coefficients)%>%
+  rename(std_error = Std..Error)
+effects_temp$Var = row.names(effects_temp)
+confs_temp = data.frame(confint(mod_lm_temp))
+confs_temp$Var = row.names(confs_temp)
+effects2_temp = effects_temp%>%
+  left_join(confs_temp)%>%
+  rename(xmin = X2.5..,
+         xmax = X97.5..)
+#DO
+effects_do = data.frame(summary(mod_lm_do)$coefficients)%>%
+  rename(std_error = Std..Error)
+effects_do$Var = row.names(effects_do)
+confs_do = data.frame(confint(mod_lm_do))
+confs_do$Var = row.names(confs_do)
+effects2_do = effects_do%>%
+  left_join(confs_do)%>%
+  rename(xmin = X2.5..,
+         xmax = X97.5..)
+#Combine
+effects2 <- effects2_temp %>%
+  mutate(name = "hypo_temp")%>%
+  full_join(effects2_do %>% mutate(name = "hypo_do"))
+comb <- effects2%>%
+  filter(!Var=="(Intercept)")%>%
+  mutate(Var = renamer(Var),
+         Var = factor(Var, levels = Var[order(abs(Estimate[name == "hypo_temp"]))]))%>%
+  mutate(name = factor(name, 
+                       levels = c("hypo_temp",
+                                  "hypo_do"),
+                       labels = c("Summer hypo. temperature",
+                                  "Summer hypo. DO"))) %>%
+  ggplot(aes(y = Var, x=Estimate))+
+  geom_vline(xintercept = 0)+
+  geom_point()+
+  geom_errorbar(aes(xmin=xmin, xmax = xmax),width=0.1)+
+  theme_bw()+
+  theme(axis.title.y = element_blank())+
+  facet_wrap(~name)
+
+jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 5, units = "in")
+ggarrange(comb,
+          mem_plot + theme(axis.title.y = element_text(vjust = -18)),
+          nrow = 2, common.legend = T, legend = "bottom", 
+          align = "v", heights = c(1,1.3), labels = "auto", label.x = .1)+
+  theme(plot.margin = margin(0.1,0.1,0.1,-1, "cm"))
+dev.off()
 ```
 
 
