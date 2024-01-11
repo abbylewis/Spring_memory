@@ -84,6 +84,8 @@ renamer = function(text_vect){
     if(text=="log_max_depth")      output[i]="Maximum depth"
     if(text=="log_SA")             output[i]="Surface area"
     if(text=="Latitude_DD")        output[i]="Latitude"
+    if(text=="buoyancy_freq")      output[i]="Maximum\nbuoyancy freq."
+    if(text=="log_SA:log_max_depth") output[i]="Surface area :\nmaximum depth"
     i = i+1
   }
   return(output)
