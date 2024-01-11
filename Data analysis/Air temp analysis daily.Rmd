@@ -24,6 +24,7 @@ library(viridis)
 library(MASS)
 library(see)
 source("monthly_correlations.R")
+source("lmer_functions.R")
 
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
@@ -123,6 +124,10 @@ write.csv(all, "../Compiled data/Correlations - 30 day rolling mean.csv", row.na
 ```
 
 ```{r}
+alpha <- 0.001
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+
 source("plot_single_var.R")
 epi_temp <- plot_single_var("Summer epi. temperature")
 epi_do_sat <- plot_single_var("Summer epi. DO sat")
@@ -157,20 +162,43 @@ memory <- all %>%
   group_by(LakeID, var, season, p) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (spring - summer)) 
+  mutate(M = (summer - spring)) 
 
 memory_plot <- memory %>%
   ggplot(aes(y = var, x = M, color = p < alpha))+
   geom_vline(xintercept = 0)+
   geom_boxplot()+
-  xlab("Relative correlation with\nspring vs. summer air temp")+
+  annotate("text", x = -0.75, y = -0.5, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0)+
+  annotate("text", x = 0.75, y = -0.5, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1)+
   theme_bw() +
   scale_y_discrete(limits=rev) +
+  xlab("\n")+
   theme(axis.title.y = element_blank())+
-  scale_color_manual(values = c("grey40","#0FA9E6"))
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,5), clip = "off")
 
 jpeg("../Figures/Monthly correlations - sum.jpg", width = 3, height = 2.5, res = 300, units = "in")
 memory_plot + theme(legend.position = "none")
+dev.off()
+
+jpeg("../Figures/Monthly correlations - sum long.jpg", width = 3, height = 3, res = 300, units = "in")
+memory %>%
+  ggplot(aes(y = var, x = M, color = p < alpha))+
+  geom_vline(xintercept = 0)+
+  geom_boxplot()+
+  annotate("text", x = -0.75, y = -0.5, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0)+
+  annotate("text", x = 0.75, y = -0.5, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1)+
+  theme_bw() +
+  scale_y_discrete(limits=rev) +
+  xlab("\n")+
+  theme(axis.title.y = element_blank())+
+  scale_color_manual(values = c("grey40","#0FA9E6"))+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,5), clip = "off") + 
+  theme(legend.position = "none")
 dev.off()
 
 library(patchwork)
@@ -290,6 +318,14 @@ colored_sd <- all_plot1 %>%
 jpeg("../Figures/Monthly correlations - all daily roll mean sd.jpg", width = 8, height = 5, res = 300, units = "in")
 colored_sd
 dev.off()
+
+jpeg("../Figures/Monthly correlations - all daily roll mean sd long.jpg", width = 5, height = 7, res = 300, units = "in")
+colored_sd +
+  ggh4x::facet_manual(~var, design = "AC
+               BD
+               #E")+
+  xlim(as_datetime("2022-02-01"), as_datetime("2022-07-31"))
+dev.off()
 ```
 
 ```{r}
@@ -407,27 +443,12 @@ all_plot1 %>%
   mutate(max_doy = as.Date("2022-01-01") + days(max_doy),
          min_doy = as.Date("2022-01-01") + days(min_doy))
 
-dates_to_plot <- do_temp_roll %>%
-  mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
-              mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
-              mutate(var = "Summer hypo. temperature")) %>%
-  full_join(temp_demand_roll %>% 
-              mutate(var = "Summer VHOD")) %>%
+dates_to_plot <- all %>%
   group_by(var, LakeID) %>%
   summarize(max = max(monthly_correlation, na.rm = T),
             min = min(monthly_correlation, na.rm = T),
             max_doy = doy[which.max(monthly_correlation)],
             min_doy = doy[which.min(monthly_correlation)]) 
-
-dates_to_plot %>%
-  mutate(max_doy = ifelse(var == "Summer hypo. DO", min_doy, max_doy)) %>%
-  ggplot(aes(x = as.Date("2022-01-01") + max_doy))+
-  geom_histogram(binwidth = 7)+
-  facet_wrap(~var, scales = "free_y")+
-  xlab("Date of strongest correlation")+
-  theme_bw()
 
 library(ggridges)
 dates_to_plot %>%
@@ -458,23 +479,12 @@ dates_to_plot %>%
   theme(legend.position = "none",
         axis.text.y = element_text(vjust = 0),
         axis.title.y = element_blank())
-
-dates_to_plot %>%
-  filter(var == "Summer hypo. temperature") %>%
-  summarize(median(max_doy))
 ```
 
 ```{r}
-sp <- yday(c("2022-03-01", "2022-05-31"))
+sp <- yday(c("2022-02-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
-dates_to_plot <- do_temp_roll %>%
-  mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
-              mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
-              mutate(var = "Summer hypo. temperature")) %>%
-  full_join(temp_demand_roll %>% 
-              mutate(var = "Summer VHOD")) %>%
+dates_to_plot <- all %>%
   mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
@@ -489,6 +499,53 @@ dates_to_plot %>%
   xlab("Date of strongest correlation")+
   theme_bw() +
   facet_grid(cols = vars(season), rows = vars(var), scales = "free_x")
+
+date_start <- read_csv("../Compiled data/stratification_onset.csv")
+
+dates <- date_start %>%
+  group_by(LakeID) %>%
+  mutate(Date_start = yday(Date_start)) %>%
+  summarize(mean_start = mean(Date_start, na.rm = T),
+            n = n()) %>%
+  filter(n >= 10,
+         !is.na(mean_start))
+
+dates_to_plot %>%
+  filter(season == "spring",
+         var == "Summer hypo. temperature") %>%
+  inner_join(dates) %>%
+  ggplot(aes(x = mean_start, y = max_doy, group = LakeID)) +
+  geom_abline(slope = 1) +
+  geom_smooth(method = "lm")+
+  geom_point()
+```
+
+```{r}
+library(lterdatasampler)
+ice_data <- ntl_icecover %>%
+  left_join(lat_long, by = c("lakeid" = "LakeName")) %>%
+  filter(year(ice_off)>1980) %>%
+  mutate(ice_off = yday(ice_off))
+
+all %>%
+  filter(LakeID %in% c("31", "32")) %>%
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer epi. DO sat",
+                    "Summer hypo. temperature",
+                    "Summer VHOD",
+                    "Summer hypo. DO")) %>%
+  ggplot()+
+  geom_hline(yintercept=0)+
+  geom_vline(aes(xintercept = ice_off, color = LakeID), data = ice_data, alpha = 0.2)+
+  geom_line(aes(x = doy, y = monthly_correlation, color = LakeID)) +
+  xlab("Air temperature date \n(right-aligned 30-day rolling mean)")+
+  ylab("Correlation")+
+  theme_bw()+
+  scale_fill_manual(values = c("grey40","#0FA9E6"))+
+  labs(fill = paste0("p < ",alpha)) +
+  facet_wrap(~var) +
+  theme(legend.position = "bottom",
+        strip.background = element_blank())
 ```
 
 ```{r}
@@ -518,7 +575,7 @@ memory <- all %>%
   group_by(LakeID, var, season, p) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (spring - summer)) 
+  mutate(M = (summer - spring)) 
 
 summer_avgs = read.csv("../Compiled data/summer_averages_wi.csv")%>%
   group_by(LakeID) %>%
@@ -544,12 +601,24 @@ mem_plot <- memory %>%
   geom_hline(yintercept = 0)+
   geom_point(aes(color = SA_class))+
   geom_smooth(method = "lm", aes(color = SA_class))+
-  ylab("Relative correlation with\nspring vs. summer air temp")+
+  ylab("Relative correlation with\nsummer vs. spring air temp")+
   #stat_cor(label.y = 0.7) +
   theme_bw() +
   xlab("Maximum buoyancy frequency (1/s)")+
   scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
-  facet_wrap(~var)
+  facet_wrap(~var)+
+  ylab("\n\n")+
+  geom_text(x = 0, y = 0.65, label = "More correlated\nwith summer", 
+           hjust = 1, lineheight = .9, size = 3,
+           data = data.frame(var = factor("Summer hypo. temperature",
+                                          levels = c("Summer hypo. temperature",
+                                                     "Summer hypo. DO"))))+
+  geom_text(x = 0, y = -0.65, label = "More correlated\nwith spring", 
+           hjust = 1, lineheight = .9, size = 3,
+           data = data.frame(var = factor("Summer hypo. temperature",
+                                          levels = c("Summer hypo. temperature",
+                                                     "Summer hypo. DO"))))+
+  coord_cartesian(ylim = c(-0.65,0.65), clip = "off")
 ```
 
 ```{r}
@@ -606,7 +675,7 @@ fm1 <- lm(hypo_do ~ log_SA*log_max_depth*buoyancy_freq,
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
 mod_lm_do <- lm(hypo_do~log_SA+buoyancy_freq, data = mem_lm_df) 
-do <- plot_effects_lm(mod_lm,"Relative correlation\nsummer hypo. DO") 
+do <- plot_effects_lm(mod_lm_do,"Relative correlation\nsummer hypo. DO") 
 
 responses <- c("vhod")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
@@ -660,8 +729,10 @@ comb <- effects2%>%
   facet_wrap(~name)
 
 jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 5, units = "in")
-ggarrange(comb,
-          mem_plot + theme(axis.title.y = element_text(vjust = -18)),
+ggarrange(comb +
+            ggtitle("Relative correlation with summer vs. spring air temp") +
+            theme(plot.title = element_text(size = 11)),
+          mem_plot,
           nrow = 2, common.legend = T, legend = "bottom", 
           align = "v", heights = c(1,1.3), labels = "auto", label.x = .1)+
   theme(plot.margin = margin(0.1,0.1,0.1,-1, "cm"))
