@@ -94,6 +94,20 @@ date_start <- full_format%>%
   filter(Date==max(Date_unif))%>%
   dplyr::select(Date, Year, LakeID)%>%
   rename(Date_start = Date)
+
+next_date <- full_format%>%
+  group_by(Year,LakeID)%>%
+  filter(unstrat==0,
+         month(Date_unif)<=7)%>%
+  filter(Date==min(Date_unif))%>%
+  dplyr::select(Date, Year, LakeID)%>%
+  rename(Date_next = Date)
+
+export <- date_start %>%
+  left_join(next_date) %>%
+  filter(Date_next - Date_start < 7)
+
+write.csv(export, "../Compiled data/stratification_onset.csv", row.names = F)
 #End of stratification
 date_end <- full_format%>%
   group_by(Year,LakeID)%>%

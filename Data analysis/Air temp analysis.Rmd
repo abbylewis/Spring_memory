@@ -162,7 +162,9 @@ for_lm <- with_temp %>%
             winter_temp = mean(winter_temp, na.rm = T),
             annual_temp = mean(mean_temp, na.rm = T),
             hypo_temp = mean(Temp_C_HYPO, na.rm = T),
-            epi_temp = mean(Temp_C_EPI, na.rm = T)) %>%
+            epi_temp = mean(Temp_C_EPI, na.rm = T),
+            doc = mean(DOC_date_EPI, na.rm = T),
+            tp = mean(TP_ugL_EPI, na.rm = T)) %>%
   left_join(lat_long) %>%
   mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
                          "Wisconsin",
@@ -177,33 +179,23 @@ source("lmer_functions.R")
 
 responses <- c("hypo_temp")
 potential_drivers <- c("spring_temp", 
-                       "winter_temp",
                        "summer_temp", 
                        "log_SA", 
-                       "log_max_depth", 
-                       "Latitude_DD"
-                      )
+                       "log_max_depth")
 aic_calculator_lm(for_lm,responses,potential_drivers, interaction = "+")
 selected_drivers <- c("spring_temp", "summer_temp", "log_SA", "log_max_depth")
-std_data <-standardize_data(for_lm,responses,selected_drivers)
-for_lm_df <- for_lm%>%
-    ungroup()%>%
-    dplyr::select(all_of(c(potential_drivers,responses,"LakeID")))%>%
-    filter(if_all(where(is.numeric),is.finite))%>%
-    mutate(across(-LakeID,zscore))
-fm1 <- lm(hypo_temp ~ log_SA*log_max_depth*spring_temp*summer_temp+winter_temp,
+for_lm_df <- standardize_data(for_lm, responses, potential_drivers)
+fm1 <- lm(hypo_temp ~ log_SA*log_max_depth*spring_temp*summer_temp,
           data = for_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
-selected_drivers <- c("spring_temp", "summer_temp", "log_SA", "log_max_depth")
-std_data <-standardize_data(for_lm,responses,selected_drivers)
 mod_lm <- lm(hypo_temp~spring_temp + summer_temp + log_SA + log_max_depth+
                log_max_depth:log_SA + log_max_depth:spring_temp + log_max_depth:summer_temp +
                log_SA:spring_temp + log_SA:summer_temp + spring_temp:summer_temp +
-               log_max_depth:log_SA:summer_temp + log_SA:spring_temp:summer_temp, data = std_data) 
-mod_lm <- lm(hypo_temp~spring_temp + summer_temp + log_SA + log_max_depth, data = std_data) 
-car::vif(mod_lm)
+               log_max_depth:log_SA:summer_temp + log_SA:spring_temp:summer_temp, data = for_lm_df) 
+mod_lm <- lm(hypo_temp~spring_temp + summer_temp + log_SA + log_max_depth, data = for_lm_df) 
+car::vif(mod_lm) #THIS IS A PROBLEM!
 summary(mod_lm)
 hypo_lm <- plot_effects_lm(mod_lm,"Summer hypo. temperature") 
 

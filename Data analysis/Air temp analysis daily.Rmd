@@ -128,12 +128,12 @@ alpha <- 0.001
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
-source("plot_single_var.R")
-epi_temp <- plot_single_var("Summer epi. temperature")
-epi_do_sat <- plot_single_var("Summer epi. DO sat")
-hypo_temp <- plot_single_var("Summer hypo. temperature")
-hypo_do <- plot_single_var("Summer hypo. DO")
-hypo_vhod <- plot_single_var("Summer VHOD")
+#source("plot_single_var.R")
+#epi_temp <- plot_single_var("Summer epi. temperature")
+#epi_do_sat <- plot_single_var("Summer epi. DO sat")
+#hypo_temp <- plot_single_var("Summer hypo. temperature")
+#hypo_do <- plot_single_var("Summer hypo. DO")
+#hypo_vhod <- plot_single_var("Summer VHOD")
 
 sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
@@ -199,6 +199,87 @@ memory %>%
   scale_color_manual(values = c("grey40","#0FA9E6"))+
   coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,5), clip = "off") + 
   theme(legend.position = "none")
+dev.off()
+
+jpeg("../Figures/Monthly correlations - sum long concept.jpg", width = 3.5, height = 3.5, res = 300, units = "in")
+memory %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer\nepi. temperature",
+                                 "Summer\nepi. DO sat",
+                                 "Summer\nhypo. temperature",
+                                 "Summer\nVHOD",
+                                 "Summer\nhypo. DO"),
+                      labels = c("Surface-water\ntemperature",
+                                 "Surface-water\ndissolved oxygen (%)",
+                                 "Bottom-water\ntemperature",
+                                 "Bottom-water\noxygen demand",
+                                 "Bottom-water\ndissolved oxygen (mg/L)")))%>%
+  group_by(var) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "> 0", "< 0")),
+         color = factor(color, levels = c("< 0", "Insignificant", "> 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0)+
+  geom_boxplot()+
+  annotate("text", x = -0.75, y = -0.5, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0)+
+  annotate("text", x = 0.75, y = -0.5, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1)+
+  theme_bw() +
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("\n")+
+  theme(axis.title.y = element_blank(),
+        legend.position = "top",
+        legend.justification='left',
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8))+
+  scale_color_manual(values = c("#25469a","grey70", "#c16586"), name = "Boxplot color")+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,5), clip = "off")
+dev.off()
+
+jpeg("../Figures/Monthly correlations - sum long concept v2.jpg", width = 3.5, height = 3, res = 600, units = "in")
+memory %>%
+  filter(!var == "Summer\nepi. DO sat") %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer\nepi. temperature (n = 413)",
+                                 "Summer\nhypo. temperature (n = 368)",
+                                 "Summer\nVHOD (n = 194)",
+                                 "Summer\nhypo. DO (n = 286)"),
+                      labels = c("Surface-water\ntemperature (n = 413)",
+                                 "Bottom-water\ntemperature (n = 368)",
+                                 "Bottom-water oxygen\ndemand  (n = 194)",
+                                 "Bottom-water dissolved\noxygen (n = 286)")))%>%
+  group_by(var) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", "Insignificant", "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = -0.7, y = 5, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = 0.7, y = 5, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=margin(c(0,0,0,0)),
+        legend.box.margin=margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#25469a","#c16586"), name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,4), clip = "off")
 dev.off()
 
 library(patchwork)
@@ -564,9 +645,9 @@ memory <- all %>%
                                       "Summer hypo. DO"),
                       labels = c("Summer epi. temperature",
                                  "Summer epi. DO sat",
-                                 "Summer hypo. temperature",
+                                 "Summer bottom-water\ntemperature",
                                  "Summer VHOD",
-                                 "Summer hypo. DO")),
+                                 "Summer bottom-water\ndissolved oxygen")),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(var) %>%
@@ -591,34 +672,37 @@ mean_temps <- with_temp %>%
             tp = mean(TP_ugL_EPI, na.rm = T))
 
 mem_plot <- memory %>%
-  filter(var %in% c("Summer hypo. temperature",
-                    "Summer hypo. DO")) %>%
+  filter(var %in% c("Summer bottom-water\ntemperature",
+                    "Summer bottom-water\ndissolved oxygen")) %>%
   left_join(summer_avgs) %>%
   left_join(lat_long) %>%
   mutate(SA_class = ifelse(SurfaceArea_ha > 100, "> 100 ha", "≤ 100 ha")) %>%
   filter(!is.na(SurfaceArea_ha)) %>%
   ggplot(aes(x = buoyancy_freq, y = M))+
   geom_hline(yintercept = 0)+
-  geom_point(aes(color = SA_class))+
+  geom_point(aes(color = SA_class, shape = SA_class))+
   geom_smooth(method = "lm", aes(color = SA_class))+
   ylab("Relative correlation with\nsummer vs. spring air temp")+
   #stat_cor(label.y = 0.7) +
   theme_bw() +
   xlab("Maximum buoyancy frequency (1/s)")+
   scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
+  scale_shape_discrete(name = "Lake size")+
   facet_wrap(~var)+
   ylab("\n\n")+
   geom_text(x = 0, y = 0.65, label = "More correlated\nwith summer", 
-           hjust = 1, lineheight = .9, size = 3,
-           data = data.frame(var = factor("Summer hypo. temperature",
-                                          levels = c("Summer hypo. temperature",
-                                                     "Summer hypo. DO"))))+
+           hjust = 1, lineheight = .9, size = 3, 
+           data = data.frame(var = factor("Summer bottom-water\ntemperature",
+                                          levels = c("Summer bottom-water\ntemperature",
+                                                     "Summer bottom-water\ndissolved oxygen"))))+
   geom_text(x = 0, y = -0.65, label = "More correlated\nwith spring", 
-           hjust = 1, lineheight = .9, size = 3,
-           data = data.frame(var = factor("Summer hypo. temperature",
-                                          levels = c("Summer hypo. temperature",
-                                                     "Summer hypo. DO"))))+
+           hjust = 1, lineheight = .9, size = 3, 
+           data = data.frame(var = factor("Summer bottom-water\ntemperature",
+                                          levels = c("Summer bottom-water\ntemperature",
+                                                     "Summer bottom-water\ndissolved oxygen"))))+
   coord_cartesian(ylim = c(-0.65,0.65), clip = "off")
+
+mem_plot
 ```
 
 ```{r}
@@ -632,8 +716,8 @@ mem_lm <- memory %>%
          temp_dif = summer_temp-spring_temp) %>%
   pivot_wider(names_from = var, values_from = M) %>%
   rename(epi_temp = `Summer epi. temperature`,
-         hypo_temp = `Summer hypo. temperature`,
-         hypo_do = `Summer hypo. DO`,
+         hypo_temp = `Summer bottom-water\ntemperature`,
+         hypo_do = `Summer bottom-water\ndissolved oxygen`,
          vhod = `Summer VHOD`,
          epi_do_sat = `Summer epi. DO sat`)
 
@@ -718,25 +802,43 @@ comb <- effects2%>%
   mutate(name = factor(name, 
                        levels = c("hypo_temp",
                                   "hypo_do"),
-                       labels = c("Summer hypo. temperature",
-                                  "Summer hypo. DO"))) %>%
+                       labels = c("Summer bottom-water\ntemperature",
+                                  "Summer bottom-water\ndissolved oxygen"))) %>%
   ggplot(aes(y = Var, x=Estimate))+
   geom_vline(xintercept = 0)+
   geom_point()+
   geom_errorbar(aes(xmin=xmin, xmax = xmax),width=0.1)+
   theme_bw()+
-  theme(axis.title.y = element_blank())+
-  facet_wrap(~name)
+  xlab("Parameter estimate")+
+  geom_text(x = -0.5, y = -0.8, label = "More correlated\nwith spring", 
+           hjust = 0, lineheight = .9, size = 3, 
+           data = data.frame(name = factor("Summer bottom-water\ntemperature",
+                                          levels = c("Summer bottom-water\ntemperature",
+                                                     "Summer bottom-water\ndissolved oxygen"))))+
+  geom_text(x = 0.15, y = -0.8, label = "More correlated\nwith summer", 
+           hjust = 1, lineheight = .9, size = 3, 
+           data = data.frame(name = factor("Summer bottom-water\ndissolved oxygen",
+                                          levels = c("Summer bottom-water\ntemperature",
+                                                     "Summer bottom-water\ndissolved oxygen"))))+
+  theme(axis.title.y = element_blank(),
+        plot.margin = unit(c(5.5, 5.5, 10, 5.5), "pt"))+
+  facet_wrap(~name)+
+  coord_cartesian(ylim = c(1, 4), clip = F)
 
-jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 5, units = "in")
+jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 5.5, units = "in")
 ggarrange(comb +
             ggtitle("Relative correlation with summer vs. spring air temp") +
             theme(plot.title = element_text(size = 11)),
-          mem_plot,
-          nrow = 2, common.legend = T, legend = "bottom", 
-          align = "v", heights = c(1,1.3), labels = "auto", label.x = .1)+
+          mem_plot + 
+            guides(shape = guide_legend(override.aes = list(size = 3)))+
+            theme(legend.position = "bottom",
+                  legend.margin=margin(c(0,0,0,0))),
+          nrow = 2, 
+          align = "v", heights = c(1,1.4), labels = "auto", label.x = .1)+
   theme(plot.margin = margin(0.1,0.1,0.1,-1, "cm"))
 dev.off()
+
+comb
 ```
 
 

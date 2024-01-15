@@ -53,7 +53,7 @@ summer_avgs_wide <- summer_avgs%>%
   full_join(vhod5_points%>%dplyr::select(VHOD5_mgLd, Year, LakeID)%>%mutate(Layer="HYPO"))%>%
   unique()%>%
   pivot_wider(names_from = Layer, 
-              values_from = c(TP_ugL, TP_date, DOC_mgL, DOC_date, DO_mgL, 
+              values_from = c(TP_ugL, TP_date, DOC_mgL, DOC_date, DO_mgL, DO_sat,
                               DO_date, Chla_ugL, Chla_date, strat_Temp_C, 
                               strat_Temp_date, Temp_C, Temp_date, TN_ugL, 
                               TN_date, DO_demand_mgLd, AHOD_mgLd, buoyancy_freq, 

@@ -88,7 +88,7 @@ empirical_strat_end <- full_with_thermo%>%
   mutate(strat_interval = as.numeric(as.Date(mixing_date) - Date),
          mixing_date = yday(mixing_date) - (strat_interval/2)) %>%
   filter(strat_interval <= PROXIMITY) %>%
-  select(LakeID, Year, mixing_date)
+  dplyr::select(LakeID, Year, mixing_date)
 
 #Nürnberg model
 strat_end <- annual_data %>%
@@ -208,7 +208,7 @@ areas = full_with_thermo %>%
   group_by(LakeID, Year) %>%
   summarize(hypo_depth = round(mean(hypo_depth)),
             SurfaceArea_ha = unique(SurfaceArea_ha)) %>%
-  left_join(lake_bats%>% select(LakeID, Depth_m, Area_m2), by = c("LakeID",hypo_depth = "Depth_m"))
+  left_join(lake_bats%>% dplyr::select(LakeID, Depth_m, Area_m2), by = c("LakeID",hypo_depth = "Depth_m"))
 
 AF = anoxic_on_off %>%
   mutate(anoxic_onset = ifelse(!is.na(anoxic_onset_data),
@@ -230,7 +230,7 @@ summer_af <- summer %>%
   filter(Layer == "HYPO",
          DO_mgL > 5) %>%
   mutate(AF_summer = 0) %>%
-  select(LakeID, Year, AF_summer)
+  dplyr::select(LakeID, Year, AF_summer)
   
 AF_output <- AF %>%
   dplyr::select(LakeID, Year, AF) %>%

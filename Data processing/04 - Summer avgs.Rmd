@@ -143,6 +143,7 @@ summer_avgs <- summer_layers%>%
                    DOC_mgL = mean(DOC_mgL, na.rm = T),
                    DOC_date = as.numeric(mean(Date[!is.na(DOC_mgL)],na.rm=T)-unique(start_date)),
                    DO_mgL = mean(DO_mgL, na.rm = T),
+                   DO_sat = mean(DO_sat, na.rm = T),
                    DO_date = as.numeric(mean(Date[!is.na(DO_mgL)],na.rm=T)-unique(start_date)),
                    Chla_ugL = mean(Chla_ugL, na.rm = T),
                    Chla_date = as.numeric(mean(Date[!is.na(DO_mgL)],na.rm=T)-unique(start_date)),
