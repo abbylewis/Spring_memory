@@ -411,6 +411,100 @@ colored_sd +
 dev.off()
 ```
 
+
+Regional
+
+```{r}
+alpha <- 0.00001
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  left_join(lat_long) %>%
+  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
+                         "Midwest",
+                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), "NE", "Other"))) %>%
+  filter(!Region == "Other") %>%
+  group_by(doy, Region, var)%>%
+  mutate(p = wilcox.test(monthly_correlation)$p.value,
+         n = n()) %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+  
+group_fun <- function(sig) {
+  group <- rep(1, length(sig))
+  for (i in 2:length(sig)) {
+    if(sig[i] == sig[i - 1]) {
+      group[i] <- group[i - 1]
+    } else {
+      group[i] <- group[i - 1] + 1
+    }
+  }
+  return(group)
+}
+
+all_plot <- all %>%
+  group_by(var, doy, sig, Region) %>%
+  summarise(mean = mean(monthly_correlation, na.rm = T),
+            sd = sd(monthly_correlation, na.rm = T))%>%
+  mutate(var2 = paste0(var, Region))
+
+all_plot$group <- 1
+for(i in 1:length(unique(all_plot$var2))){
+  all_plot$group[all_plot$var2 == unique(all_plot$var2)[i]] <- group_fun(all_plot$sig[all_plot$var2 == unique(all_plot$var2)[i]])
+}
+
+empty_df <- data.frame(var = unique(all_plot$var)) %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature",
+                                      "Summer hypo. temperature",
+                                      "Summer VHOD",
+                                      "Summer hypo. DO")))
+
+all_plot1 <- all_plot %>%
+  mutate(DateTime = as.Date("2022-01-01") + days(doy))
+
+all_plot2 <- all_plot %>%
+  ungroup() %>%
+  group_by(Region) %>%
+  mutate(DateTime = as.Date("2022-01-01") + days(doy) + hours(23) + minutes(59),
+         mean = ifelse(!is.na(lead(var)) & lead(var) == var, lead(mean), mean), #to get smooth lines
+         sd = ifelse(lead(var) == var, lead(sd), sd))
+
+colored_sd <- all_plot1 %>%
+  full_join(all_plot2) %>%
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer hypo. temperature",
+                    "Summer VHOD",
+                    "Summer hypo. DO")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer epi. temperature",
+                                 "Summer hypo. temperature",
+                                 "Summer hypo. DO",
+                                 "Summer VHOD"),
+                      labels = c("Summer epi. temperature",
+                                 "Summer hypo. temperature",
+                                 "Summer hypo. DO conc",
+                                 "Summer VHOD")),
+         layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
+  ggplot() + 
+  geom_hline(yintercept=0)+
+  geom_vline(xintercept = as_datetime("2022-04-21"), color = "grey50", lty = "dashed")+
+  geom_ribbon(aes(x = DateTime, 
+                  ymin = mean - sd, ymax = mean + sd,
+                  fill = sig, group = group),
+              alpha = 0.5) +
+  geom_line(aes(x = DateTime, y = mean)) +
+  xlab("Air temperature date \n(right-aligned 30-day rolling mean)")+
+  ylab("Correlation")+
+  theme_bw()+
+  scale_fill_manual(values = c("grey40","#0FA9E6"))+
+  labs(fill = paste0("p < ",alpha)) +
+  facet_grid(cols = vars(var), rows = vars(Region)) +
+  theme(legend.position = "bottom",
+        strip.background = element_blank())+
+  xlim(as_datetime(c("2022-01-31","2022-08-31")))
+
+jpeg("../Figures/Monthly correlations - regional.jpg", width = 8, height = 5, res = 300, units = "in")
+colored_sd
+dev.off()
+```
+
 Hypo plot
 
 ```{r}
@@ -579,11 +673,19 @@ dates_to_plot <- all %>%
 
 library(ggridges)
 dates_to_plot %>%
+  filter(var %in% c("Summer hypo. DO", "Summer VHOD",
+                    "Summer epi. temperature", "Summer hypo. temperature")) %>%
   left_join(lat_long) %>%
   filter(abs(Latitude_DD) > 30) %>%
   mutate(max_doy = ifelse(var == "Summer hypo. DO", min_doy, max_doy)) %>%
   ggplot(aes(x = as.Date("2022-01-01") + max_doy, 
              y = var))+
+  geom_rect(xmin = as.Date("2022-01-01") + sp[1], 
+            xmax = as.Date("2022-01-01") + sp[2], 
+            ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_rect(xmin = as.Date("2022-01-01") + su[1], 
+            xmax = as.Date("2022-01-01") + su[2], 
+            ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
   geom_density_ridges(
       quantile_lines = TRUE,
       jittered_points = TRUE,
