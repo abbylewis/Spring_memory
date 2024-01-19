@@ -54,9 +54,6 @@ Lon <- ifelse(Lon > 180, -(360 - Lon), Lon)
 Lat <- ncvar_get(ncFile_t,"latitude")
 time <- ncvar_get(ncFile_t,"time")
 fillvalue <- ncatt_get(ncFile_t, "t2m","missing_value") 
-days <- day(as.Date("1900-01-01")+hours(time))
-months <- month(as.Date("1900-01-01")+hours(time))
-years <- year(as.Date("1900-01-01")+hours(time))
 
 #Loop through lakes and add temp data based on lat/lon
 combined_t_df <- data.frame(LakeID = rep(lakes_format$LakeID, each = length(time)),

@@ -130,6 +130,30 @@ alpha <- 0.001
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
+all_export <- all %>%
+  filter(grepl("temp", var)) %>%
+  dplyr::select(LakeID) %>%
+  unique() %>%
+  left_join(lat_long) %>%
+  dplyr::select(hylak_id, LakeName, LakeID, Latitude_DD, Longitude_DD) %>%
+  filter(!is.na(hylak_id))
+
+library(ncdf4)
+isimip <- nc_open('hydrolakes_id.nc') 
+lakes <- ncvar_get(isimip,"id")
+lat <- ncvar_get(isimip,"lat")
+lon <- ncvar_get(isimip,"lon")
+
+combined_df = data.frame(ID = as.vector(lakes),
+                           lon = rep(lon,length(lat)),
+                           lat = rep(lat,each=length(lon))
+) %>%
+  filter(!is.na(ID))
+
+all_export2 <- all_export %>% 
+  filter(hylak_id %in% combined_df$ID)
+
+write.csv(all_export2, "lakes_for_isimip.csv", row.names = F)
 #source("plot_single_var.R")
 #epi_temp <- plot_single_var("Summer epi. temperature")
 #epi_do_sat <- plot_single_var("Summer epi. DO sat")
@@ -283,33 +307,6 @@ memory %>%
   scale_color_manual(values = c("#25469a","#c16586"), name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,4), clip = "off")
 dev.off()
-
-library(patchwork)
-ggarrange(epi_temp +
-            ylim(-0.5, 0.75)+
-            theme(axis.title.x = element_blank(),
-                  axis.ticks.x = element_blank(),
-                  axis.text.x = element_blank()),
-          epi_do_sat +
-            ylim(-0.5, 0.75)+
-            theme(axis.title.y = element_blank(),
-                  axis.title.x = element_blank(),
-                  axis.ticks = element_blank(),
-                  axis.text = element_blank()),
-          memory_plot,
-          hypo_temp +
-            ylim(-0.5, 0.75),
-          hypo_do + 
-            ylim(-0.5, 0.75) +
-            theme(axis.title.y = element_blank(),
-                  axis.ticks.y = element_blank(),
-                  axis.text.y = element_blank()),
-          hypo_vhod + 
-            ylim(-0.5, 0.75) +
-            theme(axis.title.y = element_blank(),
-                  axis.ticks.y = element_blank(),
-                  axis.text.y = element_blank()),
-          common.legend = T, legend = "bottom")
 ```
 
 
