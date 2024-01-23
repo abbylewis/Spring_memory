@@ -1,0 +1,100 @@
+---
+title: "Sine to seasons"
+author: "Abby Lewis"
+date: "2024-01-19"
+output: html_document
+---
+
+# Sine to seasons
+
+How are seasonal air temperatures changing over time
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+theme_set(theme_bw())
+```
+
+## Load climate data
+
+```{r}
+daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
+daily_temp <- daily_temp_raw %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Lat < 0, Date - months(6), Date),
+         Date = as.Date(Date, origin = "1970-01-01")) %>%
+  dplyr::select(-Lat, -Lon) %>%
+  mutate(Year = year(Date)) %>%
+  filter(!Year == 2023)
+rm(daily_temp_raw)
+```
+
+## Calculate metrics
+
+Using `y = r * sin(x + phi) + b0`
+
+-   r = amplitude
+-   phi = phase shift
+-   b0 = vertical shift
+
+```{r}
+dpy <- 365.24
+# Use lm to calculate b0, r, and phi
+sine_metrics <- daily_temp %>%
+  mutate(doy = yday(Date),
+         x = doy/dpy) %>%
+  group_by(Year, LakeID)%>%
+  summarize(b0 = coef(lm(Temp_C ~ sin(2*pi*x) + cos(2*pi*x)))[1],
+            alpha = coef(lm(Temp_C ~ sin(2*pi*x) + cos(2*pi*x)))[2],
+            beta = coef(lm(Temp_C ~ sin(2*pi*x) + cos(2*pi*x)))[3]) %>%
+  mutate(r = sqrt(alpha^2 + beta^2),
+         phi = atan2(beta, alpha))
+```
+
+## Calculate trends over time
+
+```{r}
+# Function to calculate and format trends
+sen_slope_climate <- function(df,var){
+  df <- df %>%
+    mutate(date = ymd_hms(paste(Year,"-01-01 00:00:00")))
+  output = df %>%
+    group_by(LakeID)%>%
+    dplyr::summarize(n = n(),
+                     trend = NA,
+                     sig = NA,
+                     min_year = NA,
+                     max_year = NA,
+                     var = var)
+  for(lake in unique(df$LakeID)){
+      filt = df%>%
+        filter(LakeID==lake)
+      if(length(unique(filt$Year))>=5){
+        sen = trend::sens.slope(filt[[var]])
+        output$trend[output$LakeID==lake]<-sen$estimates[1]
+        output$sig[output$LakeID==lake]<-sen$p.value[1]
+        output$min_year[output$LakeID==lake]<-min(year(filt$date))
+        output$max_year[output$LakeID==lake]<-max(year(filt$date))
+      }
+  }
+  return(output)
+}
+
+# Run for all metrics
+trend_r <- sen_slope_climate(sine_metrics, "r")
+trend_phi <- sen_slope_climate(sine_metrics, "phi")
+trend_b0 <- sen_slope_climate(sine_metrics, "b0")
+
+# Plot
+trend_r %>%
+  full_join(trend_phi) %>%
+  full_join(trend_b0) %>%
+  mutate(class = ifelse(sig < 0.05 & trend < 0, "decrease", 
+                        ifelse(sig < 0.05 & trend > 0, "increase", "insig.")),
+         class = factor(class, levels = c("decrease", "insig.", "increase"))) %>%
+  ggplot(aes(x = class)) +
+  geom_bar() +
+  facet_wrap(~var) +
+  theme(axis.title.x = element_blank())
+```

@@ -1171,4 +1171,95 @@ epi_temp_roll %>%
 dev.off()
 ```
 
+```{r}
+alpha <- 0.001
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+
+all_30 <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "30-day rolling mean")
+all_50 <- read.csv("../Compiled data/Correlations - 50 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "50-day rolling mean")
+all_10 <- read.csv("../Compiled data/Correlations - 10 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "10-day rolling mean")
+
+all <- all_30 %>%
+  full_join(all_50) %>%
+  full_join(all_10)
+
+memory <- all %>% 
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer epi. DO sat",
+                    "Summer hypo. temperature",
+                    "Summer VHOD",
+                    "Summer hypo. DO")) %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature",
+                                      "Summer epi. DO sat",
+                                      "Summer hypo. temperature",
+                                      "Summer hypo. DO",
+                                      "Summer VHOD"),
+                      labels = c("Summer\nepi. temperature",
+                                 "Summer\nepi. DO sat",
+                                 "Summer\nhypo. temperature",
+                                 "Summer\nhypo. DO",
+                                 "Summer\nVHOD")),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, p, window) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (summer - spring)) 
+
+jpeg("../Figures/Monthly correlations - sum long concept v2 many windows.jpg", width = 7, height = 3, res = 600, units = "in")
+memory %>%
+  filter(!var == "Summer\nepi. DO sat") %>%
+  group_by(var, window) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")"),
+         var = factor(var, 
+                      levels = c("Summer\nepi. temperature (n = 413)",
+                                 "Summer\nhypo. temperature (n = 368)",
+                                 "Summer\nVHOD (n = 194)",
+                                 "Summer\nhypo. DO (n = 286)"),
+                      labels = c("Surface-water\ntemperature (n = 413)",
+                                 "Bottom-water\ntemperature (n = 368)",
+                                 "Bottom-water oxygen\ndemand  (n = 194)",
+                                 "Bottom-water dissolved\noxygen (n = 286)")))%>%
+  group_by(var, window) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", "Insignificant", "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=margin(c(0,0,0,0)),
+        legend.box.margin=margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#25469a","#c16586"), name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,4), clip = "off")+
+  facet_wrap(~window)
+dev.off()
+```
 

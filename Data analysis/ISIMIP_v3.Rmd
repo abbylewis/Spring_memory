@@ -1,0 +1,194 @@
+---
+title: "ISIMIP analysis"
+author: "Abby Lewis"
+date: "2024-01-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ncdf4)
+library(tidyverse)
+library(lubridate)
+library(rLakeAnalyzer)
+source("../Data processing/thermo.depth.density.R")
+
+lakes <- read.csv("lakes_for_isimip.csv")
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+```
+
+Step 1: Load all files
+```{r}
+hylak_ref <- nc_open("hydrolakes_id.nc")
+files <- list.files("../External data/files_gotm/")
+
+load_gotm_file <- function(file){
+  test <- nc_open(paste0("../External data/files_gotm/",file))
+  
+  isimip_id <- sub("20crv3-era5_historical_obsclim_gotm_", "", 
+                sub("_daily_1901_2021.nc", "", file))
+  Lon <- ncvar_get(test,"lon")
+  Lon <- ifelse(Lon > 180, -(360 - Lon), Lon)
+  Lat <- ncvar_get(test,"lat")
+  time <- ncvar_get(test,"time")
+  date <- as.Date("1881-01-01")+seconds(time)
+  depth <- ncvar_get(test,"z")
+  t_vector <- ncvar_get(test,"temp")
+  fillvalue <- test[["var"]][["temp"]][["missval"]]
+  t_vector[t_vector == fillvalue] <- NA
+  hylak_id_df <- ncvar_get(hylak_ref,"id")
+  hylak_lon <- ncvar_get(hylak_ref,"lon")
+  hylak_lat <- ncvar_get(hylak_ref,"lat")
+  hylak_id <- hylak_id_df[which(hylak_lon == c(Lon)), 
+                          which(hylak_lat == c(Lat))]
+  
+  #Loop through lakes and add temp data based on lat/lon
+  combined_t_df <- data.frame(hylak_id = rep(hylak_id, dim(depth)[1]*dim(depth)[2]),
+                             Date = rep(date, each = dim(depth)[1]),
+                             Depth_m = -c(depth), #I want positive depths
+                             Temp_C = c(t_vector),
+                             Lon = Lon,
+                             Lat = Lat
+                             )
+  return(combined_t_df)
+}
+
+all_gotm <- map(files, load_gotm_file) %>%
+  bind_rows() %>%
+  filter(year(Date) >= 1980)
+
+#write.csv(all_gotm, "../Compiled data/ISIMIP_temp_v3.csv", row.names = F)
+```
+
+Step 2: compile to epi/hypo means
+```{r}
+isimip_summer <- all_gotm %>%
+  mutate(hylak_id = as.numeric(hylak_id)) %>%
+  left_join(lat_long) %>%
+  filter(((Latitude_DD>0) & 
+            yday(Date) >= yday("2022-07-01") & 
+            yday(Date) <= yday("2022-08-31")) |
+           ((Latitude_DD<0) &
+              yday(Date) >= yday("2022-01-01") & 
+              yday(Date) <= yday("2022-02-28"))) 
+
+thermo_depths <- isimip_summer %>%
+  group_by(Date, LakeID)%>%
+  dplyr::summarize(epi_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[1],
+            hypo_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[2],
+            max_depth = max(Depth_m),
+            thermo = thermo.depth.density(Temp_C, #use custom density threshold function
+                                          Depth_m, 
+                                          mixed.cutoff = 0.1, 
+                                          seasonal = F))%>% 
+  mutate(Year= year(Date),
+         unstrat = as.numeric(is.na(thermo)))%>%
+  group_by(Year,LakeID)%>%
+  dplyr::summarize(epi_depth = mean(epi_depth, na.rm = T),
+            hypo_depth = mean(hypo_depth, na.rm = T),
+            count_unstrat = sum(unstrat),
+            n = n())
+
+#Remove years with unstratified profiles and lakes where 10% of years have unstratified profiles
+thermo_depths_sum <- thermo_depths%>%
+  group_by(LakeID)%>%
+  dplyr::mutate(count_unstrat_tot = sum(count_unstrat),
+                n = sum(n))%>%
+  filter((count_unstrat_tot/n) <0.1,
+         count_unstrat == 0)%>%
+  group_by(LakeID,Year)%>%
+  dplyr::summarize(epi_sd = sd(epi_depth, na.rm = T),
+            epi_depth = mean(epi_depth, na.rm = T),
+            hypo_sd = sd(hypo_depth, na.rm = T),
+            hypo_depth = mean(hypo_depth, na.rm = T))
+
+#Add thermocline depths
+full_with_thermo <- isimip_summer %>%
+  mutate(Year = year(Date))%>%
+  full_join(thermo_depths_sum)%>%
+  filter(!is.na(epi_depth),
+         !is.na(hypo_depth),
+         )
+#Add discrete layer designations from data providers
+summer_layers <- full_with_thermo %>%
+  mutate(Layer = ifelse(!is.na(Depth_m)&Depth_m<epi_depth, "EPI", NA),
+         Layer = ifelse(!is.na(Depth_m)&Depth_m>hypo_depth,"HYPO",Layer))%>%
+  filter(!is.na(Layer))
+
+write.csv(summer_layers, "../Compiled data/ISIMIP_summer_layers_v3.csv", row.names = F)
+
+unstrat <- all_gotm %>%
+  mutate(hylak_id = as.numeric(hylak_id)) %>%
+  left_join(lat_long %>% select(LakeID, hylak_id)) %>%
+  filter(Lat > 0,
+         month(Date)<7) %>%
+  group_by(Date, LakeID)%>%
+  dplyr::summarize(max_depth = max(Depth_m),
+            thermo = thermo.depth.density(Temp_C,Depth_m, mixed.cutoff = 0.1, seasonal = F))%>% 
+  mutate(Year= year(Date),
+         unstrat = as.numeric(is.na(thermo)))%>%
+  filter(unstrat == 1,
+         !max_depth > 1E19)
+
+strat_onset <- unstrat %>%
+  group_by(LakeID, Year) %>%
+  filter(Date == max(Date),
+         yday(Date) < yday("2022-08-30")) %>%
+  group_by(LakeID) %>%
+  summarize(strat_onset = median(yday(Date), na.rm = T))
+
+write.csv(strat_onset, "../Compiled data/ISIMIP_strat_onset_v3.csv", row.names = F)
+
+#Calculate averages
+summer_avgs <- summer_layers%>%
+  group_by(LakeID,Year, Layer)%>% #not separating by measurement location. Is this a problem?
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T))
+  
+write.csv(summer_avgs, "../Compiled data/ISIMIP_summer_avgs_v3.csv", row.names = F)
+```
+
+Step 3: Load air temp data
+
+```{r}
+lakes <- read.csv("lakes_for_isimip.csv")
+
+process_tas <- function(file){
+  file_nc <- nc_open(file)
+  Lon <- ncvar_get(file_nc,"lon")
+  Lon <- ifelse(Lon > 180, -(360 - Lon), Lon)
+  Lat <- ncvar_get(file_nc,"lat")
+  time <- ncvar_get(file_nc,"time")
+  t_mean <- ncvar_get(file_nc,"tas")
+  fillvalue <- ncatt_get(file_nc, "tas","missing_value") 
+  t_mean[t_mean == fillvalue$value] <- NA
+  
+  #Loop through lakes and add temp data based on lat/lon
+  combined_t_df <- data.frame(LakeID = rep(lakes$LakeID, each = length(time)),
+                             Date = as.Date("1861-01-01") + days(time), 
+                             Lon = as.numeric(NA),
+                             Lat = as.numeric(NA)
+                             )
+  for(i in 1:nrow(lakes)){
+    lon_id <- ifelse(min(abs(lakes[i,]$Lon-Lon))<=0.25,which.min(abs(lakes[i,]$Lon-Lon)),NA)
+    lat_id <- ifelse(min(abs(lakes[i,]$Lat-Lat))<=0.25, which.min(abs(lakes[i,]$Lat-Lat)),NA)
+    if(!is.na(lon_id)&!is.na(lat_id)){
+      t_vector <- t_mean[lon_id,lat_id,] 
+      combined_t_df$Temp_C[combined_t_df$LakeID==lakes[i,]$LakeID]<- t_vector-273.15
+      combined_t_df$Lon[combined_t_df$LakeID==lakes[i,]$LakeID]<- Lon[lon_id]
+      combined_t_df$Lat[combined_t_df$LakeID==lakes[i,]$LakeID]<- Lat[lat_id]
+    }
+  }
+  return(combined_t_df)
+}
+
+gfdl_2001 <- process_tas('../External data/tas_day_GFDL-ESM2M_historical_r1i1p1_EWEMBI_20010101-20051231.nc4') 
+gfdl_1991 <- process_tas('../External data/tas_day_GFDL-ESM2M_historical_r1i1p1_EWEMBI_19910101-20001231.nc4') 
+gfdl_1981 <- process_tas('../External data/tas_day_GFDL-ESM2M_historical_r1i1p1_EWEMBI_19810101-19901231.nc4') 
+
+air_temps <- gfdl_2001 %>%
+  full_join(gfdl_1991) %>%
+  full_join(gfdl_1981)
+
+write.csv(air_temps, "../Compiled data/ISIMIP_GFDL_temp_1981_2005.csv", row.names = F)
+```
+

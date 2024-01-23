@@ -16,23 +16,18 @@ source("monthly_correlations.R")
 
 lakes <- read.csv("lakes_for_isimip.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
-climate <- read.csv("../Compiled data/ISIMIP_GFDL_temp_1981_2005.csv")
-summer1 <- read.csv("../Compiled data/ISIMIP_summer_avgs.csv")
-summer2 <- read.csv("../Compiled data/ISIMIP_summer_avgs2.csv")
+#climate <- read.csv("../Compiled data/ISIMIP_GFDL_temp_1981_2005.csv")
+#summer1 <- read.csv("../Compiled data/ISIMIP_summer_avgs.csv")
+#summer2 <- read.csv("../Compiled data/ISIMIP_summer_avgs2.csv")
+climate <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
 
-summer <- summer1 %>%
-  full_join(summer2) %>%
+#summer <- summer1 %>%
+#  full_join(summer2) %>%
+#  pivot_wider(names_from = "Layer", values_from = "Temp_C", names_prefix = "Temp_C_")
+
+summer <- read.csv("../Compiled data/ISIMIP_summer_avgs_v3.csv") %>%
   pivot_wider(names_from = "Layer", values_from = "Temp_C", names_prefix = "Temp_C_")
 ```
-
-```{r}
-all %>%
-  filter(LakeID == "117", 
-         var == "Summer hypo. temperature") %>%
-  ggplot(aes(x = doy, y = monthly_correlation, color = as.factor(LakeID))) +
-  geom_point()
-```
-
 
 ```{r}
 library(rMR)
@@ -65,15 +60,15 @@ all <- epi_temp_roll %>%
   full_join(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) 
 
-write.csv(all, "../Compiled data/ISIMIP correlations - 30 day rolling mean.csv", row.names = F)
+write.csv(all, "../Compiled data/ISIMIP correlations - 30 day rolling mean v3.csv", row.names = F)
 ```
 
 ```{r}
 alpha <- 0.05
-all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean.csv") %>%
+all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean v3.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
-sp <- yday(c("2022-03-01", "2022-06-30"))
+sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 
 memory <- all %>% 
@@ -81,8 +76,8 @@ memory <- all %>%
                     "Summer hypo. temperature")) %>%
   mutate(var = factor(var, levels = c("Summer epi. temperature",
                                       "Summer hypo. temperature"),
-                      labels = c("Summer\nepi. temperature",
-                                 "Summer\nhypo. temperature")),
+                      labels = c("Summer epi.\ntemperature",
+                                 "Summer hypo.\ntemperature")),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(var) %>%
@@ -93,14 +88,16 @@ memory <- all %>%
   pivot_wider(names_from = season, values_from = max) %>%
   mutate(M = (summer - spring)) 
 
-jpeg("../Figures/ISIMIP monthly correlations - sum long concept v2.jpg", width = 3.5, height = 3, res = 600, units = "in")
+jpeg("../Figures/ISIMIP monthly correlations - sum long concept v3.jpg", width = 3.5, height = 2, res = 600, units = "in")
 memory %>%
-  group_by(var) %>%
+  group_by(var) %>% 
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer\nepi. temperature",
-                                 "Summer\nhypo. temperature"),
-                      labels = c("Surface-water\ntemperature",
-                                 "Bottom-water\ntemperature")))%>%
+                      levels = c("Summer epi.\ntemperature (n = 40)",
+                                 "Summer hypo.\ntemperature (n = 42)"),
+                      labels = c("Surface-water\ntemperature (n = 40)",
+                                 "Bottom-water\ntemperature (n = 42)")))%>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
@@ -108,9 +105,9 @@ memory %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = -0.7, y = 5, label = "More correlated\nwith spring", 
+  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = 0.7, y = 5, label = "More correlated\nwith summer", 
+  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
@@ -136,7 +133,7 @@ Plots of rolling means
 
 ```{r}
 alpha <- 0.001
-all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean.csv") %>%
+all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean v3.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
 group_fun <- function(sig) {
@@ -198,7 +195,7 @@ colored_sd <- all_plot1 %>%
   theme(legend.position = "bottom",
         strip.background = element_blank())
 
-jpeg("../Figures/Monthly correlations - all daily roll mean sd ISIMIP.jpg", width = 8, height = 5, res = 300, units = "in")
+jpeg("../Figures/Monthly correlations - all daily roll mean sd ISIMIP v3.jpg", width = 8, height = 5, res = 300, units = "in")
 colored_sd
 dev.off()
 
@@ -223,26 +220,33 @@ dates <- all %>%
             max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = c(max, max_day)) 
 
-strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset2.csv")
+strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset_v3.csv")
 
 dates_cor <- dates %>%
   filter(var == "Summer\nhypo. temperature") %>%
   left_join(strat_onset) 
 
+jpeg("../Figures/Correlation between stratification onset and hypo. temp.jpg", width = 5.5, height = 4, res = 300, units = "in")
 dates_cor %>%
   mutate(Memory = max_summer - max_spring) %>%
   ggplot(aes(x = strat_onset, y = max_day_spring))+
-  geom_point(aes(color = Memory)) +
+  geom_point(aes(fill = Memory), color = "black", shape = 21) +
   geom_abline(slope = 1) +
-  scale_color_gradientn(colors = c("#25469a","white","#c16586"))+
-  ylab("Spring date that is most correlated with hypo. temp") +
-  xlab("Median stratification onset date")+
-  geom_smooth(method = "lm")+
+  scale_fill_gradient2(low = "#25469a", mid = "white", high = "#c16586", 
+                       midpoint = 0, limits = c(-0.7, 0.7), 
+                       breaks = c(-0.6, -0.3, 0, 0.3, 0.6),
+                       labels = c("More correlated\nwith spring",
+                                  "-0.3",
+                                  "0",
+                                  "0.3",
+                                  "More correlated\nwith summer"),
+                       name = "")+
+  ylab("Day of year most correlated with\nsummer bottom-water temperature (spring)") +
+  xlab("Median stratification onset (day of year)")+
+  geom_smooth(method = "lm", color = "grey50", lty = "11")+
   theme_bw()
+dev.off()
 
 summary(lm(max_day_spring ~ strat_onset, data = dates_cor))
-
-dates_cor %>%
-  filter(strat_onset > 150)
 ```
 
