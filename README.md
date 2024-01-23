@@ -1,15 +1,14 @@
-# Spring memory
+# Ecological memory of spring air temperature drives summer water quality dynamics across temperate lakes
 
 ## Summary
 
-An analysis of how spring air temperatures influence hypolimnetic temperature and oxygen across many lakes.
+An analysis of how spring air temperatures influence summer bottom-water temperature and dissolved oxygen across many widespread lakes.
 
 ## Data availability
 
 * In-lake data for this study published on the Environmental Data Initative data portal: https://doi.org/10.6073/pasta/2cd6628a942de2a8b12d2b19962712a0
 * Additional data are presented in `./External data`:
     * Air temperature and climate data are drawn from the ERA5 climate reanalysis. ERA5 is a fifth-generation product from the European Centre for Medium-Range Weather Forecasts (ECMWF), and provides data from 1959–2022 on a 0.25 degree global grid (Hersbach et al., 2019)
-    * Chlorophyll-a data from Filazzola et al. (2020) were added for n = 15 lakes without other data for chlorophyll-a
     *  We collated additional metadata for each lake using HydroLAKES, a global database of 1.4 million lakes (with surface area ≥10 ha; Messager et al., 2016)
 
 ## Repo content information
