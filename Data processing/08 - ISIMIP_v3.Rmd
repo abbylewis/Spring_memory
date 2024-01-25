@@ -5,6 +5,16 @@ date: "2024-01-19"
 output: html_document
 ---
 
+This file loads ISIMIP modeled water temperature and formats for later analysis
+
+Table of contents:
+
+- Step 1: Load packages and lake metadata
+- Step 2: Compile to epi/hypo means
+- Step 3: Load air temp data (NEED TO UPDATE WITH NEW DATA)
+
+Step 1: Load packages and lake metadata
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ncdf4)
@@ -19,7 +29,7 @@ lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd
 
 Step 1: Load all files
 ```{r}
-hylak_ref <- nc_open("hydrolakes_id.nc")
+hylak_ref <- nc_open("../External data/hydrolakes_id.nc")
 files <- list.files("../External data/files_gotm/")
 
 load_gotm_file <- function(file){
@@ -60,7 +70,8 @@ all_gotm <- map(files, load_gotm_file) %>%
 #write.csv(all_gotm, "../Compiled data/ISIMIP_temp_v3.csv", row.names = F)
 ```
 
-Step 2: compile to epi/hypo means
+Step 2: Compile to epi/hypo means
+
 ```{r}
 isimip_summer <- all_gotm %>%
   mutate(hylak_id = as.numeric(hylak_id)) %>%
@@ -147,7 +158,7 @@ summer_avgs <- summer_layers%>%
 write.csv(summer_avgs, "../Compiled data/ISIMIP_summer_avgs_v3.csv", row.names = F)
 ```
 
-Step 3: Load air temp data
+Step 3: Load air temp. data (NEED TO UPDATE WITH NEW DATA)
 
 ```{r}
 lakes <- read.csv("lakes_for_isimip.csv")

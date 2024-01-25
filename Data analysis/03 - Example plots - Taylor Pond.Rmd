@@ -1,0 +1,152 @@
+---
+title: "Example plots - Taylor Pond"
+author: "Abby Lewis"
+date: "2023-05-22"
+output: html_document
+---
+
+This file generates figures that walk through the process of calculating spring memory effects at each lake (e.g., for use in presentations). Figures focus on Taylor Pond (Maine, USA) as a particularly clear example.
+
+Table of contents
+
+-   Step 1: Load packages and data
+-   Step 2: Generate figures
+
+Step 1: Load packages and data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load packages
+library(tidyverse)
+
+#Set global options
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+alpha <- 0.001
+
+#Load saved data
+with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+
+#Format air temperature
+daily_temp <- daily_temp_raw %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Lat < 0, Date - months(6), Date),
+         Date = as.Date(Date, origin = "1970-01-01")) %>%
+  dplyr::select(-Lat, -Lon) %>%
+  mutate(Year = year(Date))
+rm(daily_temp_raw) #Large file, no need to keep in memory
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figures")){dir.create("../Figures")}
+```
+
+Step 2: Generate figures
+
+```{r}
+many_lake_temp_sum <- with_temp %>%
+  left_join(daily_temp) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+
+jpeg("../Figures/Summer Taylor Pond.jpg", res = 300, width = 4, height = 4, units = "in")
+many_lake_temp_sum %>%
+  filter(LakeID == "124",
+         doy == 225) %>%
+  ggplot(aes(x = Temp_C, y = Temp_C_EPI))+
+  geom_point()+
+  xlab("Mean air temperature July 15 - August 14")+
+  ggtitle("Taylor Pond")+
+  ylab("Summer epilimnetic temperature")+
+  theme_bw()
+dev.off()
+
+jpeg("../Figures/Winter Taylor Pond.jpg", res = 300, width = 4, height = 4, units = "in")
+many_lake_temp_sum %>%
+  filter(LakeID == "124",
+         doy == 59) %>%
+  ggplot(aes(x = Temp_C, y = Temp_C_EPI))+
+  geom_point()+
+  xlab("Mean air temperature March 1 - March 30")+
+  ggtitle("Taylor Pond")+
+  ylab("Summer epilimnetic temperature")+
+  theme_bw()
+dev.off()
+
+jpeg("../Figures/Taylor Pond year blank.jpg", res = 300, width = 4, height = 3, units = "in")
+all %>%
+  filter(var == "Summer epi. temperature", LakeID == "195") %>%
+  ggplot(aes(x = doy, y = monthly_correlation))+
+  geom_line()+
+  xlab("Air temperature (30-day rolling mean)")+
+  ggtitle("Taylor Pond")+
+  ylab("Correlation with summer\nepilimnetic temperature")+
+  theme_bw()
+dev.off()
+
+jpeg("../Figures/Taylor Pond year shaded.jpg", res = 300, width = 4, height = 3, units = "in")
+all %>%
+  filter(var == "Summer epi. temperature", LakeID == "195") %>%
+  ggplot(aes(x = doy, y = monthly_correlation))+
+  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_line()+
+  xlab("Air temperature (30-day rolling mean)")+
+  ggtitle("Taylor Pond")+
+  ylab("Correlation with summer\nepilimnetic temperature")+
+  theme_bw()
+dev.off()
+
+jpeg("../Figures/Taylor Pond year color.jpg", res = 300, width = 4, height = 3, units = "in")
+all %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  group_by(season, var, LakeID) %>%
+  mutate(max = max(abs(monthly_correlation), na.rm = T),
+         is.max = ifelse(abs(monthly_correlation)==max, "y", "n"),
+         is.max = ifelse(is.na(season), "n", is.max)) %>%
+  filter(var == "Summer epi. temperature", LakeID == "195") %>%
+  ggplot(aes(x = doy, y = monthly_correlation))+
+  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_line()+
+  geom_point(aes(color=is.max, alpha = is.max), size = 2)+
+  scale_color_manual(values = c("black", "red"))+
+  scale_alpha_manual(values = c(0,1))+
+  xlab("Air temperature (30-day rolling mean)")+
+  ggtitle("Taylor Pond")+
+  ylab("Correlation with summer\nepilimnetic temperature")+
+  theme_bw()+
+  theme(legend.position = "none")
+dev.off()
+  
+jpeg("../Figures/Taylor Pond year color hypo.jpg", res = 300, width = 4, height = 3, units = "in")
+all %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  group_by(season, var, LakeID) %>%
+  mutate(max = max(abs(monthly_correlation), na.rm = T),
+         is.max = ifelse(abs(monthly_correlation)==max, "y", "n"),
+         is.max = ifelse(is.na(season), "n", is.max)) %>%
+  filter(var == "Summer hypo. temperature", LakeID == "195") %>%
+  ggplot(aes(x = doy, y = monthly_correlation))+
+  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_line()+
+  geom_point(aes(color=is.max, alpha = is.max), size = 2)+
+  scale_color_manual(values = c("black", "red"))+
+  scale_alpha_manual(values = c(0,1))+
+  xlab("Air temperature (30-day rolling mean)")+
+  ggtitle("Taylor Pond")+
+  ylab("Correlation with summer\nhypolimnetic temperature")+
+  theme_bw()+
+  theme(legend.position = "none")
+dev.off()
+```
