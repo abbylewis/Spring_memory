@@ -32,10 +32,9 @@ library(lubridate)
 #Set global options
 sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
-alpha <- 0.001
+alpha <- 0.00001
 
 #Load saved data
-with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
@@ -85,14 +84,14 @@ memory %>%
   mutate(n = length(unique(LakeID)),
          var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer\nepi. temperature (n = 413)",
-                                 "Summer\nhypo. temperature (n = 368)",
+                      levels = c("Summer\nepi. temperature (n = 438)",
+                                 "Summer\nhypo. temperature (n = 399)",
                                  "Summer\nVHOD (n = 194)",
-                                 "Summer\nhypo. DO (n = 286)"),
-                      labels = c("Surface-water\ntemperature (n = 413)",
-                                 "Bottom-water\ntemperature (n = 368)",
+                                 "Summer\nhypo. DO (n = 322)"),
+                      labels = c("Surface-water\ntemperature (n = 438)",
+                                 "Bottom-water\ntemperature (n = 399)",
                                  "Bottom-water oxygen\ndemand  (n = 194)",
-                                 "Bottom-water dissolved\noxygen (n = 286)")))%>%
+                                 "Bottom-water dissolved\noxygen (n = 322)")))%>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
@@ -172,16 +171,16 @@ all_plot2 <- all_plot %>%
 hypo_vars <- all_plot1 %>%
   full_join(all_plot2) %>%
   filter(doy>=30) %>% #remove first 29 days (these include previous year)
-  filter(var %in% c("Summer hypo. temperature (n = 368)",
+  filter(var %in% c("Summer hypo. temperature (n = 399)",
                     "Summer VHOD (n = 194)",
-                    "Summer hypo. DO (n = 286)")) %>%
+                    "Summer hypo. DO (n = 322)")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer hypo. temperature (n = 368)",
+                      levels = c("Summer hypo. temperature (n = 399)",
                                  "Summer VHOD (n = 194)",
-                                 "Summer hypo. DO (n = 286)"),
-                      labels = c("Summer bottom-water\ntemperature (n = 368)",
+                                 "Summer hypo. DO (n = 322)"),
+                      labels = c("Summer bottom-water\ntemperature (n = 399)",
                                  "Summer bottom-water\noxygen demand (n = 194)",
-                                 "Summer bottom-water\ndissolved oxygen (n = 286)")),
+                                 "Summer bottom-water\ndissolved oxygen (n = 322)")),
          layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
   ggplot() + 
   geom_hline(yintercept=0)+
@@ -236,10 +235,8 @@ date_start <- read_csv("../Compiled data/stratification_onset.csv")
 
 dates <- date_start %>%
   group_by(LakeID) %>%
-  summarize(mean_start = mean(Onset, na.rm = T),
-            n = n()) %>%
-  filter(n >= 10,
-         !is.na(mean_start))
+  summarize(mean_start = mean(Onset, na.rm = T)) %>%
+  filter(!is.na(mean_start))
 
 dates_to_plot %>%
   filter(season == "spring",
@@ -331,14 +328,14 @@ memory %>%
   mutate(n = length(unique(LakeID)),
          var = paste0(var, " (n = ",n,")"),
          var = factor(var, 
-                      levels = c("Summer\nepi. temperature (n = 413)",
-                                 "Summer\nhypo. temperature (n = 368)",
+                      levels = c("Summer\nepi. temperature (n = 438)",
+                                 "Summer\nhypo. temperature (n = 399)",
                                  "Summer\nVHOD (n = 194)",
-                                 "Summer\nhypo. DO (n = 286)"),
-                      labels = c("Surface-water\ntemperature (n = 413)",
-                                 "Bottom-water\ntemperature (n = 368)",
+                                 "Summer\nhypo. DO (n = 322)"),
+                      labels = c("Surface-water\ntemperature (n = 438)",
+                                 "Bottom-water\ntemperature (n = 399)",
                                  "Bottom-water oxygen\ndemand  (n = 194)",
-                                 "Bottom-water dissolved\noxygen (n = 286)")))%>%
+                                 "Bottom-water dissolved\noxygen (n = 322)")))%>%
   group_by(var, window) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
