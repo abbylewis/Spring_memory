@@ -5,13 +5,13 @@ date: "2023-05-22"
 output: html_document
 ---
 
-This file analyzes the effect of variation in air temperature on hypolimnetic temperature and DO.
+This file performs a driver analysis to characterize the extent to which lake morphometric factos explain variation in the strength of seasonal ecological memory
 
 Table of contents: 
 - Step 1: Load packages and data 
-- Step 2: Generate temp anomaly summary fig 
-- Step 3: Analyze the effect of monthly air temperature on hypolimnetic DO, VHOD, and temp dynamics
-
+- Step 2: Calculate seasonal ecological memory
+- Step 3: Run driver analysis
+- Step 4: Plot identified drivers
 
 Step 1: Load packages and data
 
@@ -19,40 +19,42 @@ Step 1: Load packages and data
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
-#library(mosaic)
-#library(ggallin)
-#library(ppcor)
-#library(multcompView)
-#library(ggpubr)
-#library(viridis)
-#library(MASS)
-#library(see)
+library(ggpubr)
 source("lmer_functions.R")
+
+#Set global options
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+alpha <- 0.001
 
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual AF.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+#Buoyancy frequency
+bf = read.csv("../Compiled data/summer_averages_wi.csv")%>%
+  group_by(LakeID) %>%
+  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
+hylak <- read.csv("../Compiled data/hydrolakes_full.csv")
 
 # Make a directory for Figures if there isn't one
-if (!dir.exists("../Figures")){dir.create("../Figs")}
+if (!dir.exists("../Figures")){dir.create("../Figures")}
 ```
 
+Step 2: Calculate seasonal ecological memory
+
 ```{r}
-sp <- yday(c("2022-03-01", "2022-05-31"))
-su <- yday(c("2022-07-01", "2022-08-31"))
 memory <- all %>% 
   filter(var %in% c("Summer epi. temperature",
-                    "Summer epi. DO sat",
                     "Summer hypo. temperature",
                     "Summer VHOD",
                     "Summer hypo. DO")) %>%
   mutate(var = factor(var, levels = c("Summer epi. temperature",
-                                      "Summer epi. DO sat",
                                       "Summer hypo. temperature",
                                       "Summer VHOD",
                                       "Summer hypo. DO"),
                       labels = c("Summer epi. temperature",
-                                 "Summer epi. DO sat",
                                  "Summer bottom-water\ntemperature",
                                  "Summer VHOD",
                                  "Summer bottom-water\ndissolved oxygen")),
@@ -65,73 +67,28 @@ memory <- all %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
   mutate(M = (summer - spring)) 
-
-summer_avgs = read.csv("../Compiled data/summer_averages_wi.csv")%>%
-  group_by(LakeID) %>%
-  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
-
-mean_temps <- with_temp %>%
-  mutate(spring_temp = (temp_mar + temp_apr + temp_may)/3,
-         summer_temp = (temp_july + temp_aug)/2) %>%
-  group_by(LakeID) %>%
-  summarize(spring_temp = mean(spring_temp, na.rm = T),
-            summer_temp = mean(summer_temp, na.rm = T),
-            annual_temp = mean(mean_temp, na.rm = T),
-            tp = mean(TP_ugL_EPI, na.rm = T))
-
-mem_plot <- memory %>%
-  filter(var %in% c("Summer bottom-water\ntemperature",
-                    "Summer bottom-water\ndissolved oxygen")) %>%
-  left_join(summer_avgs) %>%
-  left_join(lat_long) %>%
-  mutate(SA_class = ifelse(SurfaceArea_ha > 100, "> 100 ha", "≤ 100 ha")) %>%
-  filter(!is.na(SurfaceArea_ha)) %>%
-  ggplot(aes(x = buoyancy_freq, y = M))+
-  geom_hline(yintercept = 0)+
-  geom_point(aes(color = SA_class, shape = SA_class))+
-  geom_smooth(method = "lm", aes(color = SA_class))+
-  ylab("Relative correlation with\nsummer vs. spring air temp")+
-  #stat_cor(label.y = 0.7) +
-  theme_bw() +
-  xlab("Maximum buoyancy frequency (1/s)")+
-  scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
-  scale_shape_discrete(name = "Lake size")+
-  facet_wrap(~var)+
-  ylab("\n\n")+
-  geom_text(x = 0, y = 0.65, label = "More correlated\nwith summer", 
-           hjust = 1, lineheight = .9, size = 3, 
-           data = data.frame(var = factor("Summer bottom-water\ntemperature",
-                                          levels = c("Summer bottom-water\ntemperature",
-                                                     "Summer bottom-water\ndissolved oxygen"))))+
-  geom_text(x = 0, y = -0.65, label = "More correlated\nwith spring", 
-           hjust = 1, lineheight = .9, size = 3, 
-           data = data.frame(var = factor("Summer bottom-water\ntemperature",
-                                          levels = c("Summer bottom-water\ntemperature",
-                                                     "Summer bottom-water\ndissolved oxygen"))))+
-  coord_cartesian(ylim = c(-0.65,0.65), clip = "off")
-
-mem_plot
 ```
+
+Step 3: Run driver analysis
 
 ```{r}
 mem_lm <- memory %>%
-  left_join(summer_avgs) %>%
-  left_join(mean_temps) %>%
+  select(LakeID, var, M) %>%
+  left_join(bf) %>%
   left_join(lat_long) %>%
+  left_join(hylak %>% select(LakeID, Res_time)) %>%
   mutate(log_SA = log(SurfaceArea_ha),
          log_max_depth = log(MaximumDepth_m),
-         log_tp = log(tp),
-         temp_dif = summer_temp-spring_temp) %>%
+         log_res_time = log(Res_time)) %>%
   pivot_wider(names_from = var, values_from = M) %>%
   rename(epi_temp = `Summer epi. temperature`,
          hypo_temp = `Summer bottom-water\ntemperature`,
          hypo_do = `Summer bottom-water\ndissolved oxygen`,
-         vhod = `Summer VHOD`,
-         epi_do_sat = `Summer epi. DO sat`)
+         vhod = `Summer VHOD`)
 
 responses <- c("epi_temp")
 potential_drivers <- c("log_SA", "log_max_depth", "buoyancy_freq")
-mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
+mem_lm_df <- standardize_data(mem_lm, responses, potential_drivers)
 fm1 <- lm(epi_temp ~ log_SA*log_max_depth*buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
@@ -139,39 +96,29 @@ dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
 #Intercept only model is best
 
-responses <- c("epi_do_sat")
-mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
-fm1 <- lm(epi_do_sat ~ log_SA*log_max_depth*buoyancy_freq, 
-          data = mem_lm_df,
-          na.action = "na.fail")
-dd <- MuMIn::dredge(fm1)
-subset(dd, delta < 2)
-#intercept only model is equivalent
-
 responses <- c("hypo_temp")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
-fm1 <- lm(hypo_temp ~ log_SA*log_max_depth*buoyancy_freq, 
+fm1 <- lm(hypo_temp ~ log_SA * log_max_depth * buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
-mod_lm_temp <- lm(hypo_temp~log_SA+buoyancy_freq+log_max_depth+log_max_depth:log_SA, 
+mod_lm_temp <- lm(hypo_temp ~ log_SA + buoyancy_freq + log_max_depth +
+                    log_max_depth:log_SA, 
              data = mem_lm_df) 
-temp <- plot_effects_lm(mod_lm_temp,"Relative correlation\nsummer hypo. temp") 
 
 responses <- c("hypo_do")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
-fm1 <- lm(hypo_do ~ log_SA*log_max_depth*buoyancy_freq, 
+fm1 <- lm(hypo_do ~ log_SA * log_max_depth * buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
-mod_lm_do <- lm(hypo_do~log_SA+buoyancy_freq, data = mem_lm_df) 
-do <- plot_effects_lm(mod_lm_do,"Relative correlation\nsummer hypo. DO") 
+mod_lm_do <- lm(hypo_do ~ log_SA + buoyancy_freq, data = mem_lm_df) 
 
 responses <- c("vhod")
-mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
-fm1 <- lm(vhod ~ log_SA*log_max_depth*buoyancy_freq, 
+mem_lm_df <- standardize_data(mem_lm, responses, potential_drivers)
+fm1 <- lm(vhod ~ log_SA * log_max_depth * buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
@@ -203,6 +150,8 @@ effects2_do = effects_do%>%
 effects2 <- effects2_temp %>%
   mutate(name = "hypo_temp")%>%
   full_join(effects2_do %>% mutate(name = "hypo_do"))
+
+#Plot
 comb <- effects2%>%
   filter(!Var=="(Intercept)")%>%
   mutate(Var = renamer(Var),
@@ -232,6 +181,41 @@ comb <- effects2%>%
         plot.margin = unit(c(5.5, 5.5, 10, 5.5), "pt"))+
   facet_wrap(~name)+
   coord_cartesian(ylim = c(1, 4), clip = F)
+```
+
+Step 4: Plot identified drivers
+
+```{r}
+mem_plot <- memory %>%
+  filter(var %in% c("Summer bottom-water\ntemperature",
+                    "Summer bottom-water\ndissolved oxygen")) %>%
+  left_join(bf) %>%
+  left_join(lat_long) %>%
+  mutate(SA_class = ifelse(SurfaceArea_ha > 100, "> 100 ha", "≤ 100 ha")) %>%
+  filter(!is.na(SurfaceArea_ha)) %>%
+  ggplot(aes(x = buoyancy_freq, y = M))+
+  geom_hline(yintercept = 0)+
+  geom_point(aes(color = SA_class, shape = SA_class))+
+  geom_smooth(method = "lm", aes(color = SA_class))+
+  ylab("Relative correlation with\nsummer vs. spring air temp")+
+  #stat_cor(label.y = 0.7) +
+  theme_bw() +
+  xlab("Maximum buoyancy frequency (1/s)")+
+  scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
+  scale_shape_discrete(name = "Lake size")+
+  facet_wrap(~var)+
+  ylab("\n\n")+
+  geom_text(x = 0, y = 0.65, label = "More correlated\nwith summer", 
+           hjust = 1, lineheight = .9, size = 3, 
+           data = data.frame(var = factor("Summer bottom-water\ntemperature",
+                                          levels = c("Summer bottom-water\ntemperature",
+                                                     "Summer bottom-water\ndissolved oxygen"))))+
+  geom_text(x = 0, y = -0.65, label = "More correlated\nwith spring", 
+           hjust = 1, lineheight = .9, size = 3, 
+           data = data.frame(var = factor("Summer bottom-water\ntemperature",
+                                          levels = c("Summer bottom-water\ntemperature",
+                                                     "Summer bottom-water\ndissolved oxygen"))))+
+  coord_cartesian(ylim = c(-0.65,0.65), clip = "off")
 
 jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 5.5, units = "in")
 ggarrange(comb +
@@ -248,3 +232,4 @@ dev.off()
 
 comb
 ```
+

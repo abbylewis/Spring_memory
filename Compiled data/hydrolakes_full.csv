@@ -1,4 +1,4 @@
-"","ID","hylak_id","Lake_name","Country","Continent","Poly_src","Lake_type","Grand_id","Lake_area","Shore_len","Shore_dev","Vol_total","Vol_res","Vol_src","Depth_avg","Dis_avg","Res_time","Elevation","Slope_100","Wshd_area","Pour_long","Pour_lat"
+"","LakeID","hylak_id","Lake_name","Country","Continent","Poly_src","Lake_type","Grand_id","Lake_area","Shore_len","Shore_dev","Vol_total","Vol_res","Vol_src","Depth_avg","Dis_avg","Res_time","Elevation","Slope_100","Wshd_area","Pour_long","Pour_lat"
 "1","aba03",1414,"Tiberias","Israel","Asia","SWBD",1,0,162.06,54.12,1.2,3800.27,0,3,23.5,16.205,2714.3,-216,3.64,2744.4,35.574631,32.716004
 "2","aba14",1038367,"Willow Creek Reservoir","United States of America","North America","SWBD",2,353,0.4,3.99,1.77,16.3,16.3,2,40.5,0.524,360,627,9.77,256.4,-119.54375,45.344451
 "3","aba02",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA

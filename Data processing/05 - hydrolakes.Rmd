@@ -31,7 +31,7 @@ dbf <- read.dbf("../External data/HydroLAKES_points_v10_shp/HydroLAKES_points_v1
 
 ids <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")%>%
   dplyr::select(LakeID,hylak_id)%>%
-  rename(ID = LakeID)
+  rename(LakeID = LakeID)
 
 comb <- ids%>%
   left_join(dbf, by = c("hylak_id"="Hylak_id"))
