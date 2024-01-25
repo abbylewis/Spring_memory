@@ -20,6 +20,7 @@ Step 6: Combine DO and temp
 
 
 Step 1: Load packages
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
@@ -32,9 +33,9 @@ library(furrr)
 plan(multisession) #Set up parallel processing to speed up interpolation
 ```
 
-
 Step 2: QAQC
 Load data from EDI and run QAQC
+
 ```{r}
 #import data
 #options(timeout=300) may be needed depending on internet connection speed
@@ -47,17 +48,6 @@ to_profiles <- to_profiles_all%>%
   left_join(lat_long, by = c("LakeID"))%>%
   filter(is.na(MaximumDepth_m)|MaximumDepth_m>6.4)%>%
   rename(reported_max_depth = MaximumDepth_m)
-
-#Take a look at cases where the depth sampled is deeper than the reported max depth of the lake
-depth_issues <- to_profiles%>%
-  group_by(LakeID,Date)%>%
-  mutate(max_depth = max(Depth_m, na.rm = T))%>%
-  group_by(LakeID)%>%
-  mutate(depth_sd = sd(max_depth,na.rm = T))%>%
-  filter(max_depth - reported_max_depth > .2*reported_max_depth,
-         max_depth - reported_max_depth > 5)%>%
-  dplyr::select(LakeID,max_depth,reported_max_depth,Date,depth_sd)%>%
-  unique()
 
 #Remove max depth outliers using IQR
 test_depth_removal <- to_profiles%>%
@@ -98,8 +88,8 @@ length(unique(to_profiles_depth_checked$LakeID)) #~50 lakes lost entirely.
 #NOTE I looked into this and it is almost entirely from removing lakes without measurements below 3m deep (typically very shallow lakes)
 ```
 
+Step 3: Plot the results of QAQC
 
-Step 3: Plot the results of QAQC (this is presented as a figure in Appendix S3)
 ```{r}
 #Calculate stats for the original dataset (before QAQC)
 unclean <- to_profiles%>%
@@ -218,9 +208,9 @@ ggarrange(unclean_plot, clean_plot, unclean_sd, clean_sd,
 dev.off()
 ```
 
-
 Step 4: Interpolate DO, following Jane et al. (2021)
 (note: this will take up to 30 minutes to run all lakes)
+
 ```{r}
 #Prep for interpolation
 
@@ -315,9 +305,9 @@ ploto <- ggplot(interpolatedvalues.do)+
   coord_flip()
 ```
 
-
 Step 4.5: Interpolate DO pSat, following Jane et al. (2021)
 (note: this will take up to 30 minutes to run all lakes)
+
 ```{r}
 #Prep for interpolation
 
@@ -415,9 +405,9 @@ ploto_sat <- ggplot(interpolatedvalues.do_sat)+
   coord_flip()
 ```
 
-
 Step 5: Interpolate temperature
 (note: this will take up to 30 minutes to run all lakes)
+
 ```{r}
 #Prep for interpolation
 
@@ -519,8 +509,8 @@ plott<-ggplot(interpolatedvalues.t)+
   coord_flip()
 ```
 
-
 Step 6: Combine DO and temp
+
 ```{r}
 database.interp <- interpolatedvalues.t %>%
   full_join(interpolatedvalues.do, by = c("LakeID", "Depth_m", "Date")) %>%

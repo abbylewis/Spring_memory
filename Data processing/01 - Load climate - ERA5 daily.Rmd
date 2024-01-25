@@ -21,8 +21,8 @@ Table of Contents:
 - Step 1: Load packages
 - Step 2: Load and synthesize data
 
-
 Step 1: Load packages
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 Sys.setenv(TZ='UTC')
@@ -33,9 +33,9 @@ library(data.table)
 library(lubridate)
 ```
 
-
 Step 2: Load and synthesize data 
 (note: this will take several minutes to run on a personal computer)
+
 ```{r}
 #Read and format our lake metadata
 lakes <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") 
