@@ -50,6 +50,137 @@ sine_metrics <- daily_temp %>%
             beta = coef(lm(Temp_C ~ sin(2*pi*x) + cos(2*pi*x)))[3]) %>%
   mutate(r = sqrt(alpha^2 + beta^2),
          phi = atan2(beta, alpha))
+
+daily_temp %>%
+  filter(LakeID == "279") %>%
+  mutate(doy = yday(Date),
+         x = doy/dpy) %>%
+  left_join(sine_metrics) %>%
+  mutate(pred = b0 + 
+           alpha * sin(2*pi*x) +
+           beta * cos(2*pi*x)) %>%
+  ggplot(aes(x = doy))+
+  geom_line(aes(y = pred, color = as.factor(Year)))
+
+daily_temp %>%
+  filter(LakeID == "279", Year == 2021) %>%
+  mutate(doy = yday(Date),
+         x = doy/dpy) %>%
+  left_join(sine_metrics) %>%
+  mutate(pred = b0 + 
+           alpha * sin(2*pi*x) +
+           beta * cos(2*pi*x)) %>%
+  ggplot(aes(x = doy))+
+  geom_line(aes(y = pred, color = as.factor(Year)))+
+  geom_point(aes(y = Temp_C))
+```
+
+Using nls to also fit period
+
+```{r}
+fit_nls <- function(lake){
+  data <- daily_temp %>%
+    filter(LakeID == lake) %>%
+    mutate(doy = yday(Date),
+           x = doy/dpy)
+  output <- data.frame(LakeID = LakeID,
+                       Year = unique(data$Year),
+                       phi = NA,
+                       r = NA,
+                       b0 = NA, 
+                       omega = NA)
+  for(year in unique(data$Year)) {
+    df_year <- data %>%
+      filter(Year == year) %>%
+      mutate(doy = yday(Date),
+             x = doy/dpy)
+    r <- (max(df_year$Temp_C)-min(df_year$Temp_C))/2
+    b0 <- median(df_year$Temp_C)
+    
+    success <- try(res1 <- nls(Temp_C ~ r*sin(omega*x+phi)+b0, 
+                               data=df_year, 
+                               start=list(r = r,
+                                          omega = pi*1.5, #buffer
+                                          phi = 0,
+                                          b0 = b0),
+                               control=list(nlsTols=0.1)),
+                silent = T)
+    
+    #If there's an error or unreasonable omega, try again with a better default omega?
+    if(class(success) == "try-error" || coef(res1)["omega"] > 10){
+      success <- try(res1 <- nls(Temp_C ~ r*sin(omega*x+phi)+b0, 
+                                 data=df_year, 
+                                 start=list(r = r,
+                                            omega = pi*2, #buffer
+                                            phi = 0,
+                                            b0 = b0),
+                                 control=list(nlsTols=0.1)), 
+                     silent = T)
+    }
+    
+    if(!class(success) == "try-error"){
+      co <- coef(res1)
+      #fit <- function(x, a, b, c, d) {a*sin(b*x+c)+d}
+      #plot(x=df_year$x, y=df_year$Temp_C)
+      #curve(fit(x, a=co["r"], b=co["omega"], c=co["phi"], d=co["b0"]), add=TRUE ,lwd=2, col="steelblue")
+      output[output$Year == year,] <- c(LakeID = lake, 
+                                        Year = year, 
+                                        phi = co["phi"],
+                                        r = co["r"],
+                                        b0 = co["b0"],
+                                        omega = co["omega"])
+    } else {
+      message("Couldn't fit ", lake, " ", year)
+    }
+  }
+  return(output)
+}
+
+
+library(furrr)
+plan("multisession")
+
+sine_metrics2 <- unique(daily_temp$LakeID) %>%
+  furrr::future_map(fit_nls) %>%
+  bind_rows()
+
+sine_metrics2 <- sine_metrics2 %>%
+  mutate(r = as.numeric(r),
+         phi = as.numeric(phi),
+         b0 = as.numeric(b0),
+         omega = as.numeric(omega)) %>%
+  filter(!is.na(r))
+
+sine_metrics_r2_prep <- daily_temp %>%
+  left_join(sine_metrics2 %>% mutate(Year = as.numeric(Year))) %>%
+  mutate(doy = yday(Date),
+         x = doy/dpy,
+         pred = r*sin(omega*x+phi)+b0)
+
+sine_metrics_r2 <- sine_metrics_r2_prep %>%
+  filter(!is.na(pred)) %>%
+  group_by(LakeID, Year) %>%
+  mutate(r2 = summary(lm(Temp_C~pred))$r.squared) %>%
+  filter(r2 > 0.8) %>%
+  select(LakeID, Year, r, phi, b0, omega, r2) %>%
+  unique()
+
+# Couldn't fit WI-213186 1994
+# Couldn't fit 55 1985
+# Couldn't fit 55 1989
+# Couldn't fit 55 1994
+# Couldn't fit 55 2001
+# Couldn't fit 55 2002
+# Couldn't fit 55 2003
+# Couldn't fit 55 2018
+# Couldn't fit 115 1998
+# Couldn't fit 123 1979
+# Couldn't fit 123 1988
+# Couldn't fit 123 1989
+# Couldn't fit 123 1993
+# Couldn't fit 123 1998
+# Couldn't fit 442 2000
+# Couldn't fit 442 2009
 ```
 
 ## Calculate trends over time
@@ -86,10 +217,47 @@ trend_r <- sen_slope_climate(sine_metrics, "r")
 trend_phi <- sen_slope_climate(sine_metrics, "phi")
 trend_b0 <- sen_slope_climate(sine_metrics, "b0")
 
+# Run for all metrics (v2)
+trend_r2 <- sen_slope_climate(sine_metrics2, "r")
+trend_phi2 <- sen_slope_climate(sine_metrics2, "phi")
+trend_b02 <- sen_slope_climate(sine_metrics2, "b0")
+trend_omega2 <- sen_slope_climate(sine_metrics2, "omega")
+
+# Run for all metrics (v3)
+trend_r3 <- sen_slope_climate(sine_metrics_r2, "r")
+trend_phi3 <- sen_slope_climate(sine_metrics_r2, "phi")
+trend_b03 <- sen_slope_climate(sine_metrics_r2, "b0")
+trend_omega3 <- sen_slope_climate(sine_metrics_r2, "omega")
+
 # Plot
 trend_r %>%
   full_join(trend_phi) %>%
   full_join(trend_b0) %>%
+  mutate(class = ifelse(sig < 0.05 & trend < 0, "decrease", 
+                        ifelse(sig < 0.05 & trend > 0, "increase", "insig.")),
+         class = factor(class, levels = c("decrease", "insig.", "increase"))) %>%
+  ggplot(aes(x = class)) +
+  geom_bar() +
+  facet_wrap(~var) +
+  theme(axis.title.x = element_blank())
+
+trend_r2 %>%
+  full_join(trend_phi2) %>%
+  full_join(trend_b02) %>%
+  full_join(trend_omega2) %>%
+  mutate(class = ifelse(sig < 0.05 & trend < 0, "decrease", 
+                        ifelse(sig < 0.05 & trend > 0, "increase", "insig.")),
+         class = factor(class, levels = c("decrease", "insig.", "increase"))) %>%
+  ggplot(aes(x = class)) +
+  geom_bar() +
+  facet_wrap(~var) +
+  theme(axis.title.x = element_blank())
+
+trend_r3 %>%
+  full_join(trend_phi3) %>%
+  full_join(trend_b03) %>%
+  full_join(trend_omega3) %>%
+  filter(!is.na(trend)) %>%
   mutate(class = ifelse(sig < 0.05 & trend < 0, "decrease", 
                         ifelse(sig < 0.05 & trend > 0, "increase", "insig.")),
          class = factor(class, levels = c("decrease", "insig.", "increase"))) %>%
