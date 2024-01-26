@@ -1,30 +1,15 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Ecological memory of spring air temperature drives summer water quality dynamics across temperate lakes
 
 ## Summary
 
-An analysis of how spring air temperatures influence summer bottom-water
-temperature and dissolved oxygen across many widespread lakes.
+An analysis of how spring air temperatures influence summer bottom-water temperature and dissolved oxygen across many widespread lakes.
 
 ## Data availability
 
--   In-lake data for this study published on the Environmental Data
-    Initative data portal:
-    <https://doi.org/10.6073/pasta/2cd6628a942de2a8b12d2b19962712a0>
+-   In-lake data for this study published on the Environmental Data Initative data portal: <https://doi.org/10.6073/pasta/2cd6628a942de2a8b12d2b19962712a0>
 -   Additional data are presented in `./External data`:
-    -   `files_gotm/` includes modeled water temperature for n = 42
-        lakes in our dataset that have been modeled through the
-        Intersectoral Model Intercomparison Project lakes sector (ISIMIP
-        global lakes v3a). For this analysis we used the General Ocean
-        Turbulence Model (GOTM) hydrodynamic model output and the ERA5
-        climate reanalysis.
-    -   `lake_tas/` includes air temperature data from ERA5 that
-        corresponds with ISIMIP outputs.
+    -   `files_gotm/` includes modeled water temperature for n = 42 lakes in our dataset that have been modeled through the Intersectoral Model Intercomparison Project lakes sector (ISIMIP global lakes v3a). For this analysis we used the General Ocean Turbulence Model (GOTM) hydrodynamic model output and the ERA5 climate reanalysis.
+    -   `lake_tas/` includes air temperature data from ERA5 that corresponds with ISIMIP outputs.
 
 ## Repo content information
 
@@ -32,54 +17,28 @@ temperature and dissolved oxygen across many widespread lakes.
 
 Data loading/processing scripts:
 
--   `01 - Load climate - ERA5 daily.Rmd`: Load netcdf of global climate
-    data and output a csv with air temperature records at each lake
-
--   `02 - Temp and DO interpolation.Rmd`: Interpolate temperature and
-    oxygen profiles to a 1 m depth resolution
-
--   `04 - Summer avgs.Rmd`: Calculate epilimnetic and hypolimnetic means
-    during the late-summer period of each year
-
--   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic
-    means during the stratified period of each year. Add in additional
-    chlorophyll-a data using "chla_harmonizer.csv"
-
--   `05 - VW DO Demand - based on strat dur.Rmd`: Calculate
-    volume-weighted hypolimnetic oxygen demand for each lake-year
-
--   `06 - Compile data.Rmd`: Combine late-summer and stratified means
-    with oxygen demand, and climate data. Output a file for following
-    analyses.
-
+-   `01 - Load climate - ERA5 daily.Rmd`: Load netcdf of global climate data and output a csv with air temperature records at each lake
+-   `02 - Temp and DO interpolation.Rmd`: Interpolate temperature and oxygen profiles to a 1 m depth resolution
+-   `04 - Summer avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the late-summer period of each year
+-   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the stratified period of each year. Add in additional chlorophyll-a data using "chla_harmonizer.csv"
+-   `05 - VW DO Demand - based on strat dur.Rmd`: Calculate volume-weighted hypolimnetic oxygen demand for each lake-year
+-   `06 - Compile data.Rmd`: Combine late-summer and stratified means with oxygen demand, and climate data. Output a file for following analyses.
 -   `07 - ISIMIP_v3.Rmd`: Compile ISIMIP modeled water temperature
 
 ### `./Data analysis`
 
 All data analysis scripts:
 
--   `01 - Data characterization.Rmd`: Characterize the full, synthesized
-    dataset. Output map of all sites
--   `02 - Calculate rolling mean correlations.Rmd`: Calculate the
-    correlation between focal variables and rolling mean air temperature
-    across all lakes
--   `03 - Example plots - Taylor Pond.Rmd`: Create plots to describe the
-    process of calculating seasonal ecological memory using Taylor Pond
-    as an example lake
--   `04 - Calculate memory and plot rolling means.Rmd`: Calculate and
-    plot seasonal ecological memory. Plot rolling correlations for
-    hypolimnetic variables
--   `05 - Memory driver analysis.Rmd`: Analyze the drivers of seasonal
-    ecological memory. Output figure for paper
--   `06 - Calculate trends.Rmd`: Calculate trends in air and water
-    temperature
--   `07 - Plot trends.Rmd`: Plot association between air temperature
-    trend and water temperature trend
--   `08 - ISIMIP_correlations`: Calculate seasonal ecological memory
-    using modeled water temeprature
+-   `01 - Data characterization.Rmd`: Characterize the full, synthesized dataset. Output map of all sites
+-   `02 - Calculate rolling mean correlations.Rmd`: Calculate the correlation between focal variables and rolling mean air temperature across all lakes
+-   `03 - Example plots - Taylor Pond.Rmd`: Create plots to describe the process of calculating seasonal ecological memory using Taylor Pond as an example lake
+-   `04 - Calculate memory and plot rolling means.Rmd`: Calculate and plot seasonal ecological memory. Plot rolling correlations for hypolimnetic variables
+-   `05 - Memory driver analysis.Rmd`: Analyze the drivers of seasonal ecological memory. Output figure for paper
+-   `06 - Calculate trends.Rmd`: Calculate trends in air and water temperature
+-   `07 - Plot trends.Rmd`: Plot association between air temperature trend and water temperature trend
+-   `08 - ISIMIP_correlations`: Calculate seasonal ecological memory using modeled water temeprature
 -   `lmer_functions.R`: Helper functions for driver analysis
--   `monthly_correlations.R`: Helper function for calculating
-    correlations by day of year
+-   `monthly_correlations.R`: Helper function for calculating correlations by day of year
 -   `sen_slope_custom.R`: Helper functions to calculate trends over time
 
 ### `./External data`
@@ -92,12 +51,8 @@ Compiled datasets, created by the scripts in `./Data analysis`
 
 ### `./Illustrator files`
 
-Adobe illustrator files used to create conceptual figure, graphical
-abstract, and annotated figures for manuscript
+Adobe illustrator files used to create conceptual figure, graphical abstract, and annotated figures for manuscript
 
 ## References
 
-Messager, M. L., Lehner, B., Grill, G., Nedeva, I., & Schmitt, O.
-(2016). Estimating the volume and age of water stored in global lakes
-using a geo-statistical approach. Nature Communications, 7(1),
-Article 1. <https://doi.org/10.1038/ncomms13603>
+Messager, M. L., Lehner, B., Grill, G., Nedeva, I., & Schmitt, O. (2016). Estimating the volume and age of water stored in global lakes using a geo-statistical approach. Nature Communications, 7(1), Article 1. <https://doi.org/10.1038/ncomms13603>
