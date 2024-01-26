@@ -4,7 +4,7 @@
 
 An analysis of how spring air temperatures influence summer bottom-water temperature and dissolved oxygen across many widespread lakes.
 
-![](Illustrator files/WI Lakes rect paper v2.png){width="5in"}
+![WI Lakes rect paper v2](https://github.com/abbylewis/Spring_memory/assets/51751937/f5dc8225-c55b-4397-ab77-a98c86fef961)
 
 ## Data availability
 
