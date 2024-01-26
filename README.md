@@ -32,82 +32,70 @@ temperature and dissolved oxygen across many widespread lakes.
 
 Data loading/processing scripts:
 
--   `01 - Load climate - ERA5.Rmd`
-    -   Load netcdf of global climate data and output a csv with air
-        temperature records at each lake
--   `02 - Temp and DO interpolation.Rmd`
-    -   Interpolate temperature and oxygen profiles to a 1 m depth
-        resolution
--   `03 - Stratified avgs.Rmd`
-    -   Calculate epilimnetic and hypolimnetic means during the
-        stratified period of each year. Add in additional chlorophyll-a
-        data using "chla_harmonizer.csv"
--   `04 - Summer avgs.Rmd`
-    -   Calculate epilimnetic and hypolimnetic means during the
-        late-summer period of each year
--   `05 - Spring avgs.Rmd`
-    -   Calculate surface and bottom means during the spring period of
-        each year
--   `06 - hydrolakes.Rmd`
-    -   Load all hydrolakes data and output a csv with hydrolakes
-        metadata for each lake
--   `07 - VW DO Demand - based on strat dur.Rmd`
-    -   Calculate volume-weighted hypolimnetic oxygen demand for each
-        lake-year
--   `08 - Temp change - based on strat dur.Rmd`
-    -   Calculate hypolimnetic warming rate for each lake-year
--   `09 - Compile data.Rmd`
-    -   Combine late-summer and stratified means with oxygen demand, and
-        climate data. Output a file for following analyses.
--   `10 - Anoxic factor.Rmd`
-    -   Calculate anoxic factor for the entire hypolimnion
--   `11 - Anoxic factor layers.Rmd`
-    -   Calculate anoxic factor in two hypolimnetic layers
+-   `01 - Load climate - ERA5 daily.Rmd`: Load netcdf of global climate
+    data and output a csv with air temperature records at each lake
 
-### ./Data analysis
+-   `02 - Temp and DO interpolation.Rmd`: Interpolate temperature and
+    oxygen profiles to a 1 m depth resolution
+
+-   `04 - Summer avgs.Rmd`: Calculate epilimnetic and hypolimnetic means
+    during the late-summer period of each year
+
+-   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic
+    means during the stratified period of each year. Add in additional
+    chlorophyll-a data using "chla_harmonizer.csv"
+
+-   `05 - VW DO Demand - based on strat dur.Rmd`: Calculate
+    volume-weighted hypolimnetic oxygen demand for each lake-year
+
+-   `06 - Compile data.Rmd`: Combine late-summer and stratified means
+    with oxygen demand, and climate data. Output a file for following
+    analyses.
+
+-   `07 - ISIMIP_v3.Rmd`: Compile ISIMIP modeled water temperature
+
+### `./Data analysis`
 
 All data analysis scripts:
 
--   `01 - Data characterization.Rmd`
-    -   Characterize the full, synthesized dataset. Output summary
-        figures
--   `Air temp analysis.Rmd`
-    -   Analyze the effects of changing monthly air temperatures on
-        hypolimnetic temperature and oxygen dynamics
--   `DOC vs warming.Rmd`
-    -   Analyze the associations between DOC and hypolimnetic warming
-        rates
+-   `01 - Data characterization.Rmd`: Characterize the full, synthesized
+    dataset. Output map of all sites
+-   `02 - Calculate rolling mean correlations.Rmd`: Calculate the
+    correlation between focal variables and rolling mean air temperature
+    across all lakes
+-   `03 - Example plots - Taylor Pond.Rmd`: Create plots to describe the
+    process of calculating seasonal ecological memory using Taylor Pond
+    as an example lake
+-   `04 - Calculate memory and plot rolling means.Rmd`: Calculate and
+    plot seasonal ecological memory. Plot rolling correlations for
+    hypolimnetic variables
+-   `05 - Memory driver analysis.Rmd`: Analyze the drivers of seasonal
+    ecological memory. Output figure for paper
+-   `06 - Calculate trends.Rmd`: Calculate trends in air and water
+    temperature
+-   `07 - Plot trends.Rmd`: Plot association between air temperature
+    trend and water temperature trend
+-   `08 - ISIMIP_correlations`: Calculate seasonal ecological memory
+    using modeled water temeprature
+-   `lmer_functions.R`: Helper functions for driver analysis
+-   `monthly_correlations.R`: Helper function for calculating
+    correlations by day of year
+-   `sen_slope_custom.R`: Helper functions to calculate trends over time
 
-### ./External data
+### `./External data`
 
 Downloaded data (unmodified from original sources)
 
-### ./Compiled data
+### `./Compiled data`
 
 Compiled datasets, created by the scripts in `./Data analysis`
 
-### ./Figures
+### `./Illustrator files`
 
-Figures created by the scripts in `./Data analysis`
-
-### ./Illustrator files
-
-Adobe illustrator files used to create conceputal figure, graphical
+Adobe illustrator files used to create conceptual figure, graphical
 abstract, and annotated figures for manuscript
 
 ## References
-
-Filazzola, A., Mahdiyan, O., Shuvo, A., Ewins, C., Moslenko, L., Sadid,
-T., Blagrave, K., Gray, D., Quinlan, R., O'Reilly, C., & Sharma, S.
-(2020). A global database of chlorophyll and water chemistry in
-freshwater lakes. <https://doi.org/10.5063/F1JH3JKZ>
-
-Hersbach, H., Bell, B., Berrisford, P., Biavati, G., Horányi, A., Muñoz
-Sabater, J., Nicolas, J., Peubey, C., Radu, R., Rozum, I., Schepers, D.,
-Simmons, A., Soci, C., Dee, D., & Thépaut, J.-N. (2019). ERA5 monthly
-averaged data on single levels from 1979 to present [Data set].
-Copernicus Climate Change Service (C3S) Climate Data Store (CDS).
-<https://doi.org/10.24381/CDS.F17050D7>
 
 Messager, M. L., Lehner, B., Grill, G., Nedeva, I., & Schmitt, O.
 (2016). Estimating the volume and age of water stored in global lakes
