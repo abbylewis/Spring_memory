@@ -4,6 +4,8 @@
 
 An analysis of how spring air temperatures influence summer bottom-water temperature and dissolved oxygen across many widespread lakes.
 
+![](Illustrator files/WI Lakes rect paper v2.png){width="5in"}
+
 ## Data availability
 
 -   In-lake data for this study published on the Environmental Data Initative data portal: <https://doi.org/10.6073/pasta/2cd6628a942de2a8b12d2b19962712a0>
@@ -52,7 +54,3 @@ Compiled datasets, created by the scripts in `./Data analysis`
 ### `./Illustrator files`
 
 Adobe illustrator files used to create conceptual figure, graphical abstract, and annotated figures for manuscript
-
-## References
-
-Messager, M. L., Lehner, B., Grill, G., Nedeva, I., & Schmitt, O. (2016). Estimating the volume and age of water stored in global lakes using a geo-statistical approach. Nature Communications, 7(1), Article 1. <https://doi.org/10.1038/ncomms13603>
