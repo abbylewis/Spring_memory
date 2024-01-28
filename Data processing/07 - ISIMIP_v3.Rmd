@@ -34,7 +34,6 @@ files <- list.files("../External data/files_gotm/")
 
 load_gotm_file <- function(file){
   test <- nc_open(paste0("../External data/files_gotm/",file))
-  
   isimip_id <- sub("20crv3-era5_historical_obsclim_gotm_", "", 
                 sub("_daily_1901_2021.nc", "", file))
   Lon <- ncvar_get(test,"lon")
@@ -161,45 +160,42 @@ write.csv(summer_avgs, "../Compiled data/ISIMIP_summer_avgs_v3.csv", row.names =
 Step 3: Load air temp. data (NEED TO UPDATE WITH NEW DATA)
 
 ```{r}
-lakes <- read.csv("lakes_for_isimip.csv")
+hylak_ref <- nc_open("../External data/hydrolakes_id.nc")
+files <- list.files("../External data/lake_tas/")
 
-process_tas <- function(file){
-  file_nc <- nc_open(file)
-  Lon <- ncvar_get(file_nc,"lon")
-  Lon <- ifelse(Lon > 180, -(360 - Lon), Lon)
-  Lat <- ncvar_get(file_nc,"lat")
-  time <- ncvar_get(file_nc,"time")
-  t_mean <- ncvar_get(file_nc,"tas")
-  fillvalue <- ncatt_get(file_nc, "tas","missing_value") 
-  t_mean[t_mean == fillvalue$value] <- NA
+load_tas_file <- function(file){
+  test <- read_tsv(paste0("../External data/lake_tas/",file),
+                   col_names = c("Date", "Time", "Temp_C"),
+                   show_col_types = FALSE)
+  isimip_id <- sub("20crv3-era5_historical_obsclim_lake_", "", 
+                sub("_daily_1901_2021.csv", "", file))
   
-  #Loop through lakes and add temp data based on lat/lon
-  combined_t_df <- data.frame(LakeID = rep(lakes$LakeID, each = length(time)),
-                             Date = as.Date("1861-01-01") + days(time), 
-                             Lon = as.numeric(NA),
-                             Lat = as.numeric(NA)
+  #Find hydrolakes ID
+  nc_file <- nc_open(paste0("../External data/files_gotm/20crv3-era5_historical_obsclim_gotm_", 
+                            isimip_id, "_daily_1901_2021.nc"))
+  Lon <- ncvar_get(nc_file,"lon")
+  Lon <- ifelse(Lon > 180, -(360 - Lon), Lon)
+  Lat <- ncvar_get(nc_file,"lat")
+  hylak_id_df <- ncvar_get(hylak_ref,"id")
+  hylak_lon <- ncvar_get(hylak_ref,"lon")
+  hylak_lat <- ncvar_get(hylak_ref,"lat")
+  hylak_id <- hylak_id_df[which(hylak_lon == c(Lon)), 
+                          which(hylak_lat == c(Lat))]
+  
+  #Add temp data based on lat/lon
+  combined_t_df <- data.frame(hylak_id = rep(hylak_id, nrow(test)),
+                             Date = test$Date,
+                             Temp_C = test$Temp_C - 273.15,
+                             Lon = Lon,
+                             Lat = Lat
                              )
-  for(i in 1:nrow(lakes)){
-    lon_id <- ifelse(min(abs(lakes[i,]$Lon-Lon))<=0.25,which.min(abs(lakes[i,]$Lon-Lon)),NA)
-    lat_id <- ifelse(min(abs(lakes[i,]$Lat-Lat))<=0.25, which.min(abs(lakes[i,]$Lat-Lat)),NA)
-    if(!is.na(lon_id)&!is.na(lat_id)){
-      t_vector <- t_mean[lon_id,lat_id,] 
-      combined_t_df$Temp_C[combined_t_df$LakeID==lakes[i,]$LakeID]<- t_vector-273.15
-      combined_t_df$Lon[combined_t_df$LakeID==lakes[i,]$LakeID]<- Lon[lon_id]
-      combined_t_df$Lat[combined_t_df$LakeID==lakes[i,]$LakeID]<- Lat[lat_id]
-    }
-  }
   return(combined_t_df)
 }
 
-gfdl_2001 <- process_tas('../External data/tas_day_GFDL-ESM2M_historical_r1i1p1_EWEMBI_20010101-20051231.nc4') 
-gfdl_1991 <- process_tas('../External data/tas_day_GFDL-ESM2M_historical_r1i1p1_EWEMBI_19910101-20001231.nc4') 
-gfdl_1981 <- process_tas('../External data/tas_day_GFDL-ESM2M_historical_r1i1p1_EWEMBI_19810101-19901231.nc4') 
+all_tas <- map(files, load_tas_file) %>%
+  bind_rows() %>%
+  filter(year(Date) >= 1980)
 
-air_temps <- gfdl_2001 %>%
-  full_join(gfdl_1991) %>%
-  full_join(gfdl_1981)
-
-write.csv(air_temps, "../Compiled data/ISIMIP_GFDL_temp_1981_2005.csv", row.names = F)
+write.csv(all_tas, "../Compiled data/ISIMIP_ERA5_temp_1981_2005.csv", row.names = F)
 ```
 
