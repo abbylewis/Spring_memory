@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(trend) #switched from openair 7 Nov 2023
+source("sen_slope_custom.R")
 
 # Make a directory for Figures if there isn't one
 if (!dir.exists("../Figures")){dir.create("../Figures")}
@@ -22,32 +23,6 @@ Step 2: Calculate water temperature trends
 
 ```{r}
 all_data <- read.csv("../Compiled data/All_data_annual.csv")
-#Function
-sen_slope_custom <- function(df,var){
-  output = df%>%
-    group_by(LakeID)%>%
-    dplyr::summarize(n = n(),
-              trend = NA,
-              sig = NA,
-              min_year = NA,
-              max_year = NA)
-  for(lake in unique(df$LakeID)){
-    filt = df %>%
-      filter(LakeID==lake) %>%
-      mutate(date = as.POSIXct(paste0(Year,"-01-01"))) %>%
-      ungroup()%>%
-      dplyr::select(-Year)
-    if(length(unique(year(filt$date)))>=10){#Only calculate a trend if there are 10 years of data
-      sen = trend::sens.slope(filt[[var]])
-      output$trend[output$LakeID==lake]<-sen$estimates[1]
-      output$sig[output$LakeID==lake]<-sen$p.value[1]
-      output$min_year[output$LakeID==lake]<-min(year(filt$date))
-      output$max_year[output$LakeID==lake]<-max(year(filt$date))
-      output$var <- var
-    }
-  }
-  return(output)
-}
 
 summer_mean_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_HYPO)), "Temp_C_HYPO")
 summer_epi_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_EPI)), "Temp_C_EPI")

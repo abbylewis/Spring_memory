@@ -9,22 +9,19 @@ sen_slope_custom <- function(df,var){
                      min_year = NA,
                      max_year = NA)
   for(lake in unique(df$LakeID)){
-      print(paste(lake)) #, era))
-      filt = df%>%
-        mutate(year = year(date))%>%
-        filter(LakeID==lake)
-      filt = filt%>%
-        filter(year>split_year)%>%
-        dplyr::select(-year)
-      if(length(unique(year(filt$date)))>=10){
-        sen = trend::sens.slope(filt[[var]])
-        output$trend[output$LakeID==lake]<-sen$estimates[1]
-        output$sig[output$LakeID==lake]<-sen$p.value[1]
-        output$min_year[output$LakeID==lake]<-min(year(filt$date))
-        output$max_year[output$LakeID==lake]<-max(year(filt$date))
-      }
-      #}
-    #}
+    filt = df %>%
+      filter(LakeID==lake) %>%
+      mutate(date = as.POSIXct(paste0(Year,"-01-01"))) %>%
+      ungroup()%>%
+      dplyr::select(-Year)
+    if(length(unique(year(filt$date)))>=10){#Only calculate a trend if there are 10 years of data
+      sen = trend::sens.slope(filt[[var]])
+      output$trend[output$LakeID==lake]<-sen$estimates[1]
+      output$sig[output$LakeID==lake]<-sen$p.value[1]
+      output$min_year[output$LakeID==lake]<-min(year(filt$date))
+      output$max_year[output$LakeID==lake]<-max(year(filt$date))
+      output$var <- var
+    }
   }
   return(output)
 }
