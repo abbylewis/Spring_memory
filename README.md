@@ -7,7 +7,6 @@ An analysis of how spring air temperatures influence summer bottom-water tempera
 ## Personnel
 
 -   Abigail Lewis, Virginia Tech, [aslewis\@vt.edu](mailto:aslewis@vt.edu)
-
 -   Cayelan Carey, Virginia Tech, [cayelan\@vt.edu](mailto:cayelan@vt.edu)
 
 ## Data availability
