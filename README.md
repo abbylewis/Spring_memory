@@ -57,4 +57,4 @@ Compiled datasets, created by the scripts in `./Data processing` and `./Data ana
 
 ### `./Illustrator files`
 
-Adobe illustrator files used to create conceptual figure, graphical abstract, and annotated figures for manuscript
+Adobe illustrator files used to create conceptual figure and annotated figures for manuscript
