@@ -53,7 +53,7 @@ Downloaded data (unmodified from original sources)
 
 ### `./Compiled data`
 
-Compiled datasets, created by the scripts in `./Data analysis`
+Compiled datasets, created by the scripts in `./Data processing` and `./Data analysis`
 
 ### `./Illustrator files`
 
