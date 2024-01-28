@@ -4,6 +4,12 @@
 
 An analysis of how spring air temperatures influence summer bottom-water temperature and dissolved oxygen across many widespread lakes.
 
+## Personnel
+
+-   Abigail Lewis, Virginia Tech, [aslewis\@vt.edu](mailto:aslewis@vt.edu)
+
+-   Cayelan Carey, Virginia Tech, [cayelan\@vt.edu](mailto:cayelan@vt.edu)
+
 ## Data availability
 
 -   In-lake data for this study published on the Environmental Data Initative data portal: <https://doi.org/10.6073/pasta/2cd6628a942de2a8b12d2b19962712a0>

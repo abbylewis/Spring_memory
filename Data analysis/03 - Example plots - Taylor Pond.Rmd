@@ -84,10 +84,11 @@ jpeg("../Figures/Taylor Pond year blank.jpg", res = 300, width = 4, height = 3, 
 all %>%
   filter(var == "Summer epi. temperature", LakeID == "195") %>%
   ggplot(aes(x = doy, y = monthly_correlation))+
+  geom_hline(yintercept = 0, color = "grey50")+
   geom_line()+
-  xlab("Air temperature (30-day rolling mean)")+
-  ggtitle("Taylor Pond")+
-  ylab("Correlation with summer\nepilimnetic temperature")+
+  xlab("Air temperature date\n(right-aligned 30-day rolling mean)")+
+  ggtitle("Surface-water temperature")+
+  ylab("Correlation")+
   theme_bw()
 dev.off()
 
@@ -97,10 +98,11 @@ all %>%
   ggplot(aes(x = doy, y = monthly_correlation))+
   geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
   geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
+  geom_hline(yintercept = 0, color = "grey50")+
   geom_line()+
-  xlab("Air temperature (30-day rolling mean)")+
-  ggtitle("Taylor Pond")+
-  ylab("Correlation with summer\nepilimnetic temperature")+
+  xlab("Air temperature date\n(right-aligned 30-day rolling mean)")+
+  ggtitle("Surface-water temperature")+
+  ylab("Correlation")+
   theme_bw()
 dev.off()
 
@@ -111,18 +113,30 @@ all %>%
   group_by(season, var, LakeID) %>%
   mutate(max = max(abs(monthly_correlation), na.rm = T),
          is.max = ifelse(abs(monthly_correlation)==max, "y", "n"),
-         is.max = ifelse(is.na(season), "n", is.max)) %>%
+         is.max = ifelse(is.na(season), "n", is.max),
+         ymin = ifelse(monthly_correlation < 0, monthly_correlation, 0),
+         ymax = ifelse(monthly_correlation < 0, 0, monthly_correlation)) %>%
   filter(var == "Summer epi. temperature", LakeID == "195") %>%
-  ggplot(aes(x = doy, y = monthly_correlation))+
-  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
-  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
-  geom_line()+
-  geom_point(aes(color=is.max, alpha = is.max), size = 2)+
+  ggplot()+
+  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90",
+            alpha = 0.1)+
+  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", 
+            alpha = 0.1)+
+  geom_hline(yintercept = 0, color = "grey50")+
+  geom_line(aes(x = doy, y = monthly_correlation))+
+  geom_segment(aes(x = doy, xend = doy, y = ymin, yend = ymax, 
+                   color=is.max, alpha = is.max, group = doy))+
+  geom_point(aes(x = doy, y = monthly_correlation, 
+                 color=is.max, alpha = is.max), size = 2)+
+  geom_text(aes(x = doy, y = monthly_correlation, 
+                 label = round(abs(monthly_correlation), 2)),
+            hjust = 0, color = "red", nudge_x = 5,
+            data = . %>% filter(is.max == "y"))+
   scale_color_manual(values = c("black", "red"))+
   scale_alpha_manual(values = c(0,1))+
-  xlab("Air temperature (30-day rolling mean)")+
-  ggtitle("Taylor Pond")+
-  ylab("Correlation with summer\nepilimnetic temperature")+
+  xlab("Air temperature date\n(right-aligned 30-day rolling mean)")+
+  ggtitle("Surface-water temperature")+
+  ylab("Correlation")+
   theme_bw()+
   theme(legend.position = "none")
 dev.off()
@@ -134,18 +148,30 @@ all %>%
   group_by(season, var, LakeID) %>%
   mutate(max = max(abs(monthly_correlation), na.rm = T),
          is.max = ifelse(abs(monthly_correlation)==max, "y", "n"),
-         is.max = ifelse(is.na(season), "n", is.max)) %>%
+         is.max = ifelse(is.na(season), "n", is.max),
+         ymin = ifelse(monthly_correlation < 0, monthly_correlation, 0),
+         ymax = ifelse(monthly_correlation < 0, 0, monthly_correlation)) %>%
   filter(var == "Summer hypo. temperature", LakeID == "195") %>%
-  ggplot(aes(x = doy, y = monthly_correlation))+
-  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
-  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.1)+
-  geom_line()+
-  geom_point(aes(color=is.max, alpha = is.max), size = 2)+
+  ggplot()+
+  geom_rect(xmin = sp[1], xmax = sp[2], ymin = -Inf, ymax = Inf, fill = "grey90",
+            alpha = 0.1)+
+  geom_rect(xmin = su[1], xmax = su[2], ymin = -Inf, ymax = Inf, fill = "grey90", 
+            alpha = 0.1)+
+  geom_hline(yintercept = 0, color = "grey50")+
+  geom_line(aes(x = doy, y = monthly_correlation))+
+  geom_segment(aes(x = doy, xend = doy, y = ymin, yend = ymax, 
+                   color=is.max, alpha = is.max, group = doy))+
+  geom_point(aes(x = doy, y = monthly_correlation, 
+                 color=is.max, alpha = is.max), size = 2)+
+  geom_text(aes(x = doy, y = monthly_correlation, 
+                 label = round(abs(monthly_correlation), 2)),
+            hjust = 0, color = "red", nudge_x = 5,
+            data = . %>% filter(is.max == "y"))+
   scale_color_manual(values = c("black", "red"))+
   scale_alpha_manual(values = c(0,1))+
-  xlab("Air temperature (30-day rolling mean)")+
-  ggtitle("Taylor Pond")+
-  ylab("Correlation with summer\nhypolimnetic temperature")+
+  xlab("Air temperature date\n(right-aligned 30-day rolling mean)")+
+  ggtitle("Bottom-water temperature")+
+  ylab("Correlation")+
   theme_bw()+
   theme(legend.position = "none")
 dev.off()
