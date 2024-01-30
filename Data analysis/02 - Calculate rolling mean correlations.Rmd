@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(rMR) #for calculating DO % saturation
-source("monthly_correlations.R")
+source("correlations_doy.R")
 
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual.csv")
@@ -71,13 +71,13 @@ many_lake_temp_sum <- with_temp %>%
 hypo_do_roll <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
-  monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
 
-hypo_demand_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "Temp_C", 
                                     "Summer VHOD ", alpha = 0.001)
 
-epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
                                     "Summer epi. temperature ", alpha = 0.001)
 
@@ -93,7 +93,7 @@ epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum,
 #                                    "DO_sat_HYPO", "Temp_C", 
 #                                    "Summer hypo. DO (saturation) ", alpha = 0.001)
 
-hypo_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_HYPO", "Temp_C", 
                                     "Summer hypo. temperature ", alpha = 0.001)
 
