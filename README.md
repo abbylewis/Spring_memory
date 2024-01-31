@@ -25,7 +25,7 @@ Data loading/processing scripts:
 -   `01 - Load climate - ERA5 daily.Rmd`: Load netcdf of global climate data and output a csv with air temperature records at each lake
 -   `02 - Temp and DO interpolation.Rmd`: Interpolate temperature and oxygen profiles to a 1 m depth resolution
 -   `04 - Summer avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the late-summer period of each year
--   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the stratified period of each year. Add in additional chlorophyll-a data using "chla_harmonizer.csv"
+-   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the entire stratified period of each year
 -   `05 - VW DO Demand - based on strat dur.Rmd`: Calculate volume-weighted hypolimnetic oxygen demand for each lake-year
 -   `06 - Compile data.Rmd`: Combine late-summer and stratified means with oxygen demand, and climate data. Output a file for following analyses.
 -   `07 - ISIMIP_v3.Rmd`: Compile ISIMIP modeled water temperature
