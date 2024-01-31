@@ -27,7 +27,7 @@ Data loading/processing scripts:
 -   `04 - Summer avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the late-summer period of each year
 -   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the entire stratified period of each year
 -   `05 - VW DO Demand - based on strat dur.Rmd`: Calculate volume-weighted hypolimnetic oxygen demand for each lake-year
--   `06 - Compile data.Rmd`: Combine late-summer and stratified means with oxygen demand, and climate data. Output a file for following analyses.
+-   `06 - Compile data.Rmd`: Combine summer means with oxygen demand. Output a file for following analyses
 -   `07 - ISIMIP_v3.Rmd`: Compile ISIMIP modeled water temperature
 
 ### `./Data analysis`
