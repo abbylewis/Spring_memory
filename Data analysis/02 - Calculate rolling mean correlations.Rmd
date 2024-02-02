@@ -10,9 +10,13 @@ This file calculates the correlation between mean air temperature and surface- a
 Table of contents:
 
 - Step 1: Load packages and data
-- Step 2: Calculate and export 30-day rolling mean correlations
-- Step 3: Re-run with 10-day window
-- Step 4: Re-run with 50-day window
+- Step 2: Load and format air temperature data
+- Step 3: Calculate and export 30-day rolling mean correlations
+- Step 4: Try using Spearman's correlation, rather than partial Spearman's correlation
+- Step 5: Re-run with 10-day window
+- Step 6: Re-run with 50-day window
+- Step 7: Re-run for July 15th to August 31st
+- Step 8: Re-run for June, July and August
 
 Step 1: Load packages and data
 
@@ -20,7 +24,6 @@ Step 1: Load packages and data
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
-library(rMR) #for calculating DO % saturation
 source("correlations_doy.R")
 
 #Load saved data
@@ -31,7 +34,7 @@ lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd
 if (!dir.exists("../Figures")){dir.create("../Figures")}
 ```
 
-Step 2: Calculate and export rolling means (30-day)
+Step 2: Load and format air temperature data
 
 ```{r}
 daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
@@ -42,26 +45,15 @@ daily_temp <- daily_temp_raw %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date))
 rm(daily_temp_raw)
+```
 
+Step 3: Calculate and export rolling means (30-day)
+
+```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
   mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year),
-         #Calculate DO saturation
-         DO_sat_EPI = ifelse(is.na(DO_sat_EPI),
-                             rMR::DO.saturation(DO_mgL_EPI, 
-                                                Temp_C_EPI, 
-                                                elevation.m = Elevation_m,
-                                                salinity = 0,
-                                                salinity.units = "uS"),
-                             DO_sat_EPI),
-         DO_sat_HYPO = ifelse(is.na(DO_sat_HYPO),
-                             rMR::DO.saturation(DO_mgL_HYPO, 
-                                                Temp_C_HYPO, 
-                                                elevation.m = Elevation_m,
-                                                salinity = 0,
-                                                salinity.units = "uS"),
-                             DO_sat_HYPO)) %>%
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
   arrange(Date) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
@@ -71,72 +63,71 @@ many_lake_temp_sum <- with_temp %>%
 hypo_do_roll <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
-  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO")
 
 hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "Temp_C", 
-                                    "Summer VHOD ", alpha = 0.001)
+                                    "Summer VHOD ")
 
 epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
-                                    "Summer epi. temperature ", alpha = 0.001)
-
-#epi_do_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_mgL_EPI", "Temp_C", 
-#                                    "Summer epi. DO ", alpha = 0.001)
-
-#epi_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_sat_EPI", "Temp_C", 
-#                                    "Summer epi. DO (saturation) ", alpha = 0.001)
-
-#hypo_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_sat_HYPO", "Temp_C", 
-#                                    "Summer hypo. DO (saturation) ", alpha = 0.001)
+                                    "Summer epi. temperature ")
 
 hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_HYPO", "Temp_C", 
-                                    "Summer hypo. temperature ", alpha = 0.001)
+                                    "Summer hypo. temperature ")
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
   full_join(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  #full_join(epi_do_roll %>%
-  #            mutate(var = "Summer epi. DO")) %>%
   full_join(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
   full_join(hypo_demand_roll %>% 
-              mutate(var = "Summer VHOD")) #%>%
-  #full_join(epi_do_sat_roll %>%
-  #            mutate(var = "Summer epi. DO sat")) %>%
-  #full_join(hypo_do_sat_roll %>%
-  #            mutate(var = "Summer hypo. DO sat"))
+              mutate(var = "Summer VHOD")) 
 
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean.csv", row.names = F)
 ```
 
-Step 3: Re-run with 10-day window
+Step 4: Try using Spearman's correlation, rather than partial Spearman's correlation
+
+```{r}
+hypo_do_roll <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
+  filter(hypoxic=="no") %>%
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", partial = F)
+
+hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "Summer VHOD ", partial = F)
+
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_EPI", "Temp_C", 
+                                    "Summer epi. temperature ", partial = F)
+
+hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_HYPO", "Temp_C", 
+                                    "Summer hypo. temperature ", partial = F)
+
+all <- hypo_do_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) %>%
+  full_join(hypo_demand_roll %>% 
+              mutate(var = "Summer VHOD")) 
+
+write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - not partial.csv", row.names = F)
+```
+
+Step 4: Re-run with 10-day window
 
 ```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
   mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year),
-         #Calculate DO saturation
-         DO_sat_EPI = ifelse(is.na(DO_sat_EPI),
-                             rMR::DO.saturation(DO_mgL_EPI, 
-                                                Temp_C_EPI, 
-                                                elevation.m = Elevation_m,
-                                                salinity = 0,
-                                                salinity.units = "uS"),
-                             DO_sat_EPI),
-         DO_sat_HYPO = ifelse(is.na(DO_sat_HYPO),
-                             rMR::DO.saturation(DO_mgL_HYPO, 
-                                                Temp_C_HYPO, 
-                                                elevation.m = Elevation_m,
-                                                salinity = 0,
-                                                salinity.units = "uS"),
-                             DO_sat_HYPO)) %>%
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
   arrange(Date) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 10, align = "right", fill = NA))
@@ -146,72 +137,39 @@ many_lake_temp_sum <- with_temp %>%
 hypo_do_roll <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
-  monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO")
 
-hypo_demand_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "Temp_C", 
-                                    "Summer VHOD ", alpha = 0.001)
+                                    "Summer VHOD ")
 
-epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
-                                    "Summer epi. temperature ", alpha = 0.001)
+                                    "Summer epi. temperature ")
 
-#epi_do_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_mgL_EPI", "Temp_C", 
-#                                    "Summer epi. DO ", alpha = 0.001)
-
-#epi_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_sat_EPI", "Temp_C", 
-#                                    "Summer epi. DO (saturation) ", alpha = 0.001)
-
-#hypo_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_sat_HYPO", "Temp_C", 
-#                                    "Summer hypo. DO (saturation) ", alpha = 0.001)
-
-hypo_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_HYPO", "Temp_C", 
-                                    "Summer hypo. temperature ", alpha = 0.001)
+                                    "Summer hypo. temperature ")
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
   full_join(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  #full_join(epi_do_roll %>%
-  #            mutate(var = "Summer epi. DO")) %>%
   full_join(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
   full_join(hypo_demand_roll %>% 
-              mutate(var = "Summer VHOD")) #%>%
-  #full_join(epi_do_sat_roll %>%
-  #            mutate(var = "Summer epi. DO sat")) %>%
-  #full_join(hypo_do_sat_roll %>%
-  #            mutate(var = "Summer hypo. DO sat"))
+              mutate(var = "Summer VHOD")) 
 
 write.csv(all, "../Compiled data/Correlations - 10 day rolling mean.csv", row.names = F)
 ```
 
-Step 4: Re-run with 50-day window
+Step 5: Re-run with 50-day window
 
 ```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
   mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year),
-         #Calculate DO saturation
-         DO_sat_EPI = ifelse(is.na(DO_sat_EPI),
-                             rMR::DO.saturation(DO_mgL_EPI, 
-                                                Temp_C_EPI, 
-                                                elevation.m = Elevation_m,
-                                                salinity = 0,
-                                                salinity.units = "uS"),
-                             DO_sat_EPI),
-         DO_sat_HYPO = ifelse(is.na(DO_sat_HYPO),
-                             rMR::DO.saturation(DO_mgL_HYPO, 
-                                                Temp_C_HYPO, 
-                                                elevation.m = Elevation_m,
-                                                salinity = 0,
-                                                salinity.units = "uS"),
-                             DO_sat_HYPO)) %>%
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
   arrange(Date) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 50, align = "right", fill = NA))
@@ -221,47 +179,104 @@ many_lake_temp_sum <- with_temp %>%
 hypo_do_roll <- many_lake_temp_sum %>%
   mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
-  monthly_correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO", alpha = 0.001)
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO")
 
-hypo_demand_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "Temp_C", 
-                                    "Summer VHOD ", alpha = 0.001)
+                                    "Summer VHOD ")
 
-epi_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
-                                    "Summer epi. temperature ", alpha = 0.001)
+                                    "Summer epi. temperature ")
 
-#epi_do_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_mgL_EPI", "Temp_C", 
-#                                    "Summer epi. DO ", alpha = 0.001)
-
-#epi_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_sat_EPI", "Temp_C", 
-#                                    "Summer epi. DO (saturation) ", alpha = 0.001)
-
-#hypo_do_sat_roll <- monthly_correlations_doy(many_lake_temp_sum, 
-#                                    "DO_sat_HYPO", "Temp_C", 
-#                                    "Summer hypo. DO (saturation) ", alpha = 0.001)
-
-hypo_temp_roll <- monthly_correlations_doy(many_lake_temp_sum, 
+hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_HYPO", "Temp_C", 
-                                    "Summer hypo. temperature ", alpha = 0.001)
+                                    "Summer hypo. temperature ")
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
   full_join(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  #full_join(epi_do_roll %>%
-  #            mutate(var = "Summer epi. DO")) %>%
   full_join(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
   full_join(hypo_demand_roll %>% 
-              mutate(var = "Summer VHOD")) #%>%
-  #full_join(epi_do_sat_roll %>%
-  #            mutate(var = "Summer epi. DO sat")) %>%
-  #full_join(hypo_do_sat_roll %>%
-  #            mutate(var = "Summer hypo. DO sat"))
+              mutate(var = "Summer VHOD"))
 
 write.csv(all, "../Compiled data/Correlations - 50 day rolling mean.csv", row.names = F)
 ```
 
+Step 6: Re-run for July 15th to August 31st
+
+```{r}
+with_temp <- read.csv("../Compiled data/All_data_annual_15th_to_31st.csv")
+
+many_lake_temp_sum <- with_temp %>%
+  left_join(daily_temp) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+
+# ---
+
+hypo_do_roll <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
+  filter(hypoxic=="no") %>%
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO")
+
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_EPI", "Temp_C", 
+                                    "Summer epi. temperature ")
+
+hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_HYPO", "Temp_C", 
+                                    "Summer hypo. temperature ")
+
+all <- hypo_do_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) 
+
+write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - 15th to 31st.csv", row.names = F)
+```
+
+Step 7: Re-run for June, July and August
+
+```{r}
+with_temp <- read.csv("../Compiled data/All_data_annual_JJA.csv")
+
+many_lake_temp_sum <- with_temp %>%
+  left_join(daily_temp) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+
+# ---
+
+hypo_do_roll <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
+  filter(hypoxic=="no") %>%
+  correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO")
+
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_EPI", "Temp_C", 
+                                    "Summer epi. temperature ")
+
+hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_HYPO", "Temp_C", 
+                                    "Summer hypo. temperature ")
+
+all <- hypo_do_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  full_join(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  full_join(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) 
+
+write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - JJA.csv", row.names = F)
+```
