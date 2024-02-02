@@ -26,11 +26,6 @@ Step 2: Compile all in-lake data
 ```{r}
 do_demand_points <- read.csv("../Compiled data/VW oxygen demand points.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
-shape <- lat_long %>%
-  filter(!is.na(MeanDepth_m),
-         !is.na(MaximumDepth_m))%>%
-  mutate(VD = 3*MeanDepth_m/MaximumDepth_m)%>%
-  dplyr::select(LakeID,VD)
 
 summer_avgs = read.csv("../Compiled data/summer_averages_wi.csv")
 summer_avgs_wide <- summer_avgs%>%
@@ -51,4 +46,42 @@ with_temp <- summer_avgs_wide %>%
          !LakeID=="387") #Hypolimnetic oxygenation
 
 write.csv(with_temp,"../Compiled data/All_data_annual.csv", row.names =F)
+```
+
+Step 3: Compile data with summer defined as July 15-Aug 31
+
+```{r}
+summer_avgs = read.csv("../Compiled data/summer_averages_wi_15th_to_31st.csv")
+summer_avgs_wide <- summer_avgs%>%
+  select(LakeID, Year, Layer, Temp_C, DO_mgL) %>%
+  unique() %>%
+  pivot_wider(names_from = Layer, 
+              values_from = c(DO_mgL, Temp_C))
+
+with_temp <- summer_avgs_wide %>%
+  left_join(lat_long, by = c("LakeID"))%>%
+  filter(MaximumDepth_m>6.4,
+         !LakeID=="123",#No clear seasons
+         !LakeID=="387") #Hypolimnetic oxygenation
+
+write.csv(with_temp,"../Compiled data/All_data_annual_15th_to_31st.csv", row.names = F)
+```
+
+Step 2: Compile data with summer defined as June, July, and August
+
+```{r}
+summer_avgs = read.csv("../Compiled data/summer_averages_wi_JJA.csv")
+summer_avgs_wide <- summer_avgs%>%
+  select(LakeID, Year, Layer, Temp_C, DO_mgL) %>%
+  unique() %>%
+  pivot_wider(names_from = Layer, 
+              values_from = c(DO_mgL, Temp_C))
+
+with_temp <- summer_avgs_wide %>%
+  left_join(lat_long, by = c("LakeID"))%>%
+  filter(MaximumDepth_m>6.4,
+         !LakeID=="123",#No clear seasons
+         !LakeID=="387") #Hypolimnetic oxygenation
+
+write.csv(with_temp,"../Compiled data/All_data_annual_JJA.csv", row.names =F)
 ```
