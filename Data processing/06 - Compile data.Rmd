@@ -39,7 +39,7 @@ summer_avgs_wide <- summer_avgs%>%
               mutate(Layer="HYPO")) %>%
   unique() %>%
   pivot_wider(names_from = Layer, 
-              values_from = c(DO_mgL, DO_sat, DO_date, Temp_C, Temp_date,
+              values_from = c(DO_mgL, DO_sat, Temp_C,
                               DO_demand_mgLd, buoyancy_freq))
 
 length(unique(summer_avgs_wide$LakeID))
