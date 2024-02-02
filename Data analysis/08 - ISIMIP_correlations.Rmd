@@ -65,11 +65,11 @@ many_lake_temp_sum <- summer %>%
 
 epi_temp_roll <-correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
-                                    "Summer epi. temperature ", alpha = 0.001)
+                                    "Summer epi. temperature ")
 
 hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_HYPO", "Temp_C", 
-                                    "Summer hypo. temperature ", alpha = 0.001)
+                                    "Summer hypo. temperature ")
 
 all <- epi_temp_roll %>%
   mutate(var = "Summer epi. temperature") %>%

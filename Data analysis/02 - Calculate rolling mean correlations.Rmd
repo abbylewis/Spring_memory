@@ -26,7 +26,7 @@ library(tidyverse)
 library(lubridate)
 source("correlations_doy.R")
 
-#Load saved data
+# Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 

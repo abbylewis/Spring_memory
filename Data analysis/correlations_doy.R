@@ -32,7 +32,7 @@ correlations_doy <- function(wi_lakes_all_data,
              variable = variable, 
              value = value,
              partial = partial,
-             .progress = "Running many lakes:") %>%
+             .progress = "Running many lakes: ") %>%
     list_rbind()
   
   wilcox <- many_lake_stat%>%
