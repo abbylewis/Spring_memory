@@ -30,6 +30,7 @@ summer_do_sen <- sen_slope_custom(all_data %>% filter(!is.na(DO_mgL_HYPO), DO_mg
 
 write.csv(summer_epi_sen, "../Compiled data/summer_epi_temp_trends.csv", row.names = F)
 write.csv(summer_mean_sen, "../Compiled data/summer_hypo_temp_mean_trends.csv", row.names = F)
+write.csv(summer_do_sen, "../Compiled data/summer_hypo_DO_trends.csv", row.names = F)
 ```
 
 Step 3: Calculate daily air temperature trends

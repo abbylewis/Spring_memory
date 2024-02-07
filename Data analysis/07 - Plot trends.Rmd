@@ -21,7 +21,7 @@ lat_long = read.csv("https://pasta-s.lternet.edu/package/data/eml/edi/1029/9/fad
 ```
 
 ```{r}
-trends <- read.csv('../Compiled data/climate_era5_roll_"Temp_C"_daily.csv')
+trends <- read.csv('../Compiled data/climate_era5_roll_Temp_C_daily.csv')
 max_cor_dates <- read.csv("../Compiled data/strongest_correlation_dates.csv")
 trends_matched <- max_cor_dates %>%
   left_join(trends, by = c("LakeID", "max_doy" = "doy")) %>%
@@ -31,17 +31,13 @@ trends_matched <- max_cor_dates %>%
 summer_hypo_mean <- read.csv("../Compiled data/summer_hypo_temp_mean_trends.csv") %>%
   rename(summer_hypo_mean = trend) %>%
   dplyr::select(summer_hypo_mean, LakeID)
-summer_epi_mean <- read.csv("../Compiled data/summer_epi_temp_trends.csv") %>%
-  rename(summer_epi_mean = trend) %>%
-  dplyr::select(summer_epi_mean, LakeID)
 
 water_trends_matched <- summer_hypo_mean %>%
-  full_join(summer_epi_mean) %>%
-  pivot_longer(cols = c(summer_hypo_mean, summer_epi_mean),
+  pivot_longer(cols = c(summer_hypo_mean),
                names_to = "layer",
                values_to = "trend") 
 
-hypo_trends <- trends_matched %>%
+hypo_trends_data <- trends_matched %>%
   dplyr::select(LakeID, season, trend) %>%
   mutate(layer = "summer_hypo_mean") %>%
   group_by(LakeID) %>%
@@ -52,7 +48,9 @@ hypo_trends <- trends_matched %>%
               rename(water_trend = trend) %>%
               filter(!is.na(water_trend))) %>%
   filter(layer == "summer_hypo_mean") %>%
-  mutate(season = ifelse(season == "spring", "Spring", "Summer")) %>%
+  mutate(season = ifelse(season == "spring", "Spring", "Summer")) 
+
+hypo_trends <- hypo_trends_data %>%
   ggplot(aes(x = air_trend, y = water_trend)) +
   geom_abline(slope = 1, color = "grey70") +
   geom_vline(xintercept = 0, color = "grey70") +
@@ -85,413 +83,97 @@ strip <- ggh4x::strip_themed(background_x = ggh4x::elem_list_rect(fill = c("#9bc
                       text_x = ggh4x::elem_list_text(colour = c("#25469a", "#c16586"))
                       )
 
-jpeg("../Figures/Temp_trends_by_season_reg.jpeg", width = 6, height = 3.5, units = "in", res = 300)
-ggarrange(air_trends_wide_blank,
+p_vals <- hypo_trends_data %>%
+  group_by(season) %>%
+  summarize(p_val = summary(lm(water_trend ~ air_trend))$coefficients[2,4]) %>%
+  mutate(p_val = ifelse(p_val < 0.001, "p < 0.001", 
+                         paste0("p = ", round(p_val, 2))))
+
+temp_plot <- ggarrange(air_trends_wide_blank,
           hypo_trends +
             xlab("Air temperature trend (ºC/y)") +
-            stat_cor(label.y = 0.3)+
             ggh4x::facet_wrap2(~ season, strip = strip) +
-            stat_regline_equation(label.y = 0.4) +
+            stat_regline_equation(label.y = 0.4, label.x = -0.06) +
+            geom_text(aes(x = -0.06, y = 0.3, label = p_val), data = p_vals, hjust = 0)+
             ylim(c(-0.61, 0.45)),
           align = "v", ncol = 1, heights = c(0.2, 1))
+
+jpeg("../Figures/Temp_trends_by_season_reg.jpeg", width = 6, height = 3.5, units = "in", res = 300)
+temp_plot
 dev.off()
 ```
 
-Okay now with epi too. This is a mess because there is no association between summer air temp trend and epi temp trend. 
+Repeat for DO
 
 ```{r}
-trends <- read.csv('../Compiled data/climate_era5_roll_"Temp_C"_daily.csv')
-max_cor_dates <- read.csv("../Compiled data/strongest_correlation_dates_both.csv")
-trends_matched <- max_cor_dates %>%
+max_cor_dates_DO <- read.csv("../Compiled data/strongest_correlation_dates_hypo.csv")
+trends_matched <- max_cor_dates_DO %>%
   left_join(trends, by = c("LakeID", "max_doy" = "doy")) %>%
   group_by(season) %>%
-  mutate(median = median(trend)) 
+  filter(var == "Summer hypo. DO") %>%
+  mutate(median = median(trend)) # median across all lakes
 
-summer_hypo_mean <- read.csv("summer_hypo_temp_mean_trends.csv") %>%
-  rename(summer_hypo_mean = trend) %>%
-  dplyr::select(summer_hypo_mean, LakeID)
-summer_epi_mean <- read.csv("summer_epi_temp_trends.csv") %>%
-  rename(summer_epi_mean = trend) %>%
-  dplyr::select(summer_epi_mean, LakeID)
+summer_hypo_do <- read.csv("../Compiled data/summer_hypo_DO_trends.csv") %>%
+  rename(summer_hypo_do = trend) %>%
+  dplyr::select(summer_hypo_do, LakeID)
 
-water_trends_matched <- summer_hypo_mean %>%
-  full_join(summer_epi_mean) %>%
-  pivot_longer(cols = c(summer_hypo_mean, summer_epi_mean),
-               names_to = "layer",
+water_trends_matched <- summer_hypo_do %>%
+  pivot_longer(cols = c(summer_hypo_do),
+               names_to = "var",
                values_to = "trend") 
 
-epi_hypo_trends <- trends_matched %>%
-  mutate(layer = ifelse(var == "Summer hypo. temperature",
-                        "summer_hypo_mean",
-                        "summer_epi_mean")) %>%
-  dplyr::select(LakeID, season, trend, layer) %>%
-  group_by(LakeID) %>%
-  #filter(sum(!is.na(trend)) == 4)%>%
-  filter(!is.na(trend)) %>%
-  rename(air_trend = trend) %>%
-  full_join(water_trends_matched %>%
-              rename(water_trend = trend) %>%
-              filter(!is.na(water_trend))) %>%
-  mutate(season = ifelse(season == "spring", "Spring", "Summer")) %>%
-  ggplot(aes(x = air_trend, y = water_trend)) +
-  geom_abline(slope = 1, color = "grey70") +
-  geom_vline(xintercept = 0, color = "grey70") +
-  geom_hline(yintercept = 0, color = "grey70") +
-  geom_point(alpha = 0.2)+
-  geom_smooth(aes(color = season), method = "lm", fill = "grey90", alpha = 0.8) + 
-  scale_color_manual(values = c("#25469a", "grey30"))+
-  xlab("Air temperature trend (ºC/y)\n(date most correlated with\nbottom-water temperature)")+
-  ylab("Summer bottom-water\ntemperature trend (ºC/y)")+
-  theme_bw()+
-  theme(axis.title.y = element_text(color = "#25469a"),
-        legend.position = "none")+
-  facet_grid(cols = vars(season), rows = vars(layer))
-
-air_trends_wide_blank <- trends_matched %>%
-  ggplot(aes(x = trend))+
-  geom_vline(aes(xintercept = 0), color = "grey70")+
-  scale_color_manual(values = c("#25469a", "#c16586"))+
-  geom_density(aes(color = season))+
-  theme_bw() + 
-  facet_wrap(~season, ncol = 2) +
-  theme_void() +
-  theme(strip.text = element_blank(),
-        legend.position = "none")
-
-library(ggh4x)
-# Only colour strips in x-direction
-strip <- strip_themed(background_x = elem_list_rect(fill = c("#9bceef", "#f3e9e9")),
-                      text_x = elem_list_text(colour = c("#25469a", "#c16586"))
-                      )
-
-#jpeg("../Figures/Temp_trends_by_season_reg.jpeg", width = 6, height = 4, units = "in", res = 300)
-ggarrange(air_trends_wide_blank,
-          epi_hypo_trends +
-            xlab("Air temperature trend (ºC/y)") +
-            stat_cor(label.y = 0.3)+
-            #facet_wrap2(~ season, strip = strip) +
-            stat_regline_equation(label.y = 0.38) +
-            ylim(c(-0.61, 0.45)),
-          align = "v", ncol = 1, heights = c(0.2, 1))
-#dev.off()
-```
-
-What about DO
-```{r}
-trends <- read.csv('../Compiled data/climate_era5_roll_"Temp_C"_daily.csv')
-max_cor_dates <- read.csv("../Compiled data/strongest_correlation_dates_hypo.csv")
-trends_matched <- max_cor_dates %>%
-  left_join(trends, by = c("LakeID", "max_doy" = "doy")) %>%
-  group_by(season) %>%
-  mutate(median = median(trend)) 
-
-summer_hypo_mean <- read.csv("summer_hypo_temp_mean_trends.csv") %>%
-  rename(summer_hypo_mean = trend) %>%
-  dplyr::select(summer_hypo_mean, LakeID)
-summer_do_mean <- read.csv("summer_do_trends.csv") %>%
-  rename(summer_do_mean = trend) %>%
-  dplyr::select(summer_do_mean, LakeID)
-
-water_trends_matched <- summer_hypo_mean %>%
-  full_join(summer_do_mean) %>%
-  pivot_longer(cols = c(summer_hypo_mean, summer_do_mean),
-               names_to = "layer",
-               values_to = "trend") 
-
-epi_hypo_trends <- trends_matched %>%
-  mutate(layer = ifelse(var == "Summer hypo. temperature",
-                        "summer_hypo_mean",
-                        "summer_epi_mean")) %>%
-  dplyr::select(LakeID, season, trend, layer) %>%
-  group_by(LakeID) %>%
-  #filter(sum(!is.na(trend)) == 4)%>%
-  filter(!is.na(trend)) %>%
-  rename(air_trend = trend) %>%
-  full_join(water_trends_matched %>%
-              rename(water_trend = trend) %>%
-              filter(!is.na(water_trend))) %>%
-  mutate(season = ifelse(season == "spring", "Spring", "Summer")) %>%
-  ggplot(aes(x = air_trend, y = water_trend)) +
-  geom_abline(slope = 1, color = "grey70") +
-  geom_vline(xintercept = 0, color = "grey70") +
-  geom_hline(yintercept = 0, color = "grey70") +
-  geom_point(alpha = 0.2)+
-  geom_smooth(aes(color = season), method = "lm", fill = "grey90", alpha = 0.8) + 
-  scale_color_manual(values = c("#25469a", "grey30"))+
-  xlab("Air temperature trend (ºC/y)\n(date most correlated with\nbottom-water temperature)")+
-  ylab("Summer bottom-water\ntemperature trend (ºC/y)")+
-  theme_bw()+
-  theme(axis.title.y = element_text(color = "#25469a"),
-        legend.position = "none")+
-  facet_grid(cols = vars(season), rows = vars(layer))
-
-air_trends_wide_blank <- trends_matched %>%
-  ggplot(aes(x = trend))+
-  geom_vline(aes(xintercept = 0), color = "grey70")+
-  scale_color_manual(values = c("#25469a", "#c16586"))+
-  geom_density(aes(color = season))+
-  theme_bw() + 
-  facet_wrap(~season, ncol = 2) +
-  theme_void() +
-  theme(strip.text = element_blank(),
-        legend.position = "none")
-
-library(ggh4x)
-# Only colour strips in x-direction
-strip <- strip_themed(background_x = elem_list_rect(fill = c("#9bceef", "#f3e9e9")),
-                      text_x = elem_list_text(colour = c("#25469a", "#c16586"))
-                      )
-
-#jpeg("../Figures/Temp_trends_by_season_reg.jpeg", width = 6, height = 4, units = "in", res = 300)
-ggarrange(air_trends_wide_blank,
-          epi_hypo_trends +
-            xlab("Air temperature trend (ºC/y)") +
-            stat_cor(label.y = 0.3)+
-            #facet_wrap2(~ season, strip = strip) +
-            stat_regline_equation(label.y = 0.38) +
-            ylim(c(-0.61, 0.45)),
-          align = "v", ncol = 1, heights = c(0.2, 1))
-#dev.off()
-```
-
-What if we constrain to day 110
-
-```{r}
-trends <- read.csv('../Compiled data/climate_era5_roll_"Temp_C"_daily.csv')
-max_cor_dates <- read.csv("../Compiled data/strongest_correlation_dates.csv") %>%
-  mutate(max_doy = ifelse(season == "spring", 110, max_doy))
-trends_matched <- max_cor_dates %>%
-  left_join(trends, by = c("LakeID", "max_doy" = "doy")) %>%
-  group_by(season) %>%
-  mutate(median = median(trend)) 
-
-air_trends <- trends_matched %>%
+hypo_trends_data_do <- trends_matched %>%
+  dplyr::select(LakeID, season, trend) %>%
+  mutate(var = "summer_hypo_do") %>%
   group_by(LakeID) %>%
   filter(sum(!is.na(trend)) == 2) %>%
-  mutate(season = ifelse(season == "spring",
-                         "Spring (date most\ncorrelated with\nbottom-water temperature)",
-                         "Summer (date most\ncorrelated with\nsurface-water temperature)")) %>%
-  ggplot(aes(y = trend, x = season))+
-  #geom_vline(aes(xintercept = median, color = season), lty = "dotted")+
+  filter(!is.na(trend)) %>%
+  rename(air_trend = trend) %>%
+  full_join(water_trends_matched %>%
+              rename(water_trend = trend) %>%
+              filter(!is.na(water_trend))) %>%
+  filter(var == "summer_hypo_do") %>%
+  mutate(season = ifelse(season == "spring", "Spring", "Summer")) 
+
+hypo_trends_do <- hypo_trends_data_do %>%
+  ggplot(aes(x = air_trend, y = water_trend)) +
+  geom_vline(xintercept = 0, color = "grey70") +
   geom_hline(yintercept = 0, color = "grey70") +
-  geom_boxplot(width = 0.45)+
-  ylab("Air temperature trend (ºC/y)") +
-  stat_compare_means(label.y = 0.085, label.x = 1.25)+
+  geom_point(alpha = 0.5)+
+  geom_smooth(aes(color = season), method = "lm", fill = "grey90", alpha = 0.8) + 
+  scale_color_manual(values = c("grey30", "grey30"))+
+  xlab("Air temperature trend (ºC/y)\n(date most correlated with\nbottom-water temperature)")+
+  ylab("Summer bottom-water\nDO trend (mg/L/y)")+
   theme_bw()+
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(color = c("#25469a", "#c16586")))
+  theme(axis.title.y = element_text(color = "#25469a"),
+        legend.position = "none")+
+  facet_wrap(~season)
 
-jpeg("../Figures/Temp_trends_by_season_110.jpeg", width = 3.5, height = 3, units = "in", res = 300)
-air_trends+
-  scale_x_discrete(expand=c(0.3,0))
+p_vals_do <- hypo_trends_data_do %>%
+  group_by(season) %>%
+  summarize(p_val = summary(lm(water_trend ~ air_trend))$coefficients[2,4]) %>%
+  mutate(p_val = ifelse(p_val < 0.001, "p < 0.001", 
+                         paste0("p = ", round(p_val, 2))))
+
+jpeg("../Figures/Temp_trends_by_season_reg_DO.jpeg", width = 6, height = 6, units = "in", res = 300)
+ggarrange(ggarrange(air_trends_wide_blank,
+                    hypo_trends +
+                      xlab("Air temperature trend (ºC/y)") +
+                      ggh4x::facet_wrap2(~ season, strip = strip) +
+                      stat_regline_equation(label.y = 0.4, label.x = -0.06) +
+                      geom_text(aes(x = -0.06, y = 0.3, label = p_val), data = p_vals, hjust = 0)+
+                      ylim(c(-0.61, 0.45))+ 
+                      theme(axis.title.x = element_blank(),
+                            axis.text.x = element_blank(),
+                            axis.ticks.x = element_blank()),
+                    align = "v", ncol = 1, heights = c(0.2, 1)) ,
+          hypo_trends_do +
+            xlab("Air temperature trend (ºC/y)") +
+            ggh4x::facet_wrap2(~ season) +
+            stat_regline_equation(label.y = 0.43, label.x = -0.06) +
+            geom_text(aes(x = -0.06, y = 0.35, label = p_val), data = p_vals_do, hjust = 0)+
+            ylim(c(-0.35, 0.45))+
+            theme(strip.text = element_blank()),
+          align = "v", ncol = 1, heights = c(1.2, 1))
 dev.off()
 ```
-
-```{r}
-sen_slope_climate <- function(df,var){
-  df <- df %>%
-    mutate(date = ymd_hms(paste(Year,"-01-01 00:00:00")))
-  output = df %>%
-    group_by(LakeID)%>%
-    dplyr::summarize(n = n(),
-                     trend = NA,
-                     sig = NA,
-                     min_year = NA,
-                     max_year = NA)
-  for(lake in unique(df$LakeID)){
-      filt = df%>%
-        filter(LakeID==lake)
-      if(length(unique(filt$Year))>=5){
-        sen = trend::sens.slope(filt[[var]])
-        output$trend[output$LakeID==lake]<-sen$estimates[1]
-        output$sig[output$LakeID==lake]<-sen$p.value[1]
-        output$min_year[output$LakeID==lake]<-min(year(filt$date))
-        output$max_year[output$LakeID==lake]<-max(year(filt$date))
-      }
-  }
-  return(output)
-}
-
-sen_slope_doys <- function(df, var, doys) {
-  output <- sen_slope_climate(df%>%filter(doy == doys[1]), var)%>%
-    mutate(doy = doys[1])
-  
-  if(length(doys)>1){
-    for (doy_n in doys[2:length(doys)]) {
-      output <- rbind(output, 
-                      sen_slope_climate(df %>% filter(doy == doy_n), var)%>%
-                        mutate(doy = doy_n)
-    )
-    }
-  }
-  
-  write.csv(output, paste0("../Compiled data/", 
-                           deparse(substitute(df)), "_",
-                           deparse(substitute(var)), "_daily.csv"), 
-              row.names = F)
-  return(output)
-}
-
-climate_era5_trends <- sen_slope_doys(climate_era5_roll, 
-                                        "Temp_C",
-                                        doys = 1:max(climate_era5_roll$doy))
-
-all_plot <- climate_era5_trends %>%
-  left_join(lat_long) %>%
-  mutate(Region = ifelse(StateOrProvince %in% c("Wisconsin", "Minnesota", "Michigan"),
-                         "Midwest",
-                         ifelse(StateOrProvince %in% c("Maine", "New York", "NH", "New Hampshire", "Vermont"), "NE", "Other"))) %>%
-    group_by(doy, Region)%>%
-    summarize(p = wilcox.test(trend)$p.value,
-           n = n(),
-           mean = mean(trend, na.rm = T),
-           sd = sd(trend, na.rm = T),
-           sig = ifelse(p < alpha, T, F))
-
-all_plot$group <- 1
-for(i in 1:length(unique(all_plot$Region))){
-  all_plot$group[all_plot$Region == unique(all_plot$Region)[i]] <- group_fun(all_plot$sig[all_plot$Region == unique(all_plot$Region)[i]])
-}
-
-empty_df <- data.frame()
-
-all_plot1 <- all_plot %>%
-  mutate(DateTime = as.Date("2022-01-01") + days(doy))
-
-all_plot2 <- all_plot %>%
-  ungroup() %>%
-  mutate(DateTime = as.Date("2022-01-01") + days(doy) + hours(23) + minutes(59),
-         mean = ifelse(!is.na(lead(Region)) & lead(Region) == Region, lead(mean), mean), #to get smooth lines
-         sd = ifelse(lead(Region) == Region, lead(Region), sd))
-
-all_plot1 %>%
-  full_join(all_plot2) %>%
-  mutate(DateTime = as.Date("2022-01-01") + doy) %>%
-  ggplot()+
-  geom_hline(yintercept=0)+
-  geom_ribbon(aes(x = DateTime, 
-                  ymin = mean - sd, ymax = mean + sd,
-                  fill = sig, group = group),
-              alpha = 0.5) +
-  geom_line(aes(x = DateTime, y = mean)) +
-  xlab("Date")+
-  ylab("Air temperature trend (ºC/y)")+
-  theme_bw()+
-  scale_fill_manual(values = c("grey40","#0FA9E6"))+
-  labs(fill = paste0("p < ",alpha)) +
-  facet_wrap(~Region)
-```
-
-Map
-```{r}
-library(ggthemes)
-library(sf)
-library(rnaturalearth)
-library(rnaturalearthdata)
-#remotes::install_github("ropensci/rnaturalearthhires")
-library(rnaturalearthhires)
-library(ggspatial)
-library(viridis)
-library(ggpubr)
-
-all_trends <- climate_era5_trends %>% 
-  mutate(Model = "ERA5",
-         Month = factor(Month, 
-                        levels = unique(Month), 
-                        labels = month.abb[unique(Month)],
-                        ordered = T))
-min = min(all_trends$trend)*10
-max = max(all_trends$trend)*10
-abs_max = max(abs(c(min,max)))
-
-for_states <- all_trends%>%
-  left_join(lat_long)
-states <- ne_states(returnclass = "sf",country = "United States of America")
-
-plot_nh <- function(for_states){
-  world <- ne_countries(scale = "medium", returnclass = "sf")
-nh_map = ggplot(data = states) +
-  geom_sf(fill = "grey98", color = "grey80", data = world) +
-  geom_sf(fill = "white") +
-  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-76,-67))+
-  geom_point(data = for_states, 
-             aes(Longitude_DD, Latitude_DD, fill = trend*10),
-             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
-  theme_bw()+
-  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
-                       colours = c("blue","white","red"),
-                       limits = c(-abs_max, abs_max))+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.background = element_rect(fill = "grey90"),
-        panel.grid = element_blank(),
-        legend.position = "bottom",
-        strip.text = element_blank())+
-  facet_grid(rows = vars(Month))
-}
-
-plot_wi <- function(for_states){
-  wi_map = ggplot(data = states) +
-  geom_sf(fill = "white") +
-  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
-  geom_point(data = for_states, 
-             aes(Longitude_DD, Latitude_DD, fill = trend*10),
-             shape = 21, color = "grey50", size = 2, alpha  =.5, stroke = .4)+
-  theme_minimal()+
-  #scale_fill_viridis(name = "Air temperature trend\n(ºC/decade)",
-  #                   limits = c(min,max), option = "H")+
-  scale_fill_gradientn(name = "Air temperature trend\n(ºC/decade)",
-                       colours = c("blue","white","red"),
-                       limits = c(-abs_max, abs_max))+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        legend.position = "bottom",
-        panel.background = element_rect(fill = "grey90"),
-        panel.grid = element_blank(),
-        panel.border=element_rect(fill=NA, colour="black")) +
-  facet_grid(rows = vars(Month), switch = "y")
-  return(wi_map)
-}
-
-wi_half1 <- plot_wi(for_states %>% filter(Month %in% c(month.abb[seq(1, 12, by = 2)])))
-wi_half2 <- plot_wi(for_states %>% filter(Month %in% c(month.abb[seq(2, 12, by = 2)])))
-nh_half1 <- plot_nh(for_states %>% filter(Month %in% c(month.abb[seq(1, 12, by = 2)])))
-nh_half2 <- plot_nh(for_states %>% filter(Month %in% c(month.abb[seq(2, 12, by = 2)])))
-wi_spring <- plot_wi(for_states %>% 
-                       filter(Month %in% c(month.abb[2:4]))%>%
-                       mutate(Month = "Spring"))
-wi_summer <- plot_wi(for_states %>% 
-                       filter(Month %in% c(month.abb[7:8]))%>%
-                       mutate(Month = "Summer"))
-wi_annual <- plot_wi(for_states %>% 
-                       mutate(Month = "Mean annual"))
-nh_spring <- plot_nh(for_states %>% 
-                       filter(Month %in% c(month.abb[2:4]))%>%
-                       mutate(Month = "Spring"))
-nh_summer <- plot_nh(for_states %>% 
-                       filter(Month %in% c(month.abb[7:8]))%>%
-                       mutate(Month = "Summer"))
-nh_annual <- plot_nh(for_states %>% 
-                       mutate(Month = "Mean annual"))
-
-jpeg("../Figures/temperature_trends_wi_ne.jpeg", height = 6, width = 4.5, units = "in", res = 300)
-ggarrange(wi_half1, nh_half1, plot_spacer(), wi_half2, nh_half2, 
-          ncol = 5, nrow = 1, widths = c(1,1,0.1,1,1),
-          common.legend = TRUE, legend = "bottom")
-dev.off()
-
-jpeg("../Figures/temperature_trends_wi_ne_sum.jpeg", height = 4.5, width = 3, units = "in", res = 300)
-ggarrange(wi_spring, nh_spring, 
-          wi_summer, nh_summer, 
-          wi_annual, nh_annual,
-          ncol = 2, nrow = 3,
-          common.legend = TRUE, legend = "bottom")
-dev.off()
-```
-

@@ -265,7 +265,7 @@ write.csv(dates_export_both,
 dates_export_hypo <- dates_to_plot %>%
   ungroup() %>%
   filter(grepl("hypo", var)) %>%
-  filter((grepl("temperature", var)) | #epi
+  filter((grepl("temperature", var)) |
            (grepl("DO", var))) 
 
 write.csv(dates_export_hypo, 
