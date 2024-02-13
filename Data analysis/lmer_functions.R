@@ -36,11 +36,12 @@ renamer = function(text_vect){
   i = 1
   while(i <= length(text_vect)){
     text = text_vect[i]
-    if(text=="log_max_depth")      output[i]="Maximum depth"
-    if(text=="log_SA")             output[i]="Surface area"
-    if(text=="Latitude_DD")        output[i]="Latitude"
-    if(text=="buoyancy_freq")      output[i]="Maximum\nbuoyancy freq."
+    if(text=="log_max_depth")        output[i]="Maximum depth"
+    if(text=="log_SA")               output[i]="Surface area"
+    if(text=="Latitude_DD")          output[i]="Latitude"
+    if(text=="buoyancy_freq")        output[i]="Maximum\nbuoyancy frequency"
     if(text=="log_SA:log_max_depth") output[i]="Surface area :\nmaximum depth"
+    if(text=="log_SA:buoyancy_freq") output[i]="Surface area :\nbuoyancy frequency"
     i = i+1
   }
   return(output)

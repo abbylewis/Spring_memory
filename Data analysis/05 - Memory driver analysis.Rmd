@@ -25,18 +25,15 @@ source("lmer_functions.R")
 #Set global options
 sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
-alpha <- 0.001
 
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
-all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
-  mutate(sig = ifelse(p < alpha, T, F))
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") 
 #Buoyancy frequency
 bf = read.csv("../Compiled data/summer_averages_wi.csv")%>%
   group_by(LakeID) %>%
   summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
-hylak <- read.csv("../Compiled data/hydrolakes_full.csv")
 
 # Make a directory for Figures if there isn't one
 if (!dir.exists("../Figures")){dir.create("../Figures")}
@@ -76,10 +73,8 @@ mem_lm <- memory %>%
   select(LakeID, var, M) %>%
   left_join(bf) %>%
   left_join(lat_long) %>%
-  left_join(hylak %>% select(LakeID, Res_time)) %>%
   mutate(log_SA = log(SurfaceArea_ha),
-         log_max_depth = log(MaximumDepth_m),
-         log_res_time = log(Res_time)) %>%
+         log_max_depth = log(MaximumDepth_m)) %>%
   pivot_wider(names_from = var, values_from = M) %>%
   rename(epi_temp = `Summer epi. temperature`,
          hypo_temp = `Summer bottom-water\ntemperature`,
@@ -94,7 +89,14 @@ fm1 <- lm(epi_temp ~ log_SA*log_max_depth*buoyancy_freq,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
-#Intercept only model is best
+export_epi <- subset(dd, delta < 2) %>% 
+  mutate(var = "Surface-water temperature") %>%
+  filter(!is.na(`(Intercept)`))
+mod_lm_epi_temp <- lm(epi_temp ~ log_SA + log_max_depth +
+                    log_max_depth:log_SA, 
+             data = mem_lm_df) 
+summary(mod_lm_epi_temp)
+#No significant main effect relationships
 
 responses <- c("hypo_temp")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
@@ -103,9 +105,13 @@ fm1 <- lm(hypo_temp ~ log_SA * log_max_depth * buoyancy_freq,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
+export_hypo <- subset(dd, delta < 2) %>% 
+  mutate(var = "Bottom-water temperature") %>%
+  filter(!is.na(`(Intercept)`))
 mod_lm_temp <- lm(hypo_temp ~ log_SA + buoyancy_freq + log_max_depth +
                     log_max_depth:log_SA, 
              data = mem_lm_df) 
+summary(mod_lm_temp)
 
 responses <- c("hypo_do")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
@@ -114,7 +120,11 @@ fm1 <- lm(hypo_do ~ log_SA * log_max_depth * buoyancy_freq,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
-mod_lm_do <- lm(hypo_do ~ log_SA + buoyancy_freq, data = mem_lm_df) 
+export_do <- subset(dd, delta < 2) %>% 
+  mutate(var = "Bottom-water dissolved oxygen") %>%
+  filter(!is.na(`(Intercept)`))
+mod_lm_do <- lm(hypo_do ~ log_SA + buoyancy_freq + log_max_depth + log_SA:buoyancy_freq, data = mem_lm_df) 
+summary(mod_lm_do)
 
 responses <- c("vhod")
 mem_lm_df <- standardize_data(mem_lm, responses, potential_drivers)
@@ -123,64 +133,31 @@ fm1 <- lm(vhod ~ log_SA * log_max_depth * buoyancy_freq,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
 subset(dd, delta < 2)
+export_vhod <- subset(dd, delta < 2) %>% 
+  mutate(var = "Bottom-water oxygen demand") %>%
+  filter(!is.na(`(Intercept)`))
 #Intercept only model is best
 
-#Plot temp and DO together
-#Temp first
-effects_temp = data.frame(summary(mod_lm_temp)$coefficients)%>%
-  rename(std_error = Std..Error)
-effects_temp$Var = row.names(effects_temp)
-confs_temp = data.frame(confint(mod_lm_temp))
-confs_temp$Var = row.names(confs_temp)
-effects2_temp = effects_temp%>%
-  left_join(confs_temp)%>%
-  rename(xmin = X2.5..,
-         xmax = X97.5..)
-#DO
-effects_do = data.frame(summary(mod_lm_do)$coefficients)%>%
-  rename(std_error = Std..Error)
-effects_do$Var = row.names(effects_do)
-confs_do = data.frame(confint(mod_lm_do))
-confs_do$Var = row.names(confs_do)
-effects2_do = effects_do%>%
-  left_join(confs_do)%>%
-  rename(xmin = X2.5..,
-         xmax = X97.5..)
-#Combine
-effects2 <- effects2_temp %>%
-  mutate(name = "hypo_temp")%>%
-  full_join(effects2_do %>% mutate(name = "hypo_do"))
-
-#Plot
-comb <- effects2%>%
-  filter(!Var=="(Intercept)")%>%
-  mutate(Var = renamer(Var),
-         Var = factor(Var, levels = Var[order(abs(Estimate[name == "hypo_temp"]))]))%>%
-  mutate(name = factor(name, 
-                       levels = c("hypo_temp",
-                                  "hypo_do"),
-                       labels = c("Summer bottom-water\ntemperature",
-                                  "Summer bottom-water\ndissolved oxygen"))) %>%
-  ggplot(aes(y = Var, x=Estimate))+
-  geom_vline(xintercept = 0)+
-  geom_point()+
-  geom_errorbar(aes(xmin=xmin, xmax = xmax),width=0.1)+
-  theme_bw()+
-  xlab("Parameter estimate")+
-  geom_text(x = -0.5, y = -0.8, label = "More correlated\nwith spring", 
-           hjust = 0, lineheight = .9, size = 3, 
-           data = data.frame(name = factor("Summer bottom-water\ntemperature",
-                                          levels = c("Summer bottom-water\ntemperature",
-                                                     "Summer bottom-water\ndissolved oxygen"))))+
-  geom_text(x = 0.15, y = -0.8, label = "More correlated\nwith summer", 
-           hjust = 1, lineheight = .9, size = 3, 
-           data = data.frame(name = factor("Summer bottom-water\ndissolved oxygen",
-                                          levels = c("Summer bottom-water\ntemperature",
-                                                     "Summer bottom-water\ndissolved oxygen"))))+
-  theme(axis.title.y = element_blank(),
-        plot.margin = unit(c(5.5, 5.5, 10, 5.5), "pt"))+
-  facet_wrap(~name)+
-  coord_cartesian(ylim = c(1, 4), clip = F)
+export_all <- export_epi %>%
+  full_join(export_hypo) %>%
+  full_join(export_do) %>%
+  full_join(export_vhod)
+export <- as.data.frame(export_all) %>%
+  relocate(var) %>%
+  select(-weight, -delta) %>%
+  select(where(~sum(!is.na(.x)) > 0)) %>%
+  mutate(across(is.numeric, round, 3),
+         across(c(logLik, AICc), round, 1),
+         across(everything(), ~ifelse(is.na(.),"",.))) %>%
+  rename(`Buoyancy freq.` = buoyancy_freq,
+         `Log-likelihood` = logLik,
+         `Intercept` = `(Intercept)`,
+         `Max. depth` = log_max_depth,
+         `Surface area` = `log_SA`,
+         `Buoyancy freq. :\nmax. depth` = `buoyancy_freq:log_max_depth`,
+         `Buoyancy freq. :\nsurface area` = `buoyancy_freq:log_SA`,
+         `Max. depth :\nsurface area` = `log_max_depth:log_SA`)
+write.csv(export, "../Compiled data/driver analysis results.csv", row.names = F)
 ```
 
 Step 4: Plot identified drivers
@@ -197,39 +174,29 @@ mem_plot <- memory %>%
   geom_hline(yintercept = 0)+
   geom_point(aes(color = SA_class, shape = SA_class))+
   geom_smooth(method = "lm", aes(color = SA_class))+
-  ylab("Relative correlation with\nsummer vs. spring air temp")+
-  #stat_cor(label.y = 0.7) +
   theme_bw() +
   xlab("Maximum buoyancy frequency (1/s)")+
   scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
   scale_shape_discrete(name = "Lake size")+
   facet_wrap(~var)+
-  ylab("\n\n")+
-  geom_text(x = 0, y = 0.65, label = "More correlated\nwith summer", 
+  ylab("\n\n\n")+
+  geom_text(x = -0.0005, y = 0.65, label = "More correlated\nwith summer", 
            hjust = 1, lineheight = .9, size = 3, 
            data = data.frame(var = factor("Summer bottom-water\ntemperature",
                                           levels = c("Summer bottom-water\ntemperature",
                                                      "Summer bottom-water\ndissolved oxygen"))))+
-  geom_text(x = 0, y = -0.65, label = "More correlated\nwith spring", 
+  geom_text(x = -0.0005, y = -0.65, label = "More correlated\nwith spring", 
            hjust = 1, lineheight = .9, size = 3, 
            data = data.frame(var = factor("Summer bottom-water\ntemperature",
                                           levels = c("Summer bottom-water\ntemperature",
                                                      "Summer bottom-water\ndissolved oxygen"))))+
   coord_cartesian(ylim = c(-0.65,0.65), clip = "off")
 
-jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 5.5, units = "in")
-ggarrange(comb +
-            ggtitle("Relative correlation with summer vs. spring air temp") +
-            theme(plot.title = element_text(size = 11)),
-          mem_plot + 
-            guides(shape = guide_legend(override.aes = list(size = 3)))+
-            theme(legend.position = "bottom",
-                  legend.margin=margin(c(0,0,0,0))),
-          nrow = 2, 
-          align = "v", heights = c(1,1.4), labels = "auto", label.x = .1)+
-  theme(plot.margin = margin(0.1,0.1,0.1,-1, "cm"))
+jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 3, units = "in")
+mem_plot + 
+  guides(shape = guide_legend(override.aes = list(size = 3)))+
+  theme(legend.position = "bottom",
+        legend.margin=margin(c(0,0,0,0)))
 dev.off()
-
-comb
 ```
 

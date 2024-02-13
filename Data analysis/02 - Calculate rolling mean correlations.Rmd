@@ -43,7 +43,8 @@ daily_temp <- daily_temp_raw %>%
          Date = ifelse(Lat < 0, Date - months(6), Date),
          Date = as.Date(Date, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
-  mutate(Year = year(Date))
+  mutate(Year = year(Date)) %>%
+  filter(Year <= 2022)
 rm(daily_temp_raw)
 ```
 

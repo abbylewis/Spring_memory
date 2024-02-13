@@ -26,7 +26,16 @@ max_cor_dates <- read.csv("../Compiled data/strongest_correlation_dates.csv")
 trends_matched <- max_cor_dates %>%
   left_join(trends, by = c("LakeID", "max_doy" = "doy")) %>%
   group_by(season) %>%
-  mutate(median = median(trend)) 
+  mutate(median = median(trend),
+         mean = mean(trend),
+         sd = sd(trend)) 
+
+trends_matched %>%
+  select(season, median, mean, sd) %>%
+  mutate(median = median *10, 
+         mean = mean *10, 
+         sd = sd *10) %>%
+  unique()
 
 summer_hypo_mean <- read.csv("../Compiled data/summer_hypo_temp_mean_trends.csv") %>%
   rename(summer_hypo_mean = trend) %>%
@@ -65,15 +74,12 @@ hypo_trends <- hypo_trends_data %>%
         legend.position = "none")+
   facet_wrap(~season)
 
-air_trends_wide <- trends_matched %>%
+air_trends_wide_blank <- trends_matched %>%
   ggplot(aes(x = trend))+
   geom_vline(aes(xintercept = 0), color = "grey70")+
   scale_color_manual(values = c("#25469a", "#c16586"))+
   geom_density(aes(color = season))+
-  theme_bw() + 
-  facet_wrap(~season, ncol = 2)
-
-air_trends_wide_blank <- air_trends_wide +
+  facet_wrap(~season, ncol = 2) +
   theme_void() +
   theme(strip.text = element_blank(),
         legend.position = "none")
