@@ -60,22 +60,22 @@ hypo_trends_data <- trends_matched %>%
   mutate(season = ifelse(season == "spring", "Spring", "Summer")) 
 
 hypo_trends <- hypo_trends_data %>%
-  ggplot(aes(x = air_trend, y = water_trend)) +
+  ggplot(aes(x = air_trend*10, y = water_trend*10)) +
   geom_abline(slope = 1, color = "grey70") +
   geom_vline(xintercept = 0, color = "grey70") +
   geom_hline(yintercept = 0, color = "grey70") +
   geom_point(alpha = 0.5)+
   geom_smooth(aes(color = season), method = "lm", fill = "grey90", alpha = 0.8) + 
   scale_color_manual(values = c("#25469a", "grey30"))+
-  xlab("Air temperature trend (ºC/y)\n(date most correlated with\nbottom-water temperature)")+
-  ylab("Summer bottom-water\ntemperature trend (ºC/y)")+
+  xlab("Air temperature trend (ºC/decade)\n(date most correlated with\nbottom-water temperature)")+
+  ylab("Summer bottom-water\ntemperature trend (ºC/decade)")+
   theme_bw()+
   theme(axis.title.y = element_text(color = "#25469a"),
         legend.position = "none")+
   facet_wrap(~season)
 
 air_trends_wide_blank <- trends_matched %>%
-  ggplot(aes(x = trend))+
+  ggplot(aes(x = trend*10))+
   geom_vline(aes(xintercept = 0), color = "grey70")+
   scale_color_manual(values = c("#25469a", "#c16586"))+
   geom_density(aes(color = season))+
@@ -97,11 +97,11 @@ p_vals <- hypo_trends_data %>%
 
 temp_plot <- ggarrange(air_trends_wide_blank,
           hypo_trends +
-            xlab("Air temperature trend (ºC/y)") +
+            xlab("Air temperature trend (ºC/decade)") +
             ggh4x::facet_wrap2(~ season, strip = strip) +
-            stat_regline_equation(label.y = 0.4, label.x = -0.06) +
-            geom_text(aes(x = -0.06, y = 0.3, label = p_val), data = p_vals, hjust = 0)+
-            ylim(c(-0.61, 0.45)),
+            stat_regline_equation(label.y = 4, label.x = -0.6) +
+            geom_text(aes(x = -0.6, y = 3, label = p_val), data = p_vals, hjust = 0)+
+            ylim(c(-6.1, 4.5)),
           align = "v", ncol = 1, heights = c(0.2, 1))
 
 jpeg("../Figures/Temp_trends_by_season_reg.jpeg", width = 6, height = 3.5, units = "in", res = 300)
