@@ -60,6 +60,11 @@ not_na%>%
 min(not_na$Date)
 max(not_na$Date)
 
+# Total number of profiles
+not_na %>%
+  select(LakeID, Date) %>%
+  unique()
+
 lat_long%>%
   ungroup() %>%
   filter(LakeID %in% not_na$LakeID) %>%
