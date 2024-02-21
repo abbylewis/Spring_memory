@@ -5,7 +5,7 @@ date: "2023-05-22"
 output: html_document
 ---
 
-This file performs a driver analysis to characterize the extent to which lake morphometric factos explain variation in the strength of seasonal ecological memory
+This file performs a driver analysis to characterize the extent to which lake morphometric factors explain variation in the strength of seasonal ecological memory
 
 Table of contents: 
 - Step 1: Load packages and data 
@@ -20,6 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(ggpubr)
+library(ggtext)
 source("lmer_functions.R")
 
 #Set global options
@@ -79,12 +80,15 @@ mem_lm <- memory %>%
   rename(epi_temp = `Summer epi. temperature`,
          hypo_temp = `Summer bottom-water\ntemperature`,
          hypo_do = `Summer bottom-water\ndissolved oxygen`,
-         vhod = `Summer VHOD`)
+         vhod = `Summer VHOD`) %>%
+  ungroup()
+
+pairs(mem_lm %>% select(c("log_SA", "log_max_depth", "buoyancy_freq")))
 
 responses <- c("epi_temp")
 potential_drivers <- c("log_SA", "log_max_depth", "buoyancy_freq")
 mem_lm_df <- standardize_data(mem_lm, responses, potential_drivers)
-fm1 <- lm(epi_temp ~ log_SA*log_max_depth*buoyancy_freq, 
+fm1 <- lm(epi_temp ~ log_SA + log_max_depth + buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
@@ -92,15 +96,10 @@ subset(dd, delta < 2)
 export_epi <- subset(dd, delta < 2) %>% 
   mutate(var = "Surface-water temperature") %>%
   filter(!is.na(`(Intercept)`))
-mod_lm_epi_temp <- lm(epi_temp ~ log_SA + log_max_depth +
-                    log_max_depth:log_SA, 
-             data = mem_lm_df) 
-summary(mod_lm_epi_temp)
-#No significant main effect relationships
 
 responses <- c("hypo_temp")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
-fm1 <- lm(hypo_temp ~ log_SA * log_max_depth * buoyancy_freq, 
+fm1 <- lm(hypo_temp ~ log_SA + log_max_depth + buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
@@ -108,14 +107,13 @@ subset(dd, delta < 2)
 export_hypo <- subset(dd, delta < 2) %>% 
   mutate(var = "Bottom-water temperature") %>%
   filter(!is.na(`(Intercept)`))
-mod_lm_temp <- lm(hypo_temp ~ log_SA + buoyancy_freq + log_max_depth +
-                    log_max_depth:log_SA, 
+mod_lm_temp <- lm(hypo_temp ~ log_SA + buoyancy_freq, 
              data = mem_lm_df) 
 summary(mod_lm_temp)
 
 responses <- c("hypo_do")
 mem_lm_df <- standardize_data(mem_lm,responses,potential_drivers)
-fm1 <- lm(hypo_do ~ log_SA * log_max_depth * buoyancy_freq, 
+fm1 <- lm(hypo_do ~ log_SA + log_max_depth + buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
@@ -123,12 +121,12 @@ subset(dd, delta < 2)
 export_do <- subset(dd, delta < 2) %>% 
   mutate(var = "Bottom-water dissolved oxygen") %>%
   filter(!is.na(`(Intercept)`))
-mod_lm_do <- lm(hypo_do ~ log_SA + buoyancy_freq + log_max_depth + log_SA:buoyancy_freq, data = mem_lm_df) 
+mod_lm_do <- lm(hypo_do ~ log_SA + buoyancy_freq, data = mem_lm_df) 
 summary(mod_lm_do)
 
 responses <- c("vhod")
 mem_lm_df <- standardize_data(mem_lm, responses, potential_drivers)
-fm1 <- lm(vhod ~ log_SA * log_max_depth * buoyancy_freq, 
+fm1 <- lm(vhod ~ log_SA + log_max_depth + buoyancy_freq, 
           data = mem_lm_df,
           na.action = "na.fail")
 dd <- MuMIn::dredge(fm1)
@@ -153,10 +151,7 @@ export <- as.data.frame(export_all) %>%
          `Log-likelihood` = logLik,
          `Intercept` = `(Intercept)`,
          `Max. depth` = log_max_depth,
-         `Surface area` = `log_SA`,
-         `Buoyancy freq. :\nmax. depth` = `buoyancy_freq:log_max_depth`,
-         `Buoyancy freq. :\nsurface area` = `buoyancy_freq:log_SA`,
-         `Max. depth :\nsurface area` = `log_max_depth:log_SA`)
+         `Surface area` = `log_SA`)
 write.csv(export, "../Compiled data/driver analysis results.csv", row.names = F)
 ```
 
@@ -179,7 +174,7 @@ mem_plot <- memory %>%
   scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
   scale_shape_discrete(name = "Lake size")+
   facet_wrap(~var)+
-  ylab("\n\n\n")+
+  labs(y="<br/><br/><br/><i>M<sub>su-sp</sub></i>") +
   geom_text(x = -0.0005, y = 0.65, label = "More correlated\nwith summer", 
            hjust = 1, lineheight = .9, size = 3, 
            data = data.frame(var = factor("Summer bottom-water\ntemperature",
@@ -190,7 +185,8 @@ mem_plot <- memory %>%
            data = data.frame(var = factor("Summer bottom-water\ntemperature",
                                           levels = c("Summer bottom-water\ntemperature",
                                                      "Summer bottom-water\ndissolved oxygen"))))+
-  coord_cartesian(ylim = c(-0.65,0.65), clip = "off")
+  coord_cartesian(ylim = c(-0.65,0.65), clip = "off")+
+  theme(axis.title.y = element_markdown())
 
 jpeg("../Figures/Memory drivers.jpg", res = 300, width = 5, height = 3, units = "in")
 mem_plot + 

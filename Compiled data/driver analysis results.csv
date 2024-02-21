@@ -1,18 +1,13 @@
-"var","Intercept","Buoyancy freq.","Max. depth","Surface area","Buoyancy freq. :
-max. depth","Buoyancy freq. :
-surface area","Max. depth :
-surface area","df","Log-likelihood","AICc"
-"Surface-water temperature",0.199,"","0.019","0.003","","","-0.02",5,87.4,-164.6
-"Surface-water temperature",0.195,"0.008","0.021","","0.022","","",5,87.1,-164
-"Surface-water temperature",0.199,"0.011","0.02","0.007","","","-0.02",6,87.9,-163.6
-"Surface-water temperature",0.199,"0.009","0.025","0.003","0.011","","-0.014",7,88.5,-162.8
-"Bottom-water temperature",-0.141,"-0.072","-0.026","-0.055","","","0.015",6,109.4,-206.5
-"Bottom-water temperature",-0.141,"-0.072","-0.026","-0.054","","0.005","0.017",7,109.5,-204.7
-"Bottom-water temperature",-0.141,"-0.073","-0.024","-0.056","0.003","","0.016",7,109.4,-204.5
-"Bottom-water dissolved oxygen",-0.095,"-0.037","-0.021","-0.024","","-0.02","",6,101.7,-191.1
-"Bottom-water dissolved oxygen",-0.094,"-0.033","","-0.034","","-0.018","",5,100.4,-190.7
-"Bottom-water dissolved oxygen",-0.093,"-0.037","-0.016","-0.023","","-0.026","-0.007",7,102.1,-189.8
-"Bottom-water dissolved oxygen",-0.093,"-0.028","-0.035","","-0.016","","",5,99.8,-189.4
-"Bottom-water oxygen demand",-0.058,"","","","","","",2,74.5,-144.9
-"Bottom-water oxygen demand",-0.058,"-0.013","","","","","",3,75.1,-144.2
-"Bottom-water oxygen demand",-0.058,"","-0.007","","","","",3,74.7,-143.2
+"var","Intercept","Buoyancy freq.","Max. depth","Surface area","df","Log-likelihood","AICc"
+"Surface-water temperature",0.188,"","","",2,82.5,-161.1
+"Surface-water temperature",0.188,"0.01","","",3,83,-160
+"Surface-water temperature",0.188,"","","-0.003",3,82.6,-159.1
+"Surface-water temperature",0.188,"","0.002","",3,82.6,-159.1
+"Bottom-water temperature",-0.133,"-0.069","","-0.056",4,106.1,-204.1
+"Bottom-water temperature",-0.133,"-0.071","-0.013","-0.049",5,106.7,-203.3
+"Bottom-water dissolved oxygen",-0.087,"-0.029","-0.023","",4,98.1,-188.1
+"Bottom-water dissolved oxygen",-0.087,"-0.03","","-0.023",4,98.1,-188
+"Bottom-water dissolved oxygen",-0.087,"-0.032","-0.015","-0.015",5,98.7,-187.3
+"Bottom-water oxygen demand",-0.058,"","","",2,74.5,-144.9
+"Bottom-water oxygen demand",-0.058,"-0.013","","",3,75.1,-144.2
+"Bottom-water oxygen demand",-0.058,"","-0.007","",3,74.7,-143.2
