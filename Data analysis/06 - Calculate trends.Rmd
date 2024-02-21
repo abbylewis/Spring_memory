@@ -26,7 +26,12 @@ all_data <- read.csv("../Compiled data/All_data_annual.csv")
 
 summer_mean_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_HYPO)), "Temp_C_HYPO")
 summer_epi_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_EPI)), "Temp_C_EPI")
-summer_do_sen <- sen_slope_custom(all_data %>% filter(!is.na(DO_mgL_HYPO), DO_mgL_HYPO > 1), "DO_mgL_HYPO")
+do_data <- all_data %>%
+  filter(!is.na(DO_mgL_HYPO)) %>% 
+  group_by(LakeID) %>%
+  filter(max(DO_mgL_HYPO, na.rm = T) >= 1) %>%
+  ungroup() 
+summer_do_sen <- sen_slope_custom(do_data, "DO_mgL_HYPO")
 
 write.csv(summer_epi_sen, "../Compiled data/summer_epi_temp_trends.csv", row.names = F)
 write.csv(summer_mean_sen, "../Compiled data/summer_hypo_temp_mean_trends.csv", row.names = F)
