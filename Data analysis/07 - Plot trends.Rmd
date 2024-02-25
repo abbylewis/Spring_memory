@@ -164,7 +164,7 @@ p_vals_do <- hypo_trends_data_do %>%
   mutate(p_val = ifelse(p_val < 0.001, "p < 0.001", 
                          paste0("p = ", round(p_val, 2))))
 
-jpeg("../Figures/Temp_trends_by_season_reg_DO.jpeg", width = 6, height = 6, units = "in", res = 300)
+jpeg("../Figures/Temp_trends_by_season_reg_DO.jpeg", width = 6, height = 5.5, units = "in", res = 300)
 ggarrange(ggarrange(air_trends_wide_blank,
                     hypo_trends +
                       xlab("Air temperature trend (ºC/decade)") +
@@ -174,15 +174,17 @@ ggarrange(ggarrange(air_trends_wide_blank,
                       xlim(xmin, xmax) +
                       theme(axis.title.x = element_blank(),
                             axis.text.x = element_blank(),
-                            axis.ticks.x = element_blank()),
+                            axis.ticks.x = element_blank(),
+                            plot.margin = margin(5.5, 5.5, 0, 5.5)),
                     align = "v", ncol = 1, heights = c(0.2, 1)) ,
           hypo_trends_do +
             xlab("Air temperature trend (ºC/decade)") +
             ggh4x::facet_wrap2(~ season) +
-            stat_regline_equation(label.y = 5, label.x = -0.6) +
-            geom_text(aes(x = -0.6, y = 3.8, label = p_val), data = p_vals_do, hjust = 0)+
+            stat_regline_equation(label.y = 5.3, label.x = -0.6) +
+            geom_text(aes(x = -0.6, y = 4.1, label = p_val), data = p_vals_do, hjust = 0)+
             xlim(xmin, xmax) +
-            theme(strip.text = element_blank()),
-          ncol = 1, heights = c(1.2, 1))
+            theme(strip.text = element_blank(),
+                  plot.margin = margin(0, 5.5, 5.5, 5.5)),
+          ncol = 1, heights = c(1.1, 1))
 dev.off()
 ```
