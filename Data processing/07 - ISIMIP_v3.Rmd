@@ -20,7 +20,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ncdf4)
 library(tidyverse)
 library(lubridate)
+library(pracma)
 library(rLakeAnalyzer)
+library(furrr)
 source("../Data processing/thermo.depth.density.R")
 
 lakes <- read.csv("lakes_for_isimip.csv")
@@ -65,14 +67,113 @@ load_gotm_file <- function(file){
 all_gotm <- map(files, load_gotm_file) %>%
   bind_rows() %>%
   filter(year(Date) >= 1980)
+```
 
-#write.csv(all_gotm, "../Compiled data/ISIMIP_temp_v3.csv", row.names = F)
+Step 2: Interpolate
+
+```{r}
+#Prep for interpolation
+to_profiles_cleaning1 <- all_gotm %>%
+  filter(!is.na(Temp_C)) %>%
+  mutate(Date = as.Date(Date)) %>%
+  group_by(hylak_id, Date) %>% 
+  filter(length(unique(Depth_m)) > 2, #less than three measurement depths
+         )%>%
+  mutate(crit = min(Depth_m)) %>% 
+  ungroup() %>%
+  filter(crit <= 3) #remove profiles where the lowest value is larger than 3
+
+#take care of all the non-zeros
+nozeros <- to_profiles_cleaning1 %>% 
+  group_by(hylak_id, Date) %>%
+  mutate(crit=min(Depth_m)) %>% 
+  ungroup() %>%
+  filter(crit != 0)
+
+#change anything Depth <0.5 to 0 (remove them first)
+nozeros_case1 <- nozeros %>% 
+  filter(crit <= 0.5) %>%
+  mutate(Depth_m = ifelse(Depth_m == crit, 0, Depth_m))
+
+#add additional 0m measurement for depths between 0.5 and 3
+nozeros_case2_zeros <- nozeros %>% 
+  filter(crit > 0.5) %>% 
+  filter(crit <= 3) %>%
+  ungroup() %>%
+  filter(Depth_m == crit)%>%#only take the lowest value
+  mutate(Depth_m=0) %>% unique()
+nozeros_case2 = nozeros %>% 
+  filter(crit > 0.5) %>% 
+  filter(crit <= 3) %>%
+  full_join(nozeros_case2_zeros)
+
+to_profiles_cleaning2 <- to_profiles_cleaning1 %>% 
+  filter(crit == 0) %>%
+  ungroup() %>%
+  rbind(nozeros_case1) %>%
+  rbind(nozeros_case2) %>% 
+  mutate(Date = as.Date(Date)) %>%
+  arrange(hylak_id, Date, Depth_m)  %>%
+  group_by(hylak_id, Date) %>% 
+  mutate(somany=n_distinct(Depth_m)) %>% 
+  ungroup() %>% 
+  filter(somany>=2) %>% #less than three measurement depths
+  dplyr::select(-somany)
+
+interp_t <- function(lake, to_profiles_cleaning2){
+  alldates<-to_profiles_cleaning2 %>% 
+    dplyr::select(hylak_id, Date, Depth_m, Temp_C) %>%
+    filter(hylak_id == lake) %>%
+    dplyr::select(Date) %>% 
+    unique() %>% 
+    unlist() %>% 
+    as.vector()
+  
+  lake_data <- to_profiles_cleaning2 %>%
+    filter(hylak_id == lake)
+  
+  interpolatedvalues.do <- furrr::future_map(alldates, run_all_dates_t, lake_data,lake) |> list_rbind()
+  
+  return(interpolatedvalues.do)
+}
+
+run_all_dates_t <- function(alldates, lake_data, lake){
+  profile <- lake_data %>% 
+    filter(Date == alldates)
+  
+  interpolated.depths <- seq(from=0, to= max(profile$Depth_m))
+  
+  datamatrix_<- data.frame(
+    depths=profile$Depth_m,
+    values=profile$Temp_C) %>%
+    group_by(depths) %>% 
+    dplyr::summarize(valuemean=mean(values)) %>% 
+    ungroup() %>% 
+    as.matrix()
+  
+  interpolated.dos <- pchip(xi= datamatrix_[,1], 
+                            yi=datamatrix_[,2],
+                            x= interpolated.depths)
+  
+  output = data.frame(hylak_id = lake,
+                      Date = alldates,
+                      Depth_m = interpolated.depths,
+                      Temp_C = interpolated.dos)
+  
+  return(output)
+}
+
+plan(multisession)
+laken <- to_profiles_cleaning2$hylak_id %>% 
+  unique()
+interpolatedvalues.t <- furrr::future_map(laken,interp_t,to_profiles_cleaning2) |> list_rbind()
 ```
 
 Step 2: Compile to epi/hypo means
 
 ```{r}
-isimip_summer <- all_gotm %>%
+isimip_summer <- interpolatedvalues.t %>%
+  mutate(Date = as.Date(Date, origin = "1970-01-01")) %>%
   mutate(hylak_id = as.numeric(hylak_id)) %>%
   left_join(lat_long) %>%
   filter(((Latitude_DD>0) & 
@@ -84,8 +185,8 @@ isimip_summer <- all_gotm %>%
 
 thermo_depths <- isimip_summer %>%
   group_by(Date, LakeID)%>%
-  dplyr::summarize(epi_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[1],
-            hypo_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[2],
+  dplyr::summarize(epi_depth = meta.depths(Temp_C, Depth_m, mixed.cutoff = 0)[1],
+            hypo_depth = meta.depths(Temp_C, Depth_m, mixed.cutoff = 0)[2],
             max_depth = max(Depth_m),
             thermo = thermo.depth.density(Temp_C, #use custom density threshold function
                                           Depth_m, 
@@ -101,12 +202,12 @@ thermo_depths <- isimip_summer %>%
 
 #Remove years with unstratified profiles and lakes where 10% of years have unstratified profiles
 thermo_depths_sum <- thermo_depths%>%
-  group_by(LakeID)%>%
+  group_by(LakeID) %>%
   dplyr::mutate(count_unstrat_tot = sum(count_unstrat),
                 n = sum(n))%>%
-  filter((count_unstrat_tot/n) <0.1,
-         count_unstrat == 0)%>%
-  group_by(LakeID,Year)%>%
+  filter((count_unstrat_tot/n) < 0.1,
+         count_unstrat == 0) %>%
+  group_by(LakeID,Year) %>%
   dplyr::summarize(epi_sd = sd(epi_depth, na.rm = T),
             epi_depth = mean(epi_depth, na.rm = T),
             hypo_sd = sd(hypo_depth, na.rm = T),
@@ -114,15 +215,14 @@ thermo_depths_sum <- thermo_depths%>%
 
 #Add thermocline depths
 full_with_thermo <- isimip_summer %>%
-  mutate(Year = year(Date))%>%
-  full_join(thermo_depths_sum)%>%
+  mutate(Year = year(Date)) %>%
+  full_join(thermo_depths_sum) %>%
   filter(!is.na(epi_depth),
-         !is.na(hypo_depth),
-         )
+         !is.na(hypo_depth))
 #Add discrete layer designations from data providers
 summer_layers <- full_with_thermo %>%
-  mutate(Layer = ifelse(!is.na(Depth_m)&Depth_m<epi_depth, "EPI", NA),
-         Layer = ifelse(!is.na(Depth_m)&Depth_m>hypo_depth,"HYPO",Layer))%>%
+  mutate(Layer = ifelse(!is.na(Depth_m) & Depth_m < epi_depth, "EPI", NA),
+         Layer = ifelse(!is.na(Depth_m) & Depth_m > hypo_depth, "HYPO" ,Layer)) %>%
   filter(!is.na(Layer))
 
 write.csv(summer_layers, "../Compiled data/ISIMIP_summer_layers_v3.csv", row.names = F)
@@ -131,10 +231,10 @@ unstrat <- all_gotm %>%
   mutate(hylak_id = as.numeric(hylak_id)) %>%
   left_join(lat_long %>% select(LakeID, hylak_id)) %>%
   filter(Lat > 0,
-         month(Date)<7) %>%
-  group_by(Date, LakeID)%>%
+         month(Date) < 7) %>%
+  group_by(Date, LakeID) %>%
   dplyr::summarize(max_depth = max(Depth_m),
-            thermo = thermo.depth.density(Temp_C,Depth_m, mixed.cutoff = 0.1, seasonal = F))%>% 
+            thermo = thermo.depth.density(Temp_C, Depth_m, mixed.cutoff = 0.1, seasonal = F))%>% 
   mutate(Year= year(Date),
          unstrat = as.numeric(is.na(thermo)))%>%
   filter(unstrat == 1,
@@ -150,14 +250,17 @@ strat_onset <- unstrat %>%
 write.csv(strat_onset, "../Compiled data/ISIMIP_strat_onset_v3.csv", row.names = F)
 
 #Calculate averages
-summer_avgs <- summer_layers%>%
-  group_by(LakeID,Year, Layer)%>% #not separating by measurement location. Is this a problem?
+summer_avgs <- summer_layers %>%
+  group_by(LakeID,Year, Layer) %>% #not separating by measurement location. Is this a problem?
   dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T))
+
+test <- nozeros %>%
+  filter(hylak_id =="1275")
   
 write.csv(summer_avgs, "../Compiled data/ISIMIP_summer_avgs_v3.csv", row.names = F)
 ```
 
-Step 3: Load air temp. data (NEED TO UPDATE WITH NEW DATA)
+Step 3: Load air temp. data
 
 ```{r}
 hylak_ref <- nc_open("../External data/hydrolakes_id.nc")
