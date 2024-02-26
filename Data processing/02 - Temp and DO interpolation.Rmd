@@ -216,10 +216,10 @@ Step 4: Interpolate DO, following Jane et al. (2021)
 
 #Filter to profiles with at least 3 measurements
 to_profiles_cleaning1 <- to_profiles_depth_checked %>%
-  filter(!is.na(DO_mgL))%>%
+  filter(!is.na(DO_mgL)) %>%
   group_by(LakeID,Date) %>% 
   filter(length(unique(Depth_m)) > 2,#less than three measurement depths
-         )%>%
+         ) %>%
   mutate(crit = min(Depth_m)) %>% 
   ungroup() %>%
   filter(crit <= 3)#remove profiles where the shallowest value is larger than 3
@@ -233,7 +233,7 @@ nozeros <- to_profiles_cleaning1 %>%
 
 #change anything Depth <0.5 to 0 (remove them first)
 nozeros_case1<-nozeros %>% 
-  filter(crit <= 0.5)%>%
+  filter(crit <= 0.5) %>%
   mutate(Depth_m = ifelse(Depth_m == crit,0,Depth_m))
 
 #add additional 0m measurement for depths between 0.5 and 3

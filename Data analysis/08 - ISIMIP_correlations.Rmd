@@ -63,7 +63,7 @@ many_lake_temp_sum <- summer %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 # ---
 
-epi_temp_roll <-correlations_doy(many_lake_temp_sum, 
+epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
                                     "Temp_C_EPI", "Temp_C", 
                                     "Summer epi. temperature ")
 
@@ -110,9 +110,9 @@ memory %>%
   mutate(n = length(unique(LakeID)),
          var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer epi.\ntemperature (n = 40)",
+                      levels = c("Summer epi.\ntemperature (n = 41)",
                                  "Summer hypo.\ntemperature (n = 42)"),
-                      labels = c("Surface-water\ntemperature (n = 40)",
+                      labels = c("Surface-water\ntemperature (n = 41)",
                                  "Bottom-water\ntemperature (n = 42)")))%>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
