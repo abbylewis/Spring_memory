@@ -165,7 +165,7 @@ p_vals_do <- hypo_trends_data_do %>%
                          paste0("p = ", round(p_val, 2))))
 
 jpeg("../Figures/Temp_trends_by_season_reg_DO.jpeg", width = 6, height = 5.5, units = "in", res = 300)
-ggarrange(ggarrange(air_trends_wide_blank,
+final <- ggarrange(ggarrange(air_trends_wide_blank,
                     hypo_trends +
                       xlab("Air temperature trend (ºC/decade)") +
                       ggh4x::facet_wrap2(~ season, strip = strip) +
@@ -185,6 +185,64 @@ ggarrange(ggarrange(air_trends_wide_blank,
             xlim(xmin, xmax) +
             theme(strip.text = element_blank(),
                   plot.margin = margin(0, 5.5, 5.5, 5.5)),
+          ncol = 1, heights = c(1.1, 1))
+final
+dev.off()
+```
+
+
+Make an empty version for presentations
+
+```{r}
+p <- hypo_trends +
+                      xlab("Air temperature trend (ºC/decade)") +
+                      ggh4x::facet_wrap2(~ season, strip = strip) +
+                      stat_regline_equation(label.y = 2.5, label.x = -0.6) +
+                      geom_text(aes(x = -0.6, y = 1.8, label = p_val), data = p_vals, hjust = 0) +
+                      xlim(xmin, xmax) +
+                      theme(axis.title.x = element_blank(),
+                            axis.text.x = element_blank(),
+                            axis.ticks.x = element_blank(),
+                            plot.margin = margin(5.5, 5.5, 0, 5.5),
+                            panel.grid.minor = element_blank(),
+                            panel.grid.major = element_blank())
+p_new <- p
+p_new$layers[[1]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new_build <- ggplot_build(p_new)
+p_new_build$layout$panel_params <- ggplot_build(p)$layout$panel_params
+
+p <- hypo_trends_do +
+            xlab("Air temperature trend (ºC/decade)") +
+            ggh4x::facet_wrap2(~ season) +
+            stat_regline_equation(label.y = 5.3, label.x = -0.6) +
+            geom_text(aes(x = -0.6, y = 4.1, label = p_val), data = p_vals_do, hjust = 0)+
+            xlim(xmin, xmax) +
+            theme(strip.text = element_blank(),
+                  plot.margin = margin(0, 5.5, 5.5, 5.5),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank())
+
+p_new <- p
+
+# delete the first layer
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new$layers[[2]] <- NULL
+p_new_build2 <- ggplot_build(p_new)
+p_new_build2$layout$panel_params <- ggplot_build(p)$layout$panel_params
+
+jpeg("../Figures/Temp_trends_by_season_reg_DO_blank.jpeg", width = 6, height = 5.5, units = "in", res = 300)
+ggarrange(ggarrange(air_trends_wide_blank,
+                    ggplot_gtable(p_new_build),
+                    align = "v", ncol = 1, heights = c(0.2, 1)) ,
+          ggplot_gtable(p_new_build2),
           ncol = 1, heights = c(1.1, 1))
 dev.off()
 ```
