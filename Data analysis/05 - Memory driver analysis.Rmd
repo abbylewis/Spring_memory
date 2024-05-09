@@ -174,7 +174,8 @@ mem_plot <- memory %>%
   scale_color_manual(name = "Lake size", values = c("#202C39", "#65A47D"))+
   scale_shape_discrete(name = "Lake size")+
   facet_wrap(~var)+
-  labs(y="<br/><br/><br/><i>M<sub>su-sp</sub></i>") +
+  #labs(y="<br/><br/><br/><i>M<sub>su-sp</sub></i>") +
+  labs(y="<br/><br/><br/><i>SATE</i>") +
   geom_text(x = -0.0005, y = 0.65, label = "More correlated\nwith summer", 
            hjust = 1, lineheight = .9, size = 3, 
            data = data.frame(var = factor("Summer bottom-water\ntemperature",

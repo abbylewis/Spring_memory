@@ -36,6 +36,7 @@ lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 onset <- read.csv("../Compiled data/stratification_onset.csv")
+hypo_do_sat <- read.csv("../Compiled data/Correlations - 30 day rolling mean - DO sat.csv")
 
 # Make a directory for Figures if there isn't one
 if (!dir.exists("../Figures")){dir.create("../Figures")}
@@ -46,21 +47,29 @@ Step 2: Calculate seasonal ecological memory
 ```{r}
 memory <- all %>% 
   filter(var %in% c("Summer epi. temperature",
-                    "Summer epi. DO sat",
                     "Summer hypo. temperature",
                     "Summer VHOD",
                     "Summer hypo. DO")) %>%
   mutate(var = factor(var, levels = c("Summer epi. temperature",
-                                      "Summer epi. DO sat",
                                       "Summer hypo. temperature",
                                       "Summer hypo. DO",
                                       "Summer VHOD"),
                       labels = c("Summer\nepi. temperature",
-                                 "Summer\nepi. DO sat",
                                  "Summer\nhypo. temperature",
                                  "Summer\nhypo. DO",
                                  "Summer\nVHOD")),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, p) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (summer - spring)) 
+
+memory_sat <- hypo_do_sat %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(var) %>%
   mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
@@ -120,6 +129,52 @@ memory %>%
   scale_color_manual(values = c("#25469a","#c16586"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,4), clip = "off")
+dev.off()
+```
+
+Step 3b: Compare hypo DO concentration (mg/L) to hypo DO saturation (%)
+
+```{r}
+jpeg("../Figures/Monthly correlations - DO sat comp.jpg", width = 3.5, height = 2, res = 600, units = "in")
+memory_sat %>%
+  mutate(var = "Summer hypo. DO\nsaturation") %>%
+  full_join(memory %>% 
+              filter(var == "Summer\nhypo. DO") %>%
+              mutate(var = "Summer hypo. DO\nconcentration")) %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
+  group_by(var) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=margin(c(0,0,0,0)),
+        legend.box.margin=margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#25469a","#c16586"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,2), clip = "off")
 dev.off()
 ```
 
@@ -366,6 +421,7 @@ memory %>%
   facet_wrap(~window)
 dev.off()
 ```
+
 Step 7: Plot multiple summer definitions (SI)
 
 ```{r}
@@ -521,3 +577,83 @@ view <- all %>%
 
 view
 ```
+
+Create a plot of 1:1 correlations for SI
+
+```{r}
+medians <- memory %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer\nepi. temperature (n = 438)",
+                                 "Summer\nhypo. temperature (n = 399)",
+                                 "Summer\nVHOD (n = 194)",
+                                 "Summer\nhypo. DO (n = 322)"),
+                      labels = c("Surface-water\ntemperature (n = 438)",
+                                 "Bottom-water\ntemperature (n = 399)",
+                                 "Bottom-water oxygen\ndemand  (n = 194)",
+                                 "Bottom-water dissolved\noxygen (n = 322)")),
+         layer = ifelse(grepl("Surf", var), "Surface-water", "Bottom-water")) %>%
+  group_by(var, layer) %>%
+  summarize(spring = median(spring, na.rm = T),
+            summer = median(summer, na.rm = T),
+            color = summer > spring) 
+
+ns <- memory %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer\nepi. temperature (n = 438)",
+                                 "Summer\nhypo. temperature (n = 399)",
+                                 "Summer\nVHOD (n = 194)",
+                                 "Summer\nhypo. DO (n = 322)"),
+                      labels = c("Surface-water\ntemperature (n = 438)",
+                                 "Bottom-water\ntemperature (n = 399)",
+                                 "Bottom-water oxygen\ndemand  (n = 194)",
+                                 "Bottom-water dissolved\noxygen (n = 322)")),
+         layer = ifelse(grepl("Surf", var), "Surface-water", "Bottom-water"),
+         color = summer > spring) %>%
+  group_by(var, color) %>%
+  summarize(n = n(), 
+            text = paste0("n = ", n)) %>%
+  mutate(y = ifelse(color, .99, 0),
+         x = ifelse(color, 0, .25),
+         text = ifelse(color, paste0("Summer-driven, ", text), paste0("Spring-driven, ", text)))
+
+one_to_one <- memory %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer\nepi. temperature (n = 438)",
+                                 "Summer\nhypo. temperature (n = 399)",
+                                 "Summer\nVHOD (n = 194)",
+                                 "Summer\nhypo. DO (n = 322)"),
+                      labels = c("Surface-water\ntemperature (n = 438)",
+                                 "Bottom-water\ntemperature (n = 399)",
+                                 "Bottom-water oxygen\ndemand  (n = 194)",
+                                 "Bottom-water dissolved\noxygen (n = 322)")),
+         layer = ifelse(grepl("Surf", var), "Surface-water", "Bottom-water"),
+         color = summer > spring)%>%
+  ggplot(aes(x = spring, y = summer, color = color)) +
+  geom_abline(slope = 1, color = "grey50") +
+  geom_point() +
+  facet_wrap(~var) +
+  scale_color_manual(values = c("#25469a", "#c16586"))+
+  scale_fill_manual(values = c("#25469a", "#c16586"))+
+  xlab("Correlation with spring air temperature") +
+  ylab("Correlation with summer air temeprature") +
+  theme_bw() +
+  ylim(0,1.05)+
+  theme(legend.position = "none") +
+  geom_point(data = medians, color = "white", fill = "black", size = 7, shape = 21, stroke = 0.5) +
+  geom_point(data = medians, aes(fill = color), color = "white", size = 4, shape = 21, stroke = 1) + 
+  geom_text(aes(x = x, y = y, label = text), data = ns, hjust = 0, vjust = 0) 
+
+jpeg("../Figures/one_to_one.jpg", width = 5, height = 5, units = "in", res = 300)
+one_to_one
+dev.off()
+```
+

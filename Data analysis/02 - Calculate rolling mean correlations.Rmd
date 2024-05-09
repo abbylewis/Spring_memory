@@ -24,6 +24,7 @@ Step 1: Load packages and data
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
+library(rMR)
 source("correlations_doy.R")
 
 # Load saved data
@@ -66,6 +67,16 @@ hypo_do_roll <- many_lake_temp_sum %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_HYPO", "Temp_C", "hypolimnetic DO")
 
+hypo_do_sat_roll <- many_lake_temp_sum %>%
+  mutate(DO_sat_HYPO = ifelse(is.na(DO_sat_HYPO),
+                             rMR::DO.saturation(DO_mgL_HYPO, 
+                                                Temp_C_HYPO, 
+                                                elevation.m = Elevation_m,
+                                                salinity = 0,
+                                                salinity.units = "uS") * 100,
+                             DO_sat_HYPO)) %>%
+  correlations_doy("DO_sat_HYPO", "Temp_C", "hypolimnetic DO (sat %)")
+
 hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
                                     "DO_demand_mgLd_HYPO", "Temp_C", 
                                     "Summer VHOD ")
@@ -88,6 +99,11 @@ all <- hypo_do_roll %>%
               mutate(var = "Summer VHOD")) 
 
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean.csv", row.names = F)
+
+#Save %sat separately
+write.csv(hypo_do_sat_roll %>% 
+            mutate(var = "Summer hypo. DO sat"), 
+          "../Compiled data/Correlations - 30 day rolling mean - DO sat.csv", row.names = F)
 ```
 
 Step 4: Try using Spearman's correlation, rather than partial Spearman's correlation
