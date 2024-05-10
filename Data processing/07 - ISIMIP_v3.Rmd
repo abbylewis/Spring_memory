@@ -244,6 +244,13 @@ strat_onset <- unstrat %>%
 
 write.csv(strat_onset, "../Compiled data/ISIMIP_strat_onset_v3.csv", row.names = F)
 
+strat_onset_yearly <- unstrat %>%
+  group_by(LakeID, Year) %>%
+  filter(Date == max(Date),
+         yday(Date) < yday("2022-08-30"))
+
+write.csv(strat_onset_yearly, "../Compiled data/ISIMIP_strat_onset_v3_yearly.csv", row.names = F)
+
 #Calculate averages
 summer_avgs <- summer_layers %>%
   group_by(LakeID,Year, Layer) %>% #not separating by measurement location. Is this a problem?
@@ -253,6 +260,14 @@ test <- thermo_depths %>%
   filter(LakeID == "6")
   
 write.csv(summer_avgs, "../Compiled data/ISIMIP_summer_avgs_v3.csv", row.names = F)
+
+buoyancy <- interpolatedvalues.t %>%
+  mutate(Date = as.Date(Date, origin = "1970-01-01")) %>%
+  mutate(hylak_id = as.numeric(hylak_id)) %>%
+  left_join(lat_long) %>%
+  group_by(Date, LakeID) %>%
+  dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C,Depth_m),na.rm=T))
+write.csv(buoyancy, "../Compiled data/ISIMIP_bf_daily.csv", row.names = F)
 ```
 
 Step 3: Load air temp. data
