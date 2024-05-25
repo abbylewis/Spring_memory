@@ -263,6 +263,18 @@ dates_cor %>%
   theme_bw()
 dev.off()
 
+jpeg("../Figures/Correlation between stratification onset and hypo. temp - pres.jpg", width = 3, height = 3, res = 300, units = "in")
+dates_cor %>%
+  mutate(Memory = max_summer - max_spring) %>%
+  ggplot(aes(x = strat_onset, y = max_day_spring)) +
+  geom_abline(slope = 1) +
+  geom_smooth(method = "lm", color = "grey50", lty = "11")+
+  geom_point(size = 2) +
+  ylab("Day of year most correlated with\nsummer bottom-water temperature") +
+  xlab("Median stratification onset\n(day of year)")+
+  theme_bw()
+dev.off()
+
 summary(lm(max_day_spring ~ strat_onset, data = dates_cor))
 ```
 

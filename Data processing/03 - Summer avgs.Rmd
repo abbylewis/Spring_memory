@@ -43,6 +43,20 @@ full <- do %>%
 #Create a Date_22 column, so that I can filter to only the end of summer
 full$Date_22 <- full$Date
 year(full$Date_22) <- 2022
+
+jpeg("../Figures/Data_hist.jpg", width = 3, height = 3, units = "in", res = 300)
+full %>%
+  group_by(Date, LakeID) %>%
+  summarize(n = length(!is.na(Temp_C))) %>%
+  filter(n > 0) %>%
+  mutate(month = as.numeric(month(Date))) %>%
+  ggplot(aes(x = month)) +
+  geom_histogram(bins = 12) +
+  scale_x_continuous(breaks = seq(1, 12, by = 2), labels = month.abb[seq(1, 12, by = 2)])+
+  ylab("Total number of sampling events") +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+dev.off()
 ```
 
 Step 3: Filter to summer period and calculate thermocline depths
