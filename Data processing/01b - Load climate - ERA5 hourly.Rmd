@@ -7,15 +7,17 @@ output: html_document
 
 This script loads climate data from the ERA5 re-analysis data product and matches climate data to LakeIDs by lat/lon. Neither the raw ERA 5 data product nor the output of this file are small enough to store on GitHub, so data will need to be re-downloaded and re-processed for replication. 
 
-To download ERA 5 daily temperature data: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form
-(note this was migrated to https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=download)
+To download ERA 5 hourly data: 
+https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=download
+(note: Need to do this in batches to accommodate download size limits)
+
   Product type: Reanalysis
-  Variable: "2m temperature"
+  Variable: 10m u-component of wind, 10m v-component of wind, Surface solar radiation downwards
   Year: 1980-2022
   Month: all
   Day: all
-  Time: 00:00
-  Geographical Area: "Whole available region"
+  Time: all
+  Geographical Area: -43 to 70 lat, -123 to 177 lon (to match with lake locations)
   Format: "NetCDF (experimental)"
 
 Table of Contents:
