@@ -1,0 +1,117 @@
+---
+title: "Load climate"
+author: "Abby Lewis"
+date: "2022-10-10"
+output: html_document
+---
+
+This script loads climate data from the ERA5 re-analysis data product through ROpenMeteo. The output of this file is too large to store on GitHub, so data will need to be re-processed for replication. 
+
+Table of Contents:
+- Step 1: Load packages
+- Step 2: Load and synthesize data
+
+Step 1: Load packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+Sys.setenv(TZ='UTC')
+#library(ncdf4)
+#library(fields)
+library(tidyverse)
+#library(data.table)
+#library(lubridate)
+library(furrr)
+
+#Function to help load from openmeteo
+read_url <- function(url, max_tries = 5){
+  tries <- 0
+  pass <- FALSE
+  while(!pass){
+    tries <- tries + 1
+    out <- tryCatch(jsonlite::fromJSON(url),
+                    error = function(cond) {
+                      message(paste("URL error. Trying again"))
+                      NULL
+                    },
+                    warning = function(cond) {
+                      message(paste("URL warning. Trying again"))
+                      NULL
+                    })
+    if(tries == max_tries | !is.null(out)){
+      pass = TRUE
+    }else{
+      Sys.sleep(2)
+    }
+  }
+  return(out)
+}
+```
+
+Step 2: Load and synthesize data 
+(note: this will take several minutes to run on a personal computer)
+
+```{r}
+#Read and format our lake metadata
+lakes <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") 
+lakes_format <- lakes %>%
+  dplyr::select(LakeID,Longitude_DD,Latitude_DD) %>%
+  rename(Lon=Longitude_DD,Lat=Latitude_DD)%>%
+  filter(!is.na(Lon),
+         !is.na(Lat))
+
+Sys.setenv(VROOM_CONNECTION_SIZE = 500000L)
+
+#Make function to run for all lakes
+download_met <- function(i, lakes_format){
+  
+  #Set params
+  latitude <- lakes_format$Lat[i]
+  longitude <- lakes_format$Lon[i]
+  start_date <- "1980-01-01"
+  end_date <- "2022-12-31"
+  variable <- "temperature_2m_mean,wind_speed_10m_max,shortwave_radiation_sum"
+  
+  #Download
+  v <-read_url(
+    glue::glue("https://archive-api.open-meteo.com/v1/archive?latitude={latitude}&longitude={longitude}&start_date={start_date}&end_date={end_date}&daily={variable}&windspeed_unit=ms&timezone=auto&models=era5"))
+  
+  if(is.null(v)){
+    return(NULL)
+  }
+  
+  #Format
+  out  <- dplyr::as_tibble(v$daily) |>
+    dplyr::mutate(Date = as.Date(time),
+                  LakeID = lakes_format$LakeID[i],
+                  Lat = v$latitude,
+                  Lon = v$longitude) |>
+    dplyr::select(-time) |>
+    dplyr::rename(Temp_C = temperature_2m_mean,
+                  Wind_ms = wind_speed_10m_max,
+                  Shortwave_mJm2 = shortwave_radiation_sum)
+  
+  write.csv(out, paste0("../Compiled data/met_downloads/",lakes_format$LakeID[i],".csv"), row.names = F)
+  
+  return(out)
+}
+
+plan(multisession)
+met_outputs <- furrr::future_map_dfr(1:nrow(lakes_format), 
+                                 download_met, 
+                                 lakes_format = lakes_format, 
+                                 .progress = T)
+
+lakes_run <- sub(".csv", "", list.files("../Compiled data/met_downloads/"))
+ids_to_rerun <- which(!lakes_format$LakeID %in% lakes_run)
+
+met_outputs <- furrr::future_map_dfr(ids_to_rerun, 
+                                 download_met, 
+                                 lakes_format = lakes_format, 
+                                 .progress = T)
+
+all_outputs <- list.files("../Compiled data/met_downloads/", full.names = T) %>%
+  read_csv()
+
+write.csv(all_outputs,"../Compiled data/historical_met_output_era5_daily.csv", row.names = F)
+```

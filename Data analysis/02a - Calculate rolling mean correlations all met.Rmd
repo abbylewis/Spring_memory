@@ -1,0 +1,102 @@
+---
+title: "Calculate correlations"
+author: "Abby Lewis"
+date: "2023-05-22"
+output: html_document
+---
+
+This file calculates the correlation between mean air temperature and surface- and bottom-water temperature and dissolved oxygen.
+
+Table of contents:
+
+- Step 1: Load packages and data
+- Step 2: Load and format air temperature data
+- Step 3: Calculate and export 30-day rolling mean correlations
+- Step 4: Try using Spearman's correlation, rather than partial Spearman's correlation
+- Step 5: Re-run with 10-day window
+- Step 6: Re-run with 50-day window
+- Step 7: Re-run for July 15th to August 31st
+- Step 8: Re-run for June, July and August
+
+Step 1: Load packages and data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(rMR)
+source("correlations_doy.R")
+
+# Load saved data
+with_temp = read.csv("../Compiled data/All_data_annual.csv")
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figures")){dir.create("../Figures")}
+```
+
+Step 2: Load and format air temperature data
+
+```{r}
+daily_met_raw <- read.csv("../Compiled data/historical_met_output_era5_daily.csv")
+daily_met <- daily_met_raw %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Lat < 0, Date - months(6), Date),
+         Date = as.Date(Date, origin = "1970-01-01")) %>%
+  dplyr::select(-Lat, -Lon) %>%
+  mutate(Year = year(Date)) %>%
+  filter(Year <= 2022)
+rm(daily_met_raw)
+```
+
+Step 3: Calculate and export rolling means (30-day)
+
+```{r}
+many_lake_temp_sum <- with_temp %>%
+  left_join(daily_met) %>%
+  mutate(doy = yday(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA),
+         Wind_ms = zoo::rollmean(Wind_ms, 30, align = "right", fill = NA),
+         Shortwave_mJm2 = zoo::rollmean(Shortwave_mJm2, 30, align = "right", fill = NA))
+
+# ---
+calc_corrs <- function(driver){
+  hypo_do_roll <- many_lake_temp_sum %>%
+    mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
+    filter(hypoxic=="no") %>%
+    correlations_doy("DO_mgL_HYPO", driver, "hypolimnetic DO")
+  
+  hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
+                                       "DO_demand_mgLd_HYPO", driver, 
+                                       "Summer VHOD ")
+  
+  epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_EPI", driver, 
+                                    "Summer epi. temperature ")
+  
+  hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                     "Temp_C_HYPO", driver, 
+                                     "Summer hypo. temperature ")
+  
+  all <- hypo_do_roll %>%
+    mutate(var = "Summer hypo. DO") %>%
+    full_join(epi_temp_roll %>%
+                mutate(var = "Summer epi. temperature")) %>%
+    full_join(hypo_temp_roll %>%
+                mutate(var = "Summer hypo. temperature")) %>%
+    full_join(hypo_demand_roll %>% 
+                mutate(var = "Summer VHOD")) %>%
+    mutate(driver = driver)
+  
+  return(all)
+}
+
+drivers <- c("Temp_C", "Wind_ms", "Shortwave_mJm2")
+
+all_drivers <- furrr::future_map_dfr(drivers, calc_corrs, .progress = T)
+
+write.csv(all_drivers, "../Compiled data/Correlations - all met.csv", row.names = F)
+```

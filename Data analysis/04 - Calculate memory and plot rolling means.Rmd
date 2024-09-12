@@ -63,24 +63,24 @@ memory <- all %>%
                       labels = labels_no_n),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  group_by(var) %>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, p) %>%
+  group_by(LakeID, var, season) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (summer - spring)) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(M)$p.value)
 
 memory_sat <- hypo_do_sat %>%
   mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  group_by(var) %>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, p) %>%
+  group_by(LakeID, var, season) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (summer - spring)) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(M)$p.value)
 ```
 
 Step 3: Generate Figure 1 (summary boxplot)
@@ -358,13 +358,13 @@ memory_windows <- all %>%
                       labels = labels_no_n),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  group_by(var, window) %>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, p, window) %>%
+  group_by(LakeID, var, season, window) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (summer - spring)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
 
 jpeg("../Figures/Monthly correlations - sum long concept v2 many windows.jpg", 
      width = 7, height = 3, res = 600, units = "in")
@@ -438,13 +438,13 @@ memory_mult <- all %>%
                                  "Bottom-water\ndissolved oxygen")),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  group_by(var, window) %>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, p, window) %>%
+  group_by(LakeID, var, season, window) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (summer - spring)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
 
 jpeg("../Figures/Monthly correlations - sum long concept v2 many summers.jpg", 
      width = 7, height = 3, res = 600, units = "in")
@@ -503,13 +503,13 @@ memory_partial <- all %>%
                       labels = labels_no_n),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  group_by(var, window) %>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, p, window) %>%
+  group_by(LakeID, var, season, window) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (summer - spring)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
 
 jpeg("../Figures/Monthly correlations - sum long concept v2 partial not partial.jpg", 
      width = 5, height = 3, res = 600, units = "in")
@@ -565,15 +565,15 @@ memory_mean <- all %>%
                       labels = labels_no_n),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  group_by(var) %>%
-  mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, p) %>%
+  group_by(LakeID, var, season, window) %>%
   summarize(mean = mean(abs(monthly_correlation), na.rm = T),
             max = max(abs(monthly_correlation), na.rm = T)) %>%
   pivot_longer(cols = c(mean, max), names_to = "metric", values_to = "value") %>%
   pivot_wider(names_from = season, values_from = value) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (summer - spring)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
 
 jpeg("../Figures/Monthly correlations (mean) - sum long concept v2.jpg", 
      width = 5, height = 3, res = 600, units = "in")
@@ -667,6 +667,47 @@ one_to_one <- memory %>%
 
 jpeg("../Figures/one_to_one.jpg", width = 5, height = 5, units = "in", res = 300)
 one_to_one
+dev.off()
+```
+
+Map
+
+```{r}
+library(ggthemes)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+#remotes::install_github("ropensci/rnaturalearthhires")
+library(rnaturalearthhires)
+library(ggspatial)
+
+#Create a world map of the sites in this analysis
+world <- ne_countries(scale = "medium", returnclass = "sf")
+states <- ne_states(returnclass = "sf",country = "United States of America")
+lat_lon <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+
+for_map <- memory %>%
+  filter(var == "Bottom-water\ntemperature") %>%
+  left_join(lat_lon)
+
+jpeg("../Figures/World Map - memory.jpg", res = 300, width = 6, height = 3.2, units = "in")
+world_map <- ggplot(data = world) +
+  geom_sf(fill = "grey98", color = "grey60") +
+  coord_sf(expand = FALSE)+
+  geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
+             shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+        legend.box.background = element_rect(fill = "white", color = "white"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid = element_line(color = "grey80",linetype = "dotted", linewidth = 0.0001))
+world_map
 dev.off()
 ```
 
