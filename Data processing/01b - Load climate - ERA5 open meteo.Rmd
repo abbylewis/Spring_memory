@@ -96,14 +96,14 @@ download_met <- function(i, lakes_format){
   return(out)
 }
 
-plan(multisession)
-met_outputs <- furrr::future_map_dfr(1:nrow(lakes_format), 
-                                 download_met, 
-                                 lakes_format = lakes_format, 
-                                 .progress = T)
-
 lakes_run <- sub(".csv", "", list.files("../Compiled data/met_downloads/"))
 ids_to_rerun <- which(!lakes_format$LakeID %in% lakes_run)
+
+plan(multisession)
+#met_outputs <- furrr::future_map_dfr(1:nrow(lakes_format), 
+#                                 download_met, 
+#                                 lakes_format = lakes_format, 
+#                                 .progress = T)
 
 met_outputs <- furrr::future_map_dfr(ids_to_rerun, 
                                  download_met, 
