@@ -64,31 +64,34 @@ many_lake_temp_sum <- with_temp %>%
 
 # ---
 calc_corrs <- function(driver){
-  hypo_do_roll <- many_lake_temp_sum %>%
+  hypo_do_roll <- many_lake_temp_sum_small %>%
     mutate(hypoxic = ifelse(max(DO_mgL_HYPO, na.rm = T) < 1,"yes","no")) %>%
     filter(hypoxic=="no") %>%
     correlations_doy("DO_mgL_HYPO", driver, "hypolimnetic DO")
   
-  hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
+  hypo_demand_roll <- correlations_doy(many_lake_temp_sum_small, 
                                        "DO_demand_mgLd_HYPO", driver, 
                                        "Summer VHOD ")
   
-  epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
+  epi_temp_roll <- correlations_doy(many_lake_temp_sum_small, 
                                     "Temp_C_EPI", driver, 
                                     "Summer epi. temperature ")
   
-  hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
+  hypo_temp_roll <- correlations_doy(many_lake_temp_sum_small, 
                                      "Temp_C_HYPO", driver, 
                                      "Summer hypo. temperature ")
   
-  all <- hypo_do_roll %>%
-    mutate(var = "Summer hypo. DO") %>%
-    full_join(epi_temp_roll %>%
-                mutate(var = "Summer epi. temperature")) %>%
-    full_join(hypo_temp_roll %>%
-                mutate(var = "Summer hypo. temperature")) %>%
-    full_join(hypo_demand_roll %>% 
-                mutate(var = "Summer VHOD")) %>%
+  all <- list(
+    hypo_do_roll %>%
+      mutate(var = "Summer hypo. DO"),
+    epi_temp_roll %>%
+      mutate(var = "Summer epi. temperature"),
+    hypo_temp_roll %>%
+      mutate(var = "Summer hypo. temperature"),
+    hypo_demand_roll %>% 
+      mutate(var = "Summer VHOD"))
+  
+  all <- data.table::rbindlist(all) %>% 
     mutate(driver = driver)
   
   return(all)
@@ -96,7 +99,15 @@ calc_corrs <- function(driver){
 
 drivers <- c("Temp_C", "Wind_ms", "Shortwave_mJm2")
 
-all_drivers <- furrr::future_map_dfr(drivers, calc_corrs, .progress = T)
+many_lake_temp_sum_small <- many_lake_temp_sum %>%
+  dplyr::select(LakeID, Date, doy, Year,
+                Temp_C, Wind_ms, Shortwave_mJm2, 
+                DO_mgL_HYPO, DO_demand_mgLd_HYPO, Temp_C_EPI, Temp_C_HYPO)
+
+plan("multisession")
+all_drivers <- furrr::future_map_dfr(drivers, 
+                                     calc_corrs, 
+                                     .progress = T)
 
 write.csv(all_drivers, "../Compiled data/Correlations - all met.csv", row.names = F)
 ```

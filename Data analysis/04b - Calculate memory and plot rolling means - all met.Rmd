@@ -104,7 +104,7 @@ memory %>%
         legend.box.margin=margin(t = -2,l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#25469a","grey50","#c16586"), 
+  scale_color_manual(values = c("#25469a","#c16586"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,4), clip = "off") +
   facet_wrap(~driver)

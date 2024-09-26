@@ -55,10 +55,11 @@ Step 2: Load and synthesize data
 #Read and format our lake metadata
 lakes <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") 
 lakes_format <- lakes %>%
-  dplyr::select(LakeID,Longitude_DD,Latitude_DD) %>%
+  dplyr::select(LakeID,Longitude_DD,Latitude_DD, MaximumDepth_m) %>%
   rename(Lon=Longitude_DD,Lat=Latitude_DD)%>%
   filter(!is.na(Lon),
-         !is.na(Lat))
+         !is.na(Lat),
+         MaximumDepth_m > 6.4)
 
 Sys.setenv(VROOM_CONNECTION_SIZE = 500000L)
 
