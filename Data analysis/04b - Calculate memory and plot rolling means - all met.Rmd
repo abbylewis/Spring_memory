@@ -234,7 +234,7 @@ dates_export <- dates_to_plot %>%
   dplyr::select(-var) 
 
 write.csv(dates_export, 
-          "../Compiled data/strongest_correlation_dates.csv", 
+          "../Compiled data/strongest_correlation_dates_all_met.csv", 
           row.names = F)
 
 dates_export_both <- dates_to_plot %>%
@@ -242,7 +242,7 @@ dates_export_both <- dates_to_plot %>%
   filter(grepl("temperature", var))
 
 write.csv(dates_export_both, 
-          "../Compiled data/strongest_correlation_dates_both.csv", 
+          "../Compiled data/strongest_correlation_dates_both_all_met.csv", 
           row.names = F)
 
 dates_export_hypo <- dates_to_plot %>%
@@ -252,7 +252,7 @@ dates_export_hypo <- dates_to_plot %>%
            (grepl("DO", var))) 
 
 write.csv(dates_export_hypo, 
-          "../Compiled data/strongest_correlation_dates_hypo.csv", 
+          "../Compiled data/strongest_correlation_dates_hypo_all_met.csv", 
           row.names = F)
 ```
 
