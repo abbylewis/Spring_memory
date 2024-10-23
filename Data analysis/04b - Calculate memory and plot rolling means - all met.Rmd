@@ -187,6 +187,11 @@ jpeg("../Figures/Monthly correlations - roll mean all met.jpg",
      width = 6, height = 2.5, res = 300, units = "in")
 hypo_vars
 dev.off()
+
+all %>%
+  ggplot(aes(x = doy, y = monthly_correlation, group = LakeID))+
+  geom_line(alpha = 0.1)+
+  facet_grid(cols = vars(var), rows = vars(driver)) 
 ```
 
 Step 5: Identify most influential dates

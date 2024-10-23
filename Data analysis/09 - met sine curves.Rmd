@@ -1,0 +1,253 @@
+---
+title: "09 - Met sine curves"
+author: "Abby Lewis"
+date: "2024-10-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ShellChron)
+```
+
+```{r}
+met <- read_csv("../Compiled data/historical_met_output_era5_daily.csv")
+```
+Visualize one lake-year
+```{r}
+met_test <- met %>%
+  mutate(Year = year(Date),
+         yday = yday(Date)) %>%
+  filter(LakeID == "1",
+         Year == 1980)
+#Temp
+min <- -sinreg(met_test$yday, met_test$Temp_C, fixed_period = 365.25)[[1]][[4]]
+sinreg(met_test$yday, met_test$Temp_C, fixed_period = 365.25, plot = T)
+abline(v=min, col="blue")
+
+#Par
+min <- -sinreg(met_test$yday, met_test$Shortwave_mJm2, fixed_period = 365.25)[[1]][[4]]
+sinreg(met_test$yday, met_test$Shortwave_mJm2, fixed_period = 365.25, plot = T)
+abline(v=min, col="blue")
+
+#Wind
+min <- -sinreg(met_test$yday, met_test$Wind_ms, fixed_period = 365.25)[[1]][[4]]
+sinreg(met_test$yday, met_test$Wind_ms, fixed_period = 365.25, plot = T)
+abline(v=min, col="blue")
+```
+
+```{r}
+generate_sin_preds <- function(df) {
+  temp <- sinreg(df$yday, df$Temp_C, fixed_period = 365.25)
+  light <- sinreg(df$yday, df$Shortwave_mJm2, fixed_period = 365.25)
+  df <- df %>%
+    mutate(Temp_C = round(temp[[2]], 1), #Using rounding to try to decrease file size
+           Shortwave_mJm2 = round(light[[2]], 1),
+           Temp_R2 = round(temp[[1]][[5]], 2),
+           Light_R2 = round(light[[1]][[5]], 2),
+           Temp_start = -round(temp[[1]][[4]]),
+           Light_start = -round(light[[1]][[4]]))
+}
+
+fits <- met %>%
+  mutate(Year = year(Date),
+         yday = yday(Date)) %>%
+  group_by(LakeID, Year) %>%
+  do(generate_sin_preds(.)) %>% 
+  ungroup() %>%
+  select(-Wind_ms, -Lat, -Lon, -Year, -yday)
+
+fits %>%
+  mutate(yday = yday(Date)) %>%
+  filter(LakeID == "1") %>%
+  ggplot(aes(yday, Temp_C, color = as.factor(year(Date)))) +
+  geom_line()
+
+write.csv(fits , "../Compiled data/met_sine_fits.csv", row.names = F)
+```
+
+```{r}
+fits <- read_csv("../Compiled data/met_sine_fits.csv", show_col_types = F) %>%
+  mutate(yday = yday(Date),
+         Year = year(Date))
+
+id_thresh <- function(thresh, df, var) {
+  df %>%
+    filter(get(var) > thresh & get(var) < (thresh + 1)) %>%
+    summarise(yday = min(yday), .groups = "drop") %>%
+    mutate(thresh = thresh)
+}
+
+fit_prep <- fits %>%
+  group_by(LakeID, Year) %>%
+  filter(yday>=unique(Temp_start),
+         yday < yday[which.max(Temp_C)])
+temp_threshs <- -10:25 %>%
+  map(., ~id_thresh(., var = "Temp_C", df = fit_prep)) %>%
+  bind_rows()
+write.csv(temp_threshs, "../Compiled data/temp_threshs.csv", row.names = F)
+#want a df with LakeID, Year, Thresh, yday
+
+fit_prep_light <- fits %>%
+  group_by(LakeID, Year) %>%
+  filter(yday>=unique(Light_start),
+         yday < yday[which.max(Shortwave_mJm2)])
+light_threshs <- 0:25 %>%
+  map(., ~id_thresh(., var = "Shortwave_mJm2", df = fit_prep_light)) %>%
+  bind_rows()
+
+write.csv(light_threshs, "../Compiled data/light_threshs.csv", row.names = F)
+```
+
+```{r}
+temp_threshs <- read_csv("../Compiled data/temp_threshs.csv") %>%
+  complete(LakeID, Year, thresh)
+light_threshs <- read_csv("../Compiled data/light_threshs.csv") %>%
+  complete(LakeID, Year, thresh)
+
+# Load saved data
+with_temp = read.csv("../Compiled data/All_data_annual.csv")
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+
+cor_sum <- with_temp %>%
+  left_join(temp_threshs) %>%
+  filter(!is.na(thresh)) %>%
+  group_by(LakeID, thresh) %>%
+  mutate(n = sum(!is.na(DO_mgL_HYPO) & !is.na(yday))) %>%
+  group_by(LakeID) %>%
+  filter(n == max(n),
+         n >= 10) %>%
+  group_by(LakeID, thresh) %>%
+  summarize(cor = cor(yday, DO_mgL_HYPO, use = "complete.obs", method = "spearman"),
+            n = n(),
+            .groups = "drop") %>%
+  group_by(LakeID) %>%
+  filter(!is.na(cor),
+         cor == max(abs(cor)))
+
+cor_sum_light <- with_temp %>%
+  left_join(light_threshs) %>%
+  filter(!is.na(thresh)) %>%
+  group_by(LakeID, thresh) %>%
+  mutate(n = sum(!is.na(DO_mgL_HYPO) & !is.na(yday))) %>%
+  group_by(LakeID) %>%
+  filter(n == max(n),
+         n >= 10) %>%
+  group_by(LakeID, thresh) %>%
+  summarize(cor = cor(yday, DO_mgL_HYPO, use = "complete.obs", method = "spearman"),
+            n = n(),
+            .groups = "drop") %>%
+  group_by(LakeID) %>%
+  filter(!is.na(cor),
+         cor == max(abs(cor)))
+
+cor_sum %>%
+  ggplot(aes(x = thresh))+
+  geom_histogram(binwidth = 1)
+
+cor_sum %>%
+  ggplot(aes(x = thresh, y = cor)) +
+  geom_point() 
+
+cor_sum <- with_temp %>%
+  left_join(temp_threshs) %>%
+  filter(!is.na(thresh)) %>%
+  group_by(LakeID, thresh) %>%
+  mutate(n = sum(!is.na(DO_mgL_HYPO) & !is.na(yday))) %>%
+  group_by(LakeID) %>%
+  filter(n == max(n),
+         n >= 10) %>%
+  group_by(LakeID, thresh) %>%
+  summarize(cor = cor(yday, DO_mgL_HYPO, use = "complete.obs", method = "spearman"),
+            n = n(),
+            .groups = "drop") %>%
+  group_by(LakeID) %>%
+  filter(!is.na(cor),
+         cor == max(abs(cor)))
+```
+
+```{r}
+roll_met <- met %>%
+  mutate(yday = yday(Date),
+         Year = year(Date),
+         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+
+roll_prep <- roll_met %>%
+  group_by(LakeID, Year) %>%
+  filter(yday < which.max(Temp_C),
+         yday > which.min(Temp_C))
+temp_threshs_roll <- -10:25 %>%
+  map(., ~id_thresh(., var = "Temp_C", df = roll_prep)) %>%
+  bind_rows()
+write.csv(temp_threshs_roll, "../Compiled data/temp_threshs_roll.csv", row.names = F)
+
+cor_sum_roll_do <- with_temp %>%
+  left_join(temp_threshs_roll) %>%
+  filter(!is.na(thresh)) %>%
+  group_by(LakeID, thresh) %>%
+  mutate(n = sum(!is.na(DO_mgL_HYPO) & !is.na(yday))) %>%
+  group_by(LakeID) %>%
+  filter(n == max(n),
+         n >= 10) %>%
+  group_by(LakeID, thresh) %>%
+  summarize(cor = cor(yday, DO_mgL_HYPO, use = "complete.obs", method = "spearman"),
+            n = n(),
+            .groups = "drop") %>%
+  group_by(LakeID) %>%
+  filter(!is.na(cor),
+         cor == max(abs(cor)))
+
+cor_sum_roll %>%
+  ggplot(aes(x = thresh))+
+  geom_histogram(binwidth = 1)
+
+cor_sum_roll %>%
+  ggplot(aes(x = thresh, y = cor)) +
+  geom_point() 
+
+cor_sum_roll_temp <- with_temp %>%
+  left_join(temp_threshs_roll) %>%
+  filter(!is.na(thresh)) %>%
+  group_by(LakeID, thresh) %>%
+  mutate(n = sum(!is.na(Temp_C_HYPO) & !is.na(yday))) %>%
+  group_by(LakeID) %>%
+  filter(n == max(n),
+         n >= 10) %>%
+  group_by(LakeID, thresh) %>%
+  summarize(cor = cor(yday, Temp_C_HYPO, use = "complete.obs", method = "spearman"),
+            n = n(),
+            .groups = "drop") %>%
+  group_by(LakeID) %>%
+  filter(!is.na(cor),
+         cor == max(abs(cor)))
+
+cor_sum_roll %>%
+  ggplot(aes(x = thresh))+
+  geom_histogram(binwidth = 1)
+
+cor_sum_roll %>%
+  ggplot(aes(x = thresh, y = cor)) +
+  geom_point() 
+
+cor_sum_roll_temp %>%
+  rename(thresh_temp = thresh,
+         cor_temp = cor,
+         n_temp = n) %>%
+  left_join(cor_sum_roll_do %>% rename(thresh_do = thresh)) %>%
+  ggplot(aes(x = thresh_temp, y = thresh_do, color = cor_temp, fill = cor)) +
+  geom_point(pch = 21, stroke = 2, size = 3)
+
+cor_sum_roll_temp %>%
+  rename(thresh_temp = thresh,
+         cor_temp = cor,
+         n_temp = n) %>%
+  left_join(cor_sum_roll_do %>% rename(thresh_do = thresh)) %>%
+  left_join(lat_long) %>%
+  ggplot(aes(x = thresh_temp, y = thresh_do, color = log(MaximumDepth_m))) +
+  geom_point() +
+  scale_color_viridis_c()
+```
+
