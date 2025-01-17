@@ -46,7 +46,7 @@ lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd
 #Remove very shallow lakes
 to_profiles <- to_profiles_all%>%
   left_join(lat_long, by = c("LakeID"))%>%
-  filter(is.na(MaximumDepth_m)|MaximumDepth_m>6.4)%>%
+  filter(is.na(MaximumDepth_m)|MaximumDepth_m>=3)%>%
   rename(reported_max_depth = MaximumDepth_m)
 
 #Remove max depth outliers using IQR
