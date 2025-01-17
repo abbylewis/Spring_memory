@@ -1,0 +1,76 @@
+---
+title: "Untitled"
+author: "Abby Lewis"
+date: "2023-10-10"
+output: html_document
+---
+
+Step 1: Load packages and data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(trend) #switched from openair 7 Nov 2023
+source("sen_slope_custom.R")
+
+# Make a directory for Figures if there isn't one
+if (!dir.exists("../Figures")){dir.create("../Figures")}
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+```
+
+Step 2: Calculate water temperature trends
+
+```{r}
+all_data <- read.csv("../Compiled data/All_data_annual_3m.csv")
+
+summer_mean_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_HYPO)), "Temp_C_HYPO")
+summer_epi_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_EPI)), "Temp_C_EPI")
+do_data <- all_data %>%
+  filter(!is.na(DO_mgL_HYPO)) %>% 
+  group_by(LakeID) %>%
+  filter(max(DO_mgL_HYPO, na.rm = T) >= 1) %>%
+  ungroup() 
+summer_do_sen <- sen_slope_custom(do_data, "DO_mgL_HYPO")
+
+write.csv(summer_epi_sen, "../Compiled data/summer_epi_temp_trends_3m.csv", row.names = F)
+write.csv(summer_mean_sen, "../Compiled data/summer_hypo_temp_mean_trends_3m.csv", row.names = F)
+write.csv(summer_do_sen, "../Compiled data/summer_hypo_DO_trends_3m.csv", row.names = F)
+```
+
+Step 3: Calculate daily met trends
+
+```{r}
+#Load data
+climate_era5 = read.csv("../Compiled data/historical_met_output_era5_daily.csv")
+
+climate_era5_roll <- climate_era5 %>%
+  mutate(doy = yday(Date),
+         Year = year(Date)) %>%
+  group_by(LakeID) %>%
+  arrange(Date) %>%
+  mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA),
+         Wind_ms = zoo::rollmean(Wind_ms, 30, align = "right", fill = NA),
+         Shortwave_mJm2 = zoo::rollmean(Shortwave_mJm2, 30, align = "right", fill = NA))%>%
+  filter(doy < yday(as.Date("2022-08-31")),
+         !is.na(Temp_C))
+
+#Calculate trends
+temp_era5_trends <- sen_slope_doys(climate_era5_roll, 
+                                   "Temp_C",
+                                   doys = 1:max(climate_era5_roll$doy))
+
+wind_era5_trends <- sen_slope_doys(climate_era5_roll, 
+                                   "Wind_ms",
+                                   doys = 1:max(climate_era5_roll$doy))
+
+light_era5_trends <- sen_slope_doys(climate_era5_roll, 
+                                   "Shortwave_mJm2",
+                                   doys = 1:max(climate_era5_roll$doy))
+
+#Save output
+write.csv(temp_era5_trends %>% full_join(wind_era5_trends) %>% full_join(light_era5_trends), 
+          "../Compiled data/climate_era5_roll_met_daily.csv", 
+              row.names = F)
+```
+
