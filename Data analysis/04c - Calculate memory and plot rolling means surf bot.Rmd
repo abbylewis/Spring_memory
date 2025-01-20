@@ -233,17 +233,17 @@ hypo_vars_strat <- all_plot1 %>%
   filter(doy>=30) %>% #remove first 29 days (these include previous year) 
   filter(strat == T) %>%
   filter(var %in% c("Summer VHOD (n = 192)",
-                    "Summer epi. temperature (n = 469)",
+                    #"Summer epi. temperature (n = 469)",
                     "Summer hypo. DO (n = 383)",
-                    "Summer hypo. temperature (n = 469)")) %>%
+                    "Summer hypo. temperature (n = 468)")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer epi. temperature (n = 469)",
-                                 "Summer hypo. temperature (n = 469)",
+                      levels = c(#"Summer epi. temperature (n = 469)",
+                                 "Summer hypo. temperature (n = 468)",
                                  "Summer VHOD (n = 192)",
                                  "Summer hypo. DO (n = 383)"
                                  ),
-                      labels = c("Summer surface-water\ntemperature (n = 469)",
-                                 "Summer bottom-water\ntemperature (n = 469)",
+                      labels = c(#"Summer surface-water\ntemperature (n = 469)",
+                                 "Summer bottom-water\ntemperature (n = 468)",
                                  "Summer bottom-water\noxygen demand (n = 192)",
                                  "Summer bottom-water\nDO (n = 383)")),
          layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
@@ -272,16 +272,16 @@ hypo_vars_strat <- all_plot1 %>%
 hypo_vars_unstrat <- all_plot1 %>%
   full_join(all_plot2) %>%
   filter(doy>=30) %>% #remove first 29 days (these include previous year)
-  filter(var %in% c("Summer epi. temperature (n = 92)",
+  filter(var %in% c(#"Summer epi. temperature (n = 92)",
                     "Summer hypo. DO (n = 97)",
-                    "Summer hypo. temperature (n = 99)")) %>%
+                    "Summer hypo. temperature (n = 92)")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer epi. temperature (n = 92)",
-                                 "Summer hypo. temperature (n = 99)",
+                      levels = c(#"Summer epi. temperature (n = 92)",
+                                 "Summer hypo. temperature (n = 92)",
                                  "Summer VHOD (n = 2)",
                                  "Summer hypo. DO (n = 97)"
                                  ),
-                      labels = c("Summer surface-water\ntemperature (n = 92)",
+                      labels = c(#"Summer surface-water\ntemperature (n = 92)",
                                  "Summer bottom-water\ntemperature (n = 92)",
                                  "Summer bottom-water\noxygen demand",
                                  "Summer bottom-water\nDO (n = 97)")),

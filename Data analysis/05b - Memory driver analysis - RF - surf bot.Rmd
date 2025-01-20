@@ -70,6 +70,8 @@ memory <- all %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
   mutate(M = (summer - spring)) 
+
+write.csv(memory, "../Compiled data/memory_3m.csv")
 ```
 
 Step 3: Run driver analysis
@@ -266,7 +268,7 @@ imp_mem <- ImpData %>%
                             "log_chla" = "Log chlorophyll-a",
                             "log_TP" = "Log TP"),
          xlab = "Variable importance\n") %>%
-  ggplot(aes(x = IncNodePurity, y = Var.Names)) +
+  ggplot(aes(x = `%IncMSE`, y = Var.Names)) +
   geom_col() +
   geom_rug(sides = "b", alpha = 0, outside = TRUE, length = unit(0.08, "npc")) +
   coord_cartesian(clip = "off") +

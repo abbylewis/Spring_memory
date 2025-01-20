@@ -173,7 +173,7 @@ surf_bot <- full_trimmed_shallow %>%
   dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
                    DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
                    Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
-                   Temp_C_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
                    DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
                    Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
                    TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T))
