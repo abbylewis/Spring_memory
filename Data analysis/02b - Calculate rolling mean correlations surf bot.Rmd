@@ -38,7 +38,7 @@ if (!dir.exists("../Figures")){dir.create("../Figures")}
 Step 2: Load and format air temperature data
 
 ```{r}
-daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
+daily_temp_raw <- read.csv("../Compiled data/historical_met_output_era5_daily.csv")
 daily_temp <- daily_temp_raw %>%
   mutate(Date = as.Date(Date),
          Date = ifelse(Lat < 0, Date - months(6), Date),

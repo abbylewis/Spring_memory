@@ -311,3 +311,18 @@ jpeg("../Figures/Monthly correlations - hypo daily roll mean sd surf bot.jpg",
 ggarrange(hypo_vars_strat, hypo_vars_unstrat, nrow = 2, align = "hv", common.legend = T, legend = "bottom")
 dev.off()
 ```
+Export dates
+
+```{r}
+dates_to_plot <- all %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(var, LakeID, season) %>%
+  summarize(max_doy = doy[which.max(abs(monthly_correlation))]) 
+
+write.csv(dates_to_plot, 
+          "../Compiled data/strongest_correlation_dates_all_met_3m.csv", 
+          row.names = F)
+```
+

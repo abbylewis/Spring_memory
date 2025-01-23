@@ -55,11 +55,11 @@ Step 2: Load and synthesize data
 #Read and format our lake metadata
 lakes <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") 
 lakes_format <- lakes %>%
-  dplyr::select(LakeID,Longitude_DD,Latitude_DD, MaximumDepth_m) %>%
-  rename(Lon=Longitude_DD,Lat=Latitude_DD)%>%
+  dplyr::select(LakeID, Longitude_DD, Latitude_DD, MaximumDepth_m) %>%
+  rename(Lon = Longitude_DD, Lat = Latitude_DD)%>%
   filter(!is.na(Lon),
          !is.na(Lat),
-         MaximumDepth_m > 6.4)
+         MaximumDepth_m >= 3)
 
 Sys.setenv(VROOM_CONNECTION_SIZE = 500000L)
 
@@ -106,12 +106,13 @@ plan(multisession)
 #                                 lakes_format = lakes_format, 
 #                                 .progress = T)
 
-met_outputs <- furrr::future_map_dfr(ids_to_rerun, 
-                                 download_met, 
-                                 lakes_format = lakes_format, 
-                                 .progress = T)
+met_outputs <- map_dfr(ids_to_rerun, 
+                                     download_met, 
+                                     lakes_format = lakes_format, 
+                                     .progress = T)
 
-all_outputs <- list.files("../Compiled data/met_downloads/", full.names = T) %>%
+all_outputs <- list.files("../Compiled data/met_downloads/", 
+                          full.names = T) %>%
   read_csv()
 
 write.csv(all_outputs,"../Compiled data/historical_met_output_era5_daily.csv", row.names = F)
