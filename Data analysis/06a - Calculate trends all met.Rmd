@@ -77,5 +77,6 @@ write.csv(temp_era5_trends %>%
                     mutate(Variable = "Shortwave_mJm2")), 
           "../Compiled data/climate_era5_roll_met_daily.csv", 
               row.names = F)
+
 ```
 

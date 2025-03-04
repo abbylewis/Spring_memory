@@ -267,22 +267,20 @@ imp_mem <- ImpData %>%
                             "log_DOC" = "DOC",
                             "log_chla" = "Log chlorophyll-a",
                             "log_TP" = "Log TP"),
-         xlab = "Variable importance\n") %>%
-  ggplot(aes(x = `%IncMSE`, y = Var.Names)) +
+         xlab = "") %>%
+  ggplot(aes(y = `%IncMSE`, x = Var.Names)) +
   geom_col() +
-  geom_rug(sides = "b", alpha = 0, outside = TRUE, length = unit(0.08, "npc")) +
+  #geom_rug(sides = "", alpha = 0, outside = TRUE, length = unit(0.08, "npc")) +
   coord_cartesian(clip = "off") +
   facet_grid(target~xlab, switch = "both") + 
-  labs(x=NULL) + 
+  labs(y = "Variable importance (% increase in MSE)") + 
   theme_bw() +
-  theme(axis.title.y = element_blank(),
+  theme(axis.title.x = element_blank(),
         strip.placement = "outside",   # format to look like title
         strip.background = element_blank(),
         strip.clip = "off",
-        axis.text.y = element_text(size = 7),
         panel.spacing.y = unit(0.8, "lines"),
-        axis.text.x = element_text(vjust=-0.5)) +
-  scale_x_continuous(n.breaks = 3) 
+        axis.title.y = element_text(size = 9))
 
 M_part <- partials_surf_temp %>%
   full_join(partials_hypo_temp) %>%
@@ -321,8 +319,8 @@ part <- M_part %>%
   ) +
   ylab("Partial dependence of memory statistic")
 
-jpeg("../Figures/partials.jpg", width = 6.5, height = 4.5, units = "in", res = 400)
-ggarrange(imp_mem, part, widths = c(0.5, 1))
+jpeg("../Figures/partials.jpg", width = 7, height = 4.5, units = "in", res = 400)
+ggarrange(imp_mem, part, widths = c(0.8, 1))
 dev.off()
 ```
 

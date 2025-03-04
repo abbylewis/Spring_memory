@@ -142,7 +142,7 @@ memory %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
          color = factor(color, levels = c("median < 0", "Insignificant", "median > 0")),
-         color = paste0(color, era)) %>%
+         color = paste0(color, "; ", era)) %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
@@ -157,7 +157,6 @@ memory %>%
   guides(color = guide_legend(nrow = 2))+
   theme(axis.title.y = element_blank(),
         axis.title.x = element_text(size= 8),
-        legend.position = "none",
         legend.text = element_text(size = 8),
         legend.key.size = unit(1, "line"),
         legend.title = element_text(size = 8),

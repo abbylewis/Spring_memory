@@ -26,6 +26,7 @@ all_data <- read.csv("../Compiled data/All_data_annual_3m.csv")
 
 summer_bot_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_BOT)), "Temp_C_BOT")
 summer_surf_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_SURF)), "Temp_C_SURF")
+summer_surf_tp <- sen_slope_custom(all_data %>% filter(!is.na(TP_ugL_SURF)), "TP_ugL_SURF")
 do_data <- all_data %>%
   filter(!is.na(DO_mgL_BOT)) %>% 
   group_by(LakeID) %>%
@@ -36,6 +37,7 @@ summer_do_sen <- sen_slope_custom(do_data, "DO_mgL_BOT")
 write.csv(summer_surf_sen, "../Compiled data/summer_surf_temp_trends_3m.csv", row.names = F)
 write.csv(summer_bot_sen, "../Compiled data/summer_bot_temp_mean_trends_3m.csv", row.names = F)
 write.csv(summer_do_sen, "../Compiled data/summer_bot_DO_trends_3m.csv", row.names = F)
+write.csv(summer_surf_tp, "../Compiled data/summer_surf_TP_trends_3m.csv", row.names = F)
 ```
 
 Step 3: Calculate daily met trends

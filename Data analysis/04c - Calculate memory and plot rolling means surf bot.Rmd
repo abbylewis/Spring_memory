@@ -82,6 +82,7 @@ memory <- all %>%
 #  mutate(M = (summer - spring)) %>%
 #  group_by(var) %>%
 #  mutate(p = wilcox.test(M)$p.value)
+memory
 ```
 
 Step 3: Generate Figure 1 (summary boxplot)
@@ -95,11 +96,11 @@ memory %>%
          var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
                       levels = c("Surface-water\ntemperature (n = 561)",
-                                 "Bottom-water\ntemperature (n = 568)",
+                                 "Bottom-water\ntemperature (n = 560)",
                                  "Bottom-water\noxygen demand (n = 194)",
                                  "Bottom-water\ndissolved oxygen (n = 480)"),
                       labels = c("Surface-water\ntemperature (n = 561)",
-                                 "Bottom-water\ntemperature (n = 568)",
+                                 "Bottom-water\ntemperature (n = 560)",
                                  "Bottom-water oxygen\ndemand (n = 194)",
                                  "Bottom-water dissolved\noxygen (n = 480)")))%>%
   group_by(var) %>%
@@ -308,7 +309,7 @@ hypo_vars_unstrat <- all_plot1 %>%
 #Save plot
 jpeg("../Figures/Monthly correlations - hypo daily roll mean sd surf bot.jpg", 
      width = 7, height = 4, res = 300, units = "in")
-ggarrange(hypo_vars_strat, hypo_vars_unstrat, nrow = 2, align = "hv", common.legend = T, legend = "bottom")
+ggpubr::ggarrange(hypo_vars_strat, hypo_vars_unstrat, nrow = 2, align = "hv", common.legend = T, legend = "bottom")
 dev.off()
 ```
 Export dates
@@ -326,3 +327,146 @@ write.csv(dates_to_plot,
           row.names = F)
 ```
 
+Map
+
+```{r}
+library(ggthemes)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+#remotes::install_github("ropensci/rnaturalearthhires")
+library(rnaturalearthhires)
+library(ggspatial)
+library(viridis)
+
+#Create a world map of the sites in this analysis
+world <- ne_countries(scale = "medium", returnclass = "sf")
+states <- ne_states(returnclass = "sf",country = "United States of America")
+lat_lon <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+
+for_map <- memory %>%
+  filter(var == "Bottom-water\ntemperature") %>%
+  left_join(lat_lon)
+
+jpeg("../Figures/World Map - memory surf bot.jpg", res = 300, width = 6, height = 3.2, units = "in")
+world_map <- ggplot(data = world) +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE)+
+  geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
+             shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+        legend.box.background = element_rect(fill = "white", color = "white"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_line(color = "grey80",linetype = "dotted", linewidth = 0.0001))
+world_map
+dev.off()
+
+for_states <- for_map%>%
+  filter(Country == "USA")
+us_map <- ggplot(data = states) +
+  geom_sf(data = world, fill = "grey98") +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(25, 50), xlim = c(-130,-60))+
+  geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
+             shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
+                         style = north_arrow_fancy_orienteering) +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+        legend.box.background = element_rect(fill = "white", color = "white"),
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+jpeg("../Figures/US Map - memory surf bot.jpg", res = 300, width = 6, height = 3.2, units = "in")
+us_map
+dev.off()
+
+euro_map <- ggplot(data = world) +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(35, 70), xlim = c(-12,40))+
+  geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
+             shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  annotation_north_arrow(location = "bl", which_north = "true", 
+      pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
+      style = north_arrow_fancy_orienteering) +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+    legend.box.background = element_rect(fill = "white", color = "white")) +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+        legend.box.background = element_rect(fill = "white", color = "white"),
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+jpeg("../Figures/Euro Map - memory surf bot.jpg", res = 300, width = 6, height = 3.2, units = "in")
+euro_map
+dev.off()
+
+for_wi <- for_map#%>%
+  #filter(Country == "USA", 
+  #       StateOrProvince == "Wisconsin")
+wi_map <- ggplot(data = states) +
+  geom_sf(data = world, fill = "grey90") +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-93,-86.5))+
+  geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
+             shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  #annotation_north_arrow(location = "bl", which_north = "true", 
+  #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
+  #    style = north_arrow_fancy_orienteering) +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+    legend.box.background = element_rect(fill = "white", color = "white"))+
+  scale_x_continuous(breaks = seq(-93, -87, 2))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank())
+wi_map
+
+for_states <- for_map#%>%
+  #filter(Country == "USA")
+states <- ne_states(returnclass = "sf",country = "United States of America")
+ne_map <- ggplot(data = states) +
+  geom_sf(data = world, fill = "grey98") +
+  geom_sf(fill = "white") +
+  coord_sf(expand = FALSE, ylim = c(42, 47.5), xlim = c(-76,-67))+
+  geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
+             shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
+  theme_bw()+
+  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  #annotation_north_arrow(location = "bl", which_north = "true", 
+  #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
+  #    style = north_arrow_fancy_orienteering) +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+    legend.box.background = element_rect(fill = "white", color = "white"))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_blank())
+ne_map
+
+library(ggpubr)
+library(patchwork)
+jpeg("../Figures/World map with insets surf bot.jpg", res = 300, width = 6, height = 5, units = "in")
+ggarrange(world_map + theme(legend.position = "none"), 
+          ggarrange(wi_map + theme(legend.position = "none"), 
+                    ne_map, 
+                    plot_spacer()+theme_void(), 
+                    labels = c("b", "c", NA), widths = c(4,7,1), nrow = 1), 
+          nrow = 2, heights = c(2,1), labels = c("a",NA))
+dev.off()
+```
