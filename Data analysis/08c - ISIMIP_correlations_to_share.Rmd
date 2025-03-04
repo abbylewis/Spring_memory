@@ -69,30 +69,45 @@ to_profiles_cleaning <- all_gotm %>%
   group_by(hylak_id, Date) %>% 
   filter(length(unique(Depth_m)) > 2) %>% #Need at least three depths
   mutate(Date = as.Date(Date)) %>%
-  arrange(hylak_id, Date, Depth_m)
+  arrange(hylak_id, Date, Depth_m) %>%
+  ungroup()
+
+to_profiles_summer <- to_profiles_cleaning %>%
+  mutate(Date = as.Date(Date, origin = "1970-01-01")) %>%
+  mutate(hylak_id = as.numeric(hylak_id)) %>%
+  filter(((Lat > 0) & 
+            yday(Date) >= yday("2022-07-01") & 
+            yday(Date) <= yday("2022-08-31")) |
+           ((Lat < 0) &
+              yday(Date) >= yday("2022-01-01") & 
+              yday(Date) <= yday("2022-02-28"))) 
 
 #Function to interpolate temeprature profiles to 1m resolution
-interp_t <- function(lake, to_profiles_cleaning){
-  alldates<-to_profiles_cleaning %>% 
+interp_t <- function(lake, to_profiles_summer){
+  alldates <- to_profiles_summer %>% 
     dplyr::select(hylak_id, Date, Depth_m, Temp_C) %>%
     filter(hylak_id == lake) %>%
     dplyr::select(Date) %>% 
-    unique() %>% 
+    distinct() %>%
     unlist() %>% 
     as.vector()
   
-  lake_data <- to_profiles_cleaning %>%
+  lake_data <- to_profiles_summer %>%
     filter(hylak_id == lake)
   
-  interpolatedvalues.t <- furrr::future_map(alldates, run_all_dates_t, lake_data,lake) |> list_rbind()
+  interpolatedvalues.t <- furrr::future_map(alldates, 
+                                            run_all_dates_t, 
+                                            lake_data, 
+                                            lake) |> 
+    list_rbind()
   
   return(interpolatedvalues.t)
 }
 
 #Function to run across all dates
-run_all_dates_t <- function(alldates, lake_data, lake){
+run_all_dates_t <- function(date_i, lake_data, lake){
   profile <- lake_data %>% 
-    filter(Date == alldates)
+    filter(Date == date_i)
   
   interpolated.depths <- seq(from=0, to= max(profile$Depth_m))
   
@@ -109,7 +124,7 @@ run_all_dates_t <- function(alldates, lake_data, lake){
                             x= interpolated.depths)
   
   output = data.frame(hylak_id = lake,
-                      Date = alldates,
+                      Date = date_i,
                       Depth_m = interpolated.depths,
                       Temp_C = interpolated.dos)
   
@@ -118,11 +133,11 @@ run_all_dates_t <- function(alldates, lake_data, lake){
 
 #Interpolate all lakes/dates
 plan(multisession, workers = 4)
-laken <- to_profiles_cleaning$hylak_id %>% 
+laken <- to_profiles_summer$hylak_id %>% 
   unique()
 interpolatedvalues.t <- furrr::future_map(laken,
                                           interp_t,
-                                          to_profiles_cleaning) |> 
+                                          to_profiles_summer) |> 
   list_rbind()
 ```
 
@@ -130,17 +145,11 @@ interpolatedvalues.t <- furrr::future_map(laken,
 Step 2: Compile to epi/hypo means
 
 ```{r}
-#Filter to summer data
+#Format
 isimip_summer <- interpolatedvalues.t %>%
-  mutate(Date = as.Date(Date, origin = "1970-01-01")) %>%
-  mutate(hylak_id = as.numeric(hylak_id)) %>%
-  left_join(lat_long) %>%
-  filter(((Latitude_DD > 0) & 
-            yday(Date) >= yday("2022-07-01") & 
-            yday(Date) <= yday("2022-08-31")) |
-           ((Latitude_DD < 0) &
-              yday(Date) >= yday("2022-01-01") & 
-              yday(Date) <= yday("2022-02-28"))) 
+  mutate(Date = as.Date(Date, origin = "1970-01-01"),
+         hylak_id = as.numeric(hylak_id)) %>%
+  rename(LakeID = hylak_id)
 
 #Calculate thermocline depth
 thermo_depths <- isimip_summer %>%
@@ -175,12 +184,16 @@ full_with_thermo <- isimip_summer %>%
   filter(!is.na(epi_depth),
          !is.na(hypo_depth))
 
-write.csv(summer_layers, "../Compiled data/ISIMIP_summer_layers_v3.csv", row.names = F)
+#Add discrete layer designations 
+summer_layers <- full_with_thermo %>%
+  mutate(Layer = ifelse(!is.na(Depth_m) & Depth_m < epi_depth, "EPI", NA),
+         Layer = ifelse(!is.na(Depth_m) & Depth_m > hypo_depth, "HYPO" ,Layer)) %>%
+  filter(!is.na(Layer))
 
 #Identify stratification onset dates
 strat_onset <- all_gotm %>%
-  mutate(hylak_id = as.numeric(hylak_id)) %>%
-  left_join(lat_long %>% select(LakeID, hylak_id)) %>%
+  mutate(LakeID = as.numeric(hylak_id)) %>%
+  select(-hylak_id)%>%
   filter(Lat > 0,
          month(Date) < 7) %>%
   group_by(Date, LakeID) %>%
@@ -212,8 +225,7 @@ write.csv(summer_avgs, "../Compiled data/ISIMIP_summer_avgs_v3.csv", row.names =
 #Calculate buoyancy frequency and export
 buoyancy <- interpolatedvalues.t %>%
   mutate(Date = as.Date(Date, origin = "1970-01-01")) %>%
-  mutate(hylak_id = as.numeric(hylak_id)) %>%
-  left_join(lat_long) %>%
+  mutate(LakeID = as.numeric(hylak_id)) %>%
   group_by(Date, LakeID) %>%
   dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C,Depth_m),na.rm=T))
 write.csv(buoyancy, "../Compiled data/ISIMIP_bf_daily.csv", row.names = F)
@@ -266,7 +278,6 @@ write.csv(all_tas, "../Compiled data/ISIMIP_ERA5_temp_1981_2005.csv", row.names 
 Step 4: Calculate rolling mean correlations
 
 ```{r}
-lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 isimip <- nc_open('../External data/hydrolakes_id.nc') 
 lakes <- ncvar_get(isimip,"id")
 lat <- ncvar_get(isimip,"lat")
@@ -277,10 +288,11 @@ combined_df = data.frame(ID = as.vector(lakes),
 ) %>%
   filter(!is.na(ID))
 
-climate <- read.csv("../Compiled data/ISIMIP_ERA5_temp_1981_2005.csv") %>%
-  left_join(lat_long)
+climate <- #read.csv("../Compiled data/ISIMIP_ERA5_temp_1981_2005.csv") %>%
+  all_tas
 
-summer <- read.csv("../Compiled data/ISIMIP_summer_avgs_v3.csv") %>%
+summer <- #read.csv("../Compiled data/ISIMIP_summer_avgs_v3.csv") %>%
+  summer_avgs %>%
   pivot_wider(names_from = "Layer", values_from = "Temp_C", names_prefix = "Temp_C_")
 
 daily_temp <- climate %>%
@@ -288,7 +300,8 @@ daily_temp <- climate %>%
          Date = ifelse(Lat < 0, Date - months(6), Date),
          Date = as.Date(Date, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
-  mutate(Year = year(Date))
+  mutate(Year = year(Date)) %>%
+  rename(LakeID = hylak_id)
 
 many_lake_temp_sum <- summer %>%
   left_join(daily_temp) %>%
