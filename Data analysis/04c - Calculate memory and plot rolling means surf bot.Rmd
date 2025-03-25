@@ -68,7 +68,7 @@ memory <- all %>%
   group_by(LakeID, var, season) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) %>%
+  mutate(M = (spring - summer)) %>%
   group_by(var) %>%
   mutate(p = wilcox.test(M)$p.value)
 
@@ -106,20 +106,20 @@ memory %>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
-         color = factor(color, levels = c("median < 0", 
+         color = factor(color, levels = c("median > 0", 
                                           "Insignificant", 
-                                          "median > 0"))) %>%
+                                          "median < 0"))) %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = -0.7, y = 5, label = "More correlated\nwith spring", 
+  annotate("text", x = 0.7, y = 5, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = 0.7, y = 5, label = "More correlated\nwith summer", 
+  annotate("text", x = -0.7, y = 5, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
   scale_y_discrete(limits=rev, position = "right") +
-  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  xlab("Relative correlation with spring\nvs. summer air temperature")+
   guides(color = guide_legend(nrow = 2))+
   theme(axis.title.y = element_blank(),
         axis.title.x = element_text(size= 8),
@@ -133,7 +133,8 @@ memory %>%
         )+
   scale_color_manual(values = c("#25469a","#c16586"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,4), clip = "off")
+  coord_cartesian(ylim = c(1,4), clip = "off")+
+  scale_x_reverse()
 dev.off()
 ```
 

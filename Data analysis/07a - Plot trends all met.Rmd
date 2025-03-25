@@ -34,12 +34,21 @@ summer_bot_mean <- read.csv("../Compiled data/summer_bot_temp_mean_trends_3m.csv
 summer_surf_mean <- read.csv("../Compiled data/summer_surf_temp_trends_3m.csv") %>%
   rename(summer_surf_mean = trend) %>%
   dplyr::select(summer_surf_mean, LakeID)
+summer_surf_do <- read.csv("../Compiled data/summer_surf_DO_trends_3m.csv") %>%
+  rename(summer_surf_do = trend) %>%
+  dplyr::select(summer_surf_do, LakeID)
 summer_bot_do <- read.csv("../Compiled data/summer_bot_DO_trends_3m.csv") %>%
   rename(summer_bot_do = trend) %>%
   dplyr::select(summer_bot_do, LakeID)
 summer_surf_tp <- read.csv("../Compiled data/summer_surf_tp_trends_3m.csv") %>%
   rename(summer_surf_tp = trend) %>%
   dplyr::select(summer_surf_tp, LakeID)
+summer_dif <- read.csv("../Compiled data/summer_dif_trends_3m.csv") %>%
+  rename(summer_dif = trend) %>%
+  dplyr::select(summer_dif, LakeID)
+summer_dif_do <- read.csv("../Compiled data/summer_dif_DO_trends_3m.csv") %>%
+  rename(summer_dif = trend) %>%
+  dplyr::select(summer_dif, LakeID)
 
 met_by_bot_temp %>%
   mutate(doy = as.Date("2022-01-01") + doy - 1) %>%
@@ -47,6 +56,145 @@ met_by_bot_temp %>%
   geom_line(alpha=0.01)+
   facet_wrap(~Variable, scales = "free_y")
 ```
+
+Compare
+
+```{r}
+data <- summer_bot_mean %>%
+  full_join(summer_surf_mean) %>%
+  full_join(summer_surf_do) %>%
+  full_join(summer_bot_do) %>%
+  pivot_longer(cols = c(summer_bot_mean, summer_surf_mean, summer_surf_do, summer_bot_do),
+               names_to = "Variable",
+               values_to = "trend") %>%
+  left_join(mem %>% select(LakeID, var, M) %>% distinct(), by = c("LakeID","Variable" = "var")) %>%
+  mutate(layer = ifelse(str_detect(Variable, "surf"), 
+                        "Surface", "Bottom"),
+         var = ifelse(str_detect(Variable, "mean"), 
+                      "Temperature trend\n(ºC/decade)", "DO trend\n(mg/L/decade)"),
+         var = factor(var,
+                      levels = c("Temperature trend\n(ºC/decade)", "DO trend\n(mg/L/decade)"))) %>%
+  group_by(var, LakeID) %>%
+  mutate(M = M[layer == "Bottom"]) %>%
+  select(-Variable) %>%
+  pivot_wider(names_from = layer,
+              values_from = trend)
+
+cors <- data %>%
+  group_by(var) %>%
+  summarize(cor = cor(Surface, Bottom, method = "spearman", use = "complete.obs"))
+
+min_do <- min(c(data$Bottom[data$var == "DO trend\n(mg/L/decade)"], 
+                data$Surface[data$var == "DO trend\n(mg/L/decade)"]),
+              na.rm = T)
+max_do <- max(c(data$Bottom[data$var == "DO trend\n(mg/L/decade)"], 
+                data$Surface[data$var == "DO trend\n(mg/L/decade)"]),
+              na.rm = T)
+min_temp <- min(c(data$Bottom[data$var == "Temperature trend\n(ºC/decade)"], 
+                  data$Surface[data$var == "Temperature trend\n(ºC/decade)"]),
+                na.rm = T)
+max_temp <- max(c(data$Bottom[data$var == "Temperature trend\n(ºC/decade)"], 
+                  data$Surface[data$var == "Temperature trend\n(ºC/decade)"]),
+                na.rm = T)
+mean_do <- mean(c(data$Bottom[data$var == "DO trend\n(mg/L/decade)"], 
+                data$Surface[data$var == "DO trend\n(mg/L/decade)"]),
+              na.rm = T)
+sd_do <- sd(c(data$Bottom[data$var == "DO trend\n(mg/L/decade)"], 
+                data$Surface[data$var == "DO trend\n(mg/L/decade)"]),
+              na.rm = T)
+mean_temp <- mean(c(data$Bottom[data$var == "Temperature trend\n(ºC/decade)"], 
+                  data$Surface[data$var == "Temperature trend\n(ºC/decade)"]),
+                na.rm = T)
+sd_temp <- sd(c(data$Bottom[data$var == "Temperature trend\n(ºC/decade)"], 
+                  data$Surface[data$var == "Temperature trend\n(ºC/decade)"]),
+                na.rm = T)
+
+jpeg("../Figures/spatial_mismatch.jpg", width = 6, height = 3, units = "in", res = 300)
+data %>%
+  ggplot(aes(x = Bottom, y = Surface)) +
+  geom_abline()+
+  geom_point(alpha = 0.5) +
+  geom_label(data = cors, aes(x = Inf, y = Inf, label =  paste0("\u03C1 = ", round(cor,2))), 
+             hjust = 1, vjust = 1)+
+  facet_wrap(~var, scales = "free")+
+  ggh4x::facetted_pos_scales(
+    x = list(
+      scale_x_continuous(limits = c(mean_do - 2*sd_do, 
+                                    mean_do + 2*sd_do)),
+      scale_x_continuous(limits = c(mean_temp - 2*sd_temp, 
+                                    mean_temp + 2*sd_temp))
+    ),
+    y = list(
+      scale_y_continuous(limits = c(mean_do - 2*sd_do, 
+                                    mean_do + 2*sd_do)),
+      scale_y_continuous(limits = c(mean_temp - 2*sd_temp, 
+                                    mean_temp + 2*sd_temp))
+    )
+  )+
+  theme_bw()
+dev.off()
+
+data %>%
+  ggplot(aes(x = Bottom, y = Surface)) +
+  geom_abline()+
+  geom_point(alpha = 0.8, aes(color = M)) +
+  geom_label(data = cors, aes(x = Inf, y = Inf, label =  paste0("\u03C1 = ", round(cor,2))), 
+             hjust = 1, vjust = 1)+
+  facet_wrap(~var, scales = "free")+
+  theme_bw()+
+  scale_color_gradientn(colors = c("#25469a", "#735690","#c16586"), 
+                        limits = c(-0.7, 0.7))+
+  ggh4x::facetted_pos_scales(
+    x = list(
+      scale_x_continuous(limits = c(mean_do - 2*sd_do, 
+                                    mean_do + 2*sd_do)),
+      scale_x_continuous(limits = c(mean_temp - 2*sd_temp, 
+                                    mean_temp + 2*sd_temp))
+    ),
+    y = list(
+      scale_y_continuous(limits = c(mean_do - 2*sd_do, 
+                                    mean_do + 2*sd_do)),
+      scale_y_continuous(limits = c(mean_temp - 2*sd_temp, 
+                                    mean_temp + 2*sd_temp))
+    )
+  )
+
+a <- data %>%
+  filter(var == "Temperature trend\n(ºC/decade)") %>%
+  ggplot(aes(x = Bottom*10, y = Surface*10)) +
+  geom_abline(color = "grey70")+
+  geom_hline(yintercept = 0, color = "grey80")+
+  geom_vline(xintercept = 0, color = "grey80")+
+  geom_point(alpha = 0.5) +
+  ylab("Surface temperature trend\n(ºC/decade)")+
+  xlab("Bottom temperature trend\n(ºC/decade)")+
+  geom_label(data = cors %>%
+               filter(var == "Temperature trend\n(ºC/decade)"), 
+             aes(x = -10, y = 4, label =  paste0("\u03C1 = ", round(cor,2))), 
+             hjust = 0)+
+  theme_bw(base_size = 10)
+
+b <- summer_dif %>% 
+  ggplot(aes(x = summer_dif*10)) +
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  geom_hline(yintercept = 0, color = "grey80")+
+  geom_vline(aes(xintercept = median(summer_dif*10, na.rm = T)), lty = "dotted")+
+  geom_density(linewidth = 1)+
+  geom_label(aes(x = -3, y = 0.35, 
+                 label = paste0("Median = +", 
+                                round(median, 2),
+                                " ºC/decade")), 
+             hjust = 0,
+             data = . %>% summarize(median = median(summer_dif, na.rm = T)*10))+
+  xlab("Trend in thermal difference between\n surface and bottom waters (ºC/decade)")+
+  ylab("Density") +
+  theme_bw(base_size = 10)
+
+jpeg("../Figures/temp_mismatch.jpg", width = 6, height = 3, units = "in", res = 300)
+ggarrange(a, b, labels = "auto")
+dev.off()
+```
+
 
 Lm
 
@@ -340,7 +488,7 @@ ImpData_bot_temp %>%
                             labels = c("Spring", "Summer")),
          M_binary = factor(M_binary,
                            levels = c("> 0", "<= 0"),
-                           labels = c("SATE > 0", "SATE <= 0"))) %>%
+                           labels = c("SEM > 0", "SEM <= 0"))) %>%
   ggplot(aes(y = `%IncMSE`, x = Var.Names, fill = Var.Names)) +
   geom_hline(yintercept = 0, color = "grey70") +
   geom_col(aes(alpha = neg)) +
@@ -370,7 +518,7 @@ imp <- ImpData_bot_temp %>%
                             labels = c("Spring", "Summer")),
          M_binary = factor(M_binary,
                            levels = c("> 0", "<= 0"),
-                           labels = c("SATE > 0", "SATE <= 0"))) %>%
+                           labels = c("SEM > 0", "SEM <= 0"))) %>%
   mutate(neg = `%IncMSE` > 0,
          target = "") %>%
   ggplot(aes(y = `%IncMSE`, x = Var.Names, fill = Var.Names)) +
@@ -409,20 +557,31 @@ partial_bot_spring_less <- data.frame(
 
 M_part <- partial_bot_summer_greater %>%
   full_join(partial_bot_spring_greater) %>%
-  mutate(M_binary = "SATE > 0") %>%
+  mutate(M_binary = "SEM > 0") %>%
   full_join(partial_bot_summer_less %>%
               full_join(partial_bot_spring_less) %>%
-              mutate(M_binary = "SATE <= 0"))
+              mutate(M_binary = "SEM <= 0"))
+
+rug_data <- mem_rf_df_bot_temp %>%
+  pivot_longer(cols = all_of(potential_drivers),
+               names_to = "var", values_to = "x") %>%
+  filter(!is.na(x)) %>%
+  mutate(var = factor(var, levels = c("Air_temp_C_spring",
+                                                  "Air_temp_C_summer"),
+                            labels = c("Spring", "Summer")),
+         M_binary = factor(M_binary,
+                           levels = c("> 0", "<= 0"),
+                           labels = c("SEM > 0", "SEM <= 0")))
 
 part <- M_part %>%
   mutate(M_binary = factor(M_binary,
-                           levels = c("SATE > 0", "SATE <= 0"),
-                           labels = c("SATE > 0", "SATE <= 0"))) %>%
+                           levels = c("SEM > 0", "SEM <= 0"),
+                           labels = c("SEM > 0", "SEM <= 0"))) %>%
   ggplot(aes(x = x)) +
   geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
   geom_vline(xintercept = 0, color = "grey60", linewidth = 0.3) +
   geom_line(aes(y = y)) +
-  #geom_rug(aes(x = x), sides = "b", data = rug_data, alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
+  geom_rug(aes(x = x), sides = "b", data = rug_data, alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
   coord_cartesian(clip = "off") +
   facet_grid(M_binary~var, scales = "free_x") +
   xlab("Air temperature trend") +
