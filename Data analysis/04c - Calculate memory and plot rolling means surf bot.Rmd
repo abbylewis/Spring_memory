@@ -119,10 +119,10 @@ memory %>%
   theme_bw() +
   ggtitle("\n")+
   scale_y_discrete(limits=rev, position = "right") +
-  xlab("Relative correlation with spring\nvs. summer air temperature")+
+  xlab("Seasonal ecological memory")+
   guides(color = guide_legend(nrow = 2))+
   theme(axis.title.y = element_blank(),
-        axis.title.x = element_text(size= 8),
+        axis.title.x = element_text(),
         legend.position = "none",
         legend.text = element_text(size = 8),
         legend.key.size = unit(1, "line"),
@@ -357,7 +357,7 @@ world_map <- ggplot(data = world) +
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
   scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
         legend.box.background = element_rect(fill = "white", color = "white"),
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
@@ -383,7 +383,7 @@ us_map <- ggplot(data = states) +
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
                          style = north_arrow_fancy_orienteering) +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
         legend.box.background = element_rect(fill = "white", color = "white"),
         panel.background = element_rect(fill = "grey90"),
         panel.grid = element_blank(),
@@ -403,9 +403,9 @@ euro_map <- ggplot(data = world) +
   annotation_north_arrow(location = "bl", which_north = "true", 
       pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
       style = north_arrow_fancy_orienteering) +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
     legend.box.background = element_rect(fill = "white", color = "white")) +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
         legend.box.background = element_rect(fill = "white", color = "white"),
         panel.background = element_rect(fill = "grey90"),
         panel.grid = element_blank(),
@@ -429,7 +429,7 @@ wi_map <- ggplot(data = states) +
   #annotation_north_arrow(location = "bl", which_north = "true", 
   #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
   #    style = north_arrow_fancy_orienteering) +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
     legend.box.background = element_rect(fill = "white", color = "white"))+
   scale_x_continuous(breaks = seq(-93, -87, 2))+
   theme(axis.title.x = element_blank(),
@@ -452,7 +452,7 @@ ne_map <- ggplot(data = states) +
   #annotation_north_arrow(location = "bl", which_north = "true", 
   #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
   #    style = north_arrow_fancy_orienteering) +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
     legend.box.background = element_rect(fill = "white", color = "white"))+
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),

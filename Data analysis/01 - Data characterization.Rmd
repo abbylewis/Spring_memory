@@ -30,17 +30,17 @@ Step 2: Summary statistics
 
 ```{r}
 #Load data from EDI
-lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") %>%
+  filter(Latitude_DD < -23.5 | Latitude_DD > 23.5)
 #Load interpolated DO data file, created by "02 - Temp and DO interpolation.Rmd"
 do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
 #Combine
 full <- do %>%
   full_join(lat_long, by = c("LakeID")) %>%
-  mutate(Date = as.Date(Date)) %>%
-  filter(!is.na(MaximumDepth_m) & MaximumDepth_m >= 6.4)
+  mutate(Date = as.Date(Date)) 
 #filter to rows with data
 not_na <- full %>%
-  filter(if_any(.cols = c(Temp_C,DO_mgL),
+  filter(if_any(.cols = c(Temp_C, DO_mgL),
                 .fns = ~ !is.na(.x)))
 
 not_na%>%
@@ -96,19 +96,16 @@ library(ggspatial)
 #Create a world map of the sites in this analysis
 world <- ne_countries(scale = "medium", returnclass = "sf")
 states <- ne_states(returnclass = "sf",country = "United States of America")
-for_map <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
-
-for_map <- for_map %>%
-  filter(MaximumDepth_m > 6.4)
+for_map <- lat_long
 
 jpeg("../Figures/World Map - just points.jpg", res = 300, width = 6, height = 3.2, units = "in")
 world_map <- ggplot(data = world) +
   geom_sf(fill = "white", color = "grey60") +
-  coord_sf(expand = FALSE)+
+  coord_sf(expand = FALSE, ylim = c(-50,80))+
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD), 
              fill = "#3087D9",shape = 21, color = "white", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"),
+  theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
     legend.box.background = element_rect(fill = "white", color = "white"))+
   scale_fill_viridis(name = "Years of data")+
   theme(axis.title.x = element_blank(),
@@ -118,3 +115,61 @@ world_map <- ggplot(data = world) +
 world_map
 dev.off()
 ```
+
+```{r}
+depth <- lat_long %>%
+  ggplot(aes(x = MaximumDepth_m))+
+  geom_density(color = "#3087D9")+
+  scale_x_log10(n.breaks = 4)+
+  theme_bw(base_size = 9)+
+  xlab(expression("Maximum depth (m)"))+
+  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
+
+area <- lat_long %>%
+  ggplot(aes(x = SurfaceArea_ha/100))+
+  geom_density(color = "#3087D9")+
+  scale_x_log10(n.breaks = 3)+
+  theme_bw(base_size = 9)+
+  xlab(expression("Surface area (km"^{2}*")"))+
+  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"),
+        axis.title.x=element_text(vjust=2))
+
+years <- not_na %>%
+  mutate(Year = year(Date)) %>%
+  group_by(Year) %>%
+  summarize(lakes = length(unique(LakeID))) %>% 
+  ggplot(aes(x = Year, y = lakes))+
+  geom_line(color = "#3087D9")+
+  ylab("Lakes (n)")+
+  xlab(expression("Year"))+
+  theme_bw(base_size = 9)+
+  scale_x_continuous(n.breaks = 3.5)+
+  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
+
+doys <- not_na %>%
+  left_join(lat_long %>%
+              select(LakeID, Latitude_DD)) %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Latitude_DD < 0, Date + months(6), Date),
+         Date = as.Date(Date)) %>%
+  mutate(yday = lubridate::yday(Date)) %>%
+  group_by(LakeID, yday) %>%
+  summarize() %>%
+  ggplot(aes(x = yday))+
+  geom_density(color = "#3087D9")+
+  xlab(expression("Sampling date"))+
+  theme_bw(base_size = 9)+
+  scale_x_continuous(n.breaks = 3,
+                     breaks = c(yday("2024-06-20"), yday("2024-12-21")),
+                     labels = c("Summer\nsolstice", "Winter\nsolstice"))+
+  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
+
+jpeg("../Figures/Data summary.jpeg", width = 6, height = 4, units = "in", res = 300)
+ggpubr::ggarrange(world_map, 
+                  ggpubr::ggarrange(depth, area, doys, years, nrow = 1, ncol = 4, align = "h", 
+                                    labels = c("b1", "b2", "b3", "b4", "b5"), label.y = 1.04,
+                                    font.label = list(size = 10)), 
+                  nrow=2, heights = c(1, .5), labels = c("a", "b"), label.y = c(1.03, 1.2), label.x = c(0.05, 0.05))
+dev.off()
+```
+

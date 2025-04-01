@@ -577,14 +577,16 @@ part <- M_part %>%
   mutate(M_binary = factor(M_binary,
                            levels = c("SEM > 0", "SEM <= 0"),
                            labels = c("SEM > 0", "SEM <= 0"))) %>%
-  ggplot(aes(x = x)) +
+  ggplot(aes(x = x*10)) +
   geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
   geom_vline(xintercept = 0, color = "grey60", linewidth = 0.3) +
   geom_line(aes(y = y)) +
-  geom_rug(aes(x = x), sides = "b", data = rug_data, alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
+  geom_rug(aes(x = x*10, color = var), sides = "b", data = rug_data, alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
   coord_cartesian(clip = "off") +
   facet_grid(M_binary~var, scales = "free_x") +
-  xlab("Air temperature trend") +
+  xlab("Air temperature trend (ºC/decade)") +
+  scale_color_manual(values = c("Spring" = "#25469a",
+                               "Summer" = "#c16586"))+
   theme_bw() +
   theme(
     strip.placement = "outside",   # format to look like title
@@ -598,12 +600,43 @@ part <- M_part %>%
   ) +
   ylab("Bottom-water temperature trend")
 
-jpeg("../Figures/Bottom-water temperature trend drivers.jpeg", width = 6, height = 3, units = "in", res = 300)
-ggarrange(imp, part, widths = c(.5,1))
+air_trends_wide_blank <- rug_data %>%
+  mutate(spacer = "") %>%
+  ggplot(aes(x = x*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  scale_color_manual(values = c("Spring" = "#25469a",
+                               "Summer" = "#c16586"))+
+  geom_density(aes(color = var))+
+  facet_grid(spacer~var, scales = "free_x") +
+  theme_bw() +
+  ylab("")+
+  theme(strip.placement = "outside",
+        strip.background = element_blank(),
+        strip.clip = "off",
+        strip.text.x = element_blank(),
+        legend.position = "none",
+        panel.spacing.y = unit(0.8, "lines"),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.title.y = element_text(size = 9),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(color = "white"),
+        axis.ticks = element_line(color = "white"),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
+jpeg("../Figures/Bottom-water temperature trend drivers.jpeg", width = 6, height = 3.5, units = "in", res = 300)
+ggarrange(ggarrange(ggplot() + geom_blank() + theme_void(), 
+                    imp + theme(plot.margin = unit(c(0,0,.2,.2), 'lines')), 
+                    heights = c(0.2, 1), nrow = 2, labels = c("","a")),
+          ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1), 'lines')), 
+                    part + theme(plot.margin = unit(c(0,.2,.2,1), 'lines')), 
+                    heights = c(0.2, 1), nrow = 2, labels = c("", "b")),
+          ncol = 2, widths = c(.5,1))
 dev.off()
 ```
 
-
+```{r}
 met_trends_matched <- max_cor_dates %>%
   filter(var == "Summer hypo. temperature") %>%
   left_join(met_by_bot_temp, 
@@ -671,7 +704,6 @@ p <- pdpZen(data = mem_rf_df_bot_temp,
 
 #+
   geom_hline(yintercept = 0, color = "grey70")
-```
 
 
 M_part <- partials_surf_temp %>%
