@@ -19,8 +19,8 @@ if (!dir.exists("../Figures")){dir.create("../Figures")}
 
 # Load data
 lat_long = read.csv("https://pasta-s.lternet.edu/package/data/eml/edi/1029/9/fadd3eaa25b5fdd1fc4efba70e660579")
-met_by_bot_temp <- read_csv("../Compiled data/climate_era5_roll_met_daily - summer_bot_temp_years.csv")
-met_by_surf_temp <- read_csv("../Compiled data/climate_era5_roll_met_daily - summer_surf_temp_years.csv")
+met_by_bot_temp <- read_csv("../Compiled data/climate_era5_roll_met_daily - summer_bot_temp_years.csv") 
+met_by_surf_temp <- read_csv("../Compiled data/climate_era5_roll_met_daily - summer_surf_temp_years.csv") 
 met_by_bot_do <- read_csv("../Compiled data/climate_era5_roll_met_daily - summer_bot_DO_years.csv")
 max_cor_dates <- read.csv("../Compiled data/strongest_correlation_dates_all_met_3m.csv")
 mem <- read_csv("../Compiled data/memory_3m.csv") %>%
@@ -166,13 +166,18 @@ a <- data %>%
   geom_hline(yintercept = 0, color = "grey80")+
   geom_vline(xintercept = 0, color = "grey80")+
   geom_point(alpha = 0.5) +
-  ylab("Surface temperature trend\n(ºC/decade)")+
+  ylab("Surface temperature\ntrend (ºC/decade)")+
   xlab("Bottom temperature trend\n(ºC/decade)")+
   geom_label(data = cors %>%
                filter(var == "Temperature trend\n(ºC/decade)"), 
              aes(x = -10, y = 4, label =  paste0("\u03C1 = ", round(cor,2))), 
-             hjust = 0)+
+             hjust = 0, size = 3)+
   theme_bw(base_size = 10)
+
+u <- mean(summer_dif$summer_dif, na.rm = T)
+sd <- sd(summer_dif$summer_dif, na.rm = T)
+p_05 <- quantile(summer_dif$summer_dif*10, 0.05, na.rm = T)
+p_95 <- quantile(summer_dif$summer_dif*10, 0.95, na.rm = T)
 
 b <- summer_dif %>% 
   ggplot(aes(x = summer_dif*10)) +
@@ -180,18 +185,83 @@ b <- summer_dif %>%
   geom_hline(yintercept = 0, color = "grey80")+
   geom_vline(aes(xintercept = median(summer_dif*10, na.rm = T)), lty = "dotted")+
   geom_density(linewidth = 1)+
-  geom_label(aes(x = -3, y = 0.35, 
+  geom_label(aes(x = -0.7, y = 0.35, 
                  label = paste0("Median = +", 
                                 round(median, 2),
                                 " ºC/decade")), 
-             hjust = 0,
+             hjust = 0, size = 3,
              data = . %>% summarize(median = median(summer_dif, na.rm = T)*10))+
   xlab("Trend in thermal difference between\n surface and bottom waters (ºC/decade)")+
-  ylab("Density") +
+  ylab("\nDensity") +
+  xlim(c(p_05, p_95))+
   theme_bw(base_size = 10)
 
 jpeg("../Figures/temp_mismatch.jpg", width = 6, height = 3, units = "in", res = 300)
 ggarrange(a, b, labels = "auto")
+dev.off()
+
+dif_rf <- summer_dif %>%
+  left_join(mem %>%
+              filter(var == "summer_bot_mean") %>%
+              select(LakeID, M)) %>%
+  filter(!is.na(M), !is.na(summer_dif))
+
+bot <- max_cor_dates %>%
+  filter(var == "Summer hypo. temperature") %>%
+  left_join(met_by_bot_temp, 
+            by = c("LakeID", "max_doy" = "doy"), 
+            relationship = "many-to-many") %>% 
+  filter(Variable == "Air_temp_C",
+         season == "spring") %>%
+  select(LakeID, trend) %>%
+  rename(spring = trend)
+
+surf <- max_cor_dates %>%
+  filter(var == "Summer epi. temperature") %>%
+  left_join(met_by_surf_temp, 
+            by = c("LakeID", "max_doy" = "doy"), 
+            relationship = "many-to-many") %>% 
+  filter(Variable == "Air_temp_C",
+         season == "summer") %>%
+  select(LakeID, trend) %>%
+  rename(summer = trend)
+
+c <- bot %>%
+  left_join(surf) %>%
+  left_join(dif_rf) %>%
+  mutate(M_binary = ifelse(M>0, "SEM > 0", "SEM ≤ 0"),
+         air_binary = ifelse(spring > summer, 
+                             "Spring warming\nfaster than summer",
+                             "Summer warming\nfaster than spring"),
+         summer_binary = ifelse(summer_dif > 0,
+                                "Increasing difference",
+                                "Decreasing difference")) %>%
+  group_by(M_binary, air_binary) %>%
+  summarize(pct_inc = sum(summer_dif > 0, na.rm = T)/n()*100,
+            n = n(),
+            label = paste0(sum(summer_dif > 0, na.rm = T), " of\n", n)) %>%
+  ggplot(aes(x = interaction(M_binary, air_binary), y = pct_inc))+
+  geom_hline(yintercept = 0, color = "grey80")+
+  geom_col(width = 0.6)+
+  geom_text(aes(label = label,
+                y = pct_inc + 6), size = 3)+
+  #ylim(c(0, 100))+
+  ylab("Trend in thermal difference between\nsurface and bottom > 0 (% of lakes)")+
+  scale_x_discrete(guide = "axis_nested")+
+  #facet_wrap(~air_binary)+
+  scale_fill_manual(name = "Trend in thermal difference between\nsurface and bottom waters",
+                    values = c("black", "#876BDB"))+
+  theme_bw(base_size = 10)+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_text(size = 9))
+
+jpeg("../Figures/temp_mismatch2.jpg", width = 6, height = 4, units = "in", res = 300)
+ggarrange(ggarrange(a, b, 
+                    heights = c(1, .6), labels = c("a", "b"), 
+                    ncol = 1, nrow = 2, align = "v"), 
+          ggarrange(c, 
+                    ncol = 1, heights = c(1)),
+          labels = c(NA, "c"), ncol = 2)
 dev.off()
 ```
 
