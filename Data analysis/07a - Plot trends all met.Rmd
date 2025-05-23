@@ -82,7 +82,8 @@ data <- summer_bot_mean %>%
 
 cors <- data %>%
   group_by(var) %>%
-  summarize(cor = cor(Surface, Bottom, method = "spearman", use = "complete.obs"))
+  summarize(cor = cor(Surface, Bottom, method = "spearman", use = "complete.obs"),
+            cor_p = cor.test(Surface, Bottom, method = "spearman", use = "complete.obs")$p.value)
 
 min_do <- min(c(data$Bottom[data$var == "DO trend\n(mg/L/decade)"], 
                 data$Surface[data$var == "DO trend\n(mg/L/decade)"]),
@@ -260,6 +261,40 @@ ggarrange(ggarrange(a, b,
                     heights = c(1, .6), labels = c("a", "b"), 
                     ncol = 1, nrow = 2, align = "v"), 
           ggarrange(c, 
+                    ncol = 1, heights = c(1)),
+          labels = c(NA, "c"), ncol = 2)
+dev.off()
+
+d <- bot %>%
+  left_join(surf) %>%
+  left_join(dif_rf) %>%
+  mutate(M_binary = ifelse(M>0, "SEM > 0", "SEM ≤ 0"),
+         air_binary = ifelse(spring > summer, 
+                             "Spring warming\nfaster than summer",
+                             "Summer warming\nfaster than spring"),
+         summer_binary = ifelse(summer_dif > 0,
+                                "Increasing difference",
+                                "Decreasing difference")) %>%
+  #filter(M_binary == "SEM > 0") %>%
+  ggplot(aes(x = air_binary, y = summer_dif))+
+  geom_hline(yintercept = 0, color = "grey80")+
+  geom_boxplot()+
+  #ylim(c(0, 100))+
+  ylab("Trend in thermal difference between\nsurface and bottom")+
+  scale_x_discrete(guide = "axis_nested")+
+  facet_wrap(~M_binary, ncol = 1)+
+  scale_fill_manual(name = "Trend in thermal difference between\nsurface and bottom waters",
+                    values = c("black", "#876BDB"))+
+  theme_bw(base_size = 10)+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_text(size = 9))+
+  ggpubr::stat_compare_means()
+
+jpeg("../Figures/temp_mismatch3.jpg", width = 6, height = 4, units = "in", res = 300)
+ggarrange(ggarrange(a, b, 
+                    heights = c(1, .6), labels = c("a", "b"), 
+                    ncol = 1, nrow = 2, align = "v"), 
+          ggarrange(d, 
                     ncol = 1, heights = c(1)),
           labels = c(NA, "c"), ncol = 2)
 dev.off()

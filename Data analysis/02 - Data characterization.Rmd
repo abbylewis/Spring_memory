@@ -33,11 +33,13 @@ Step 2: Summary statistics
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") %>%
   filter(Latitude_DD < -23.5 | Latitude_DD > 23.5)
 #Load interpolated DO data file, created by "02 - Temp and DO interpolation.Rmd"
+mem <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
 do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
 #Combine
 full <- do %>%
   full_join(lat_long, by = c("LakeID")) %>%
-  mutate(Date = as.Date(Date)) 
+  mutate(Date = as.Date(Date)) %>%
+  filter(LakeID %in% mem$LakeID)
 #filter to rows with data
 not_na <- full %>%
   filter(if_any(.cols = c(Temp_C, DO_mgL),
@@ -77,9 +79,6 @@ lat_long%>%
                                      max(.x,na.rm=T))))
 
 unique(lat_long$Country)
-
-#How many lakes are removed by 6.4 m depth cut off?
-length(unique(lat_long$LakeID))-length(unique(lat_long$LakeID[is.na(lat_long$MaximumDepth_m)|lat_long$MaximumDepth_m>6.4])) #158
 ```
 
 Step 3: Map distribution of lakes
