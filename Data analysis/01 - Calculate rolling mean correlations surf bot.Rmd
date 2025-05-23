@@ -123,7 +123,7 @@ all <- hypo_do_roll %>%
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - not partial surf bot.csv", row.names = F)
 ```
 
-Step 4: Re-run with 10-day window
+Step 5: Re-run with 10-day window
 
 ```{r}
 many_lake_temp_sum <- with_temp %>%
@@ -165,7 +165,7 @@ all <- hypo_do_roll %>%
 write.csv(all, "../Compiled data/Correlations - 10 day rolling mean surf bot.csv", row.names = F)
 ```
 
-Step 5: Re-run with 50-day window
+Step 6: Re-run with 50-day window
 
 ```{r}
 many_lake_temp_sum <- with_temp %>%
@@ -207,7 +207,7 @@ all <- hypo_do_roll %>%
 write.csv(all, "../Compiled data/Correlations - 50 day rolling mean surf bot.csv", row.names = F)
 ```
 
-Step 6: Re-run for July 15th to August 31st
+Step 7: Re-run for July 15th to August 31st
 
 ```{r}
 with_temp <- read.csv("../Compiled data/All_data_annual_15th_to_31st.csv")
@@ -245,7 +245,7 @@ all <- hypo_do_roll %>%
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - 15th to 31st surf bot.csv", row.names = F)
 ```
 
-Step 7: Re-run for June, July and August
+Step 8: Re-run for June, July and August
 
 ```{r}
 with_temp <- read.csv("../Compiled data/All_data_annual_JJA.csv")

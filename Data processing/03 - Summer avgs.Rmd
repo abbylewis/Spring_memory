@@ -291,6 +291,45 @@ buoyancy <- full_trimmed%>%
 summer_avgs <- summer_avgs%>%
   left_join(buoyancy)
 
+full_trimmed_shallow <- full_shallow %>%
+  filter(((Latitude_DD>0) & Date_22 >= as.Date("2022-07-15") & Date_22 <= as.Date("2022-08-31"))|
+           ((Latitude_DD<0) & Date_22 >= as.Date("2022-01-15") & Date_22 <= as.Date("2022-02-28"))) %>%
+  dplyr::select(-Date_22)
+
+surf_bot <- full_trimmed_shallow %>%
+  group_by(Date, LakeID, Depth_m) %>%
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
+                   DO_mgL = mean(DO_mgL, na.rm = T),
+                   TP_ugL = mean(TP_ugL, na.rm = T),
+                   DOC_mgL = mean(DOC_mgL, na.rm = T),
+                   Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
+  filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
+  ungroup() %>%
+  mutate(Year = year(Date)) %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
+                   Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T))
+
+buoyancy_shallow <- full_trimmed_shallow %>%
+  group_by(Date, LakeID, Depth_m) %>%
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T)) %>%
+  filter(!is.na(Temp_C)) %>%
+  ungroup() %>%
+  group_by(Date, LakeID) %>%
+  dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C,Depth_m),na.rm=T)) %>%
+  mutate(Year=year(Date)) %>%
+  group_by(Year,LakeID) %>%
+  dplyr::summarize(buoyancy_freq = mean(buoyancy_freq,na.rm=T))
+
+summer_avgs <- surf_bot %>%
+  full_join(summer_avgs) %>%
+  left_join(buoyancy_shallow) 
+
 #All done!
 write.csv(summer_avgs, "../Compiled data/summer_averages_wi_15th_to_31st.csv", row.names = F)
 ```
@@ -379,6 +418,52 @@ buoyancy <- full_trimmed%>%
 
 summer_avgs <- summer_avgs%>%
   left_join(buoyancy)
+
+full_trimmed_shallow <- full_shallow %>%
+  mutate(Date = ifelse(Latitude_DD < 0, Date + months(6), Date)) %>%
+  mutate(Date = as.Date(Date, origin = "1970-01-01"),
+         Date_22 = Date)
+
+year(full_trimmed_shallow$Date_22) <- 2022
+
+full_trimmed <- full_trimmed_shallow %>%
+  filter(Date_22 >= "2022-06-01", 
+         Date_22 <= "2022-08-31") %>%
+  dplyr::select(-Date_22)
+
+surf_bot <- full_trimmed_shallow %>%
+  group_by(Date, LakeID, Depth_m) %>%
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
+                   DO_mgL = mean(DO_mgL, na.rm = T),
+                   TP_ugL = mean(TP_ugL, na.rm = T),
+                   DOC_mgL = mean(DOC_mgL, na.rm = T),
+                   Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
+  filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
+  ungroup() %>%
+  mutate(Year = year(Date)) %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
+                   Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T))
+
+buoyancy_shallow <- full_trimmed_shallow %>%
+  group_by(Date, LakeID, Depth_m) %>%
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T)) %>%
+  filter(!is.na(Temp_C)) %>%
+  ungroup() %>%
+  group_by(Date, LakeID) %>%
+  dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C,Depth_m),na.rm=T)) %>%
+  mutate(Year=year(Date)) %>%
+  group_by(Year,LakeID) %>%
+  dplyr::summarize(buoyancy_freq = mean(buoyancy_freq,na.rm=T))
+
+summer_avgs <- surf_bot %>%
+  full_join(summer_avgs) %>%
+  left_join(buoyancy_shallow) 
 
 #All done!
 write.csv(summer_avgs, "../Compiled data/summer_averages_wi_JJA.csv", row.names = F)

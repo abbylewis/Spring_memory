@@ -12,6 +12,7 @@ Table of contents:
 - Step 1: Load packages
 - Step 2: Summary statistics
 - Step 3: Map distribution of lakes
+- Step 4: Generate data summary plots
 
 
 Step 1: Load packages
@@ -32,7 +33,7 @@ Step 2: Summary statistics
 #Load data from EDI
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") %>%
   filter(Latitude_DD < -23.5 | Latitude_DD > 23.5)
-#Load interpolated DO data file, created by "02 - Temp and DO interpolation.Rmd"
+#Load interpolated DO data file and memory calculations to  identify which lakes were included in the analysis
 mem <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
 do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
 #Combine
@@ -114,6 +115,8 @@ world_map <- ggplot(data = world) +
 world_map
 dev.off()
 ```
+
+Step 4: Generate data summary plots
 
 ```{r}
 depth <- lat_long %>%

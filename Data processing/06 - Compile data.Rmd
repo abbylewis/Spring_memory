@@ -61,7 +61,7 @@ Step 3: Compile data with summer defined as July 15-Aug 31
 ```{r}
 summer_avgs = read.csv("../Compiled data/summer_averages_wi_15th_to_31st.csv")
 summer_avgs_wide <- summer_avgs%>%
-  select(LakeID, Year, Layer, Temp_C, DO_mgL) %>%
+  #select(LakeID, Year, Layer, Temp_C, DO_mgL) %>%
   unique() %>%
   pivot_wider(names_from = Layer, 
               values_from = c(DO_mgL, Temp_C))
@@ -80,7 +80,7 @@ Step 2: Compile data with summer defined as June, July, and August
 ```{r}
 summer_avgs = read.csv("../Compiled data/summer_averages_wi_JJA.csv")
 summer_avgs_wide <- summer_avgs%>%
-  select(LakeID, Year, Layer, Temp_C, DO_mgL) %>%
+  #select(LakeID, Year, Layer, Temp_C, DO_mgL) %>%
   unique() %>%
   pivot_wider(names_from = Layer, 
               values_from = c(DO_mgL, Temp_C))
