@@ -96,7 +96,17 @@ mem_rf <- memory %>%
 
 pairs(mem_rf %>% select(c("log_SA", "buoyancy_freq", 
                           "log_chla", "log_DOC", "log_TP")))
-pairs(mem_rf %>% select(c("log_SA", "buoyancy_freq", "log_TP")))
+jpeg("../Figures/driver correlations.jpg", width = 5, height = 5, units = "in", res = 400)
+GGally::ggpairs(mem_rf %>% 
+                  select(c("log_SA", "buoyancy_freq", "log_TP")) %>%
+                  rename("Log surface area (ha)" = log_SA,
+                         "Buoyancy frequency (1/s)" = buoyancy_freq,
+                         "Log TP (µg/L)" = log_TP))+
+  theme_bw()+
+  theme(text = element_text(size = 9))
+dev.off()
+
+cor(mem_rf %>% select(c("log_SA", "buoyancy_freq", "log_TP")), use = "pairwise.complete.obs")
 
 responses <- c("epi_temp")
 potential_drivers <- c("log_SA", "buoyancy_freq", 

@@ -351,7 +351,7 @@ world_map <- ggplot(data = world) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
   theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
         legend.box.background = element_rect(fill = "white", color = "white"),
         axis.title.x = element_blank(),
@@ -374,7 +374,7 @@ us_map <- ggplot(data = states) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
                          style = north_arrow_fancy_orienteering) +
@@ -394,7 +394,7 @@ euro_map <- ggplot(data = world) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
   annotation_north_arrow(location = "bl", which_north = "true", 
       pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
       style = north_arrow_fancy_orienteering) +
@@ -420,7 +420,7 @@ wi_map <- ggplot(data = states) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
   #annotation_north_arrow(location = "bl", which_north = "true", 
   #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
   #    style = north_arrow_fancy_orienteering) +
@@ -443,7 +443,7 @@ ne_map <- ggplot(data = states) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "Memory", low = "#25469a", high = "#c16586")+
+  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
   #annotation_north_arrow(location = "bl", which_north = "true", 
   #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
   #    style = north_arrow_fancy_orienteering) +
@@ -464,5 +464,292 @@ ggarrange(world_map + theme(legend.position = "none"),
                     plot_spacer()+theme_void(), 
                     labels = c("b", "c", NA), widths = c(4,7,1), nrow = 1), 
           nrow = 2, heights = c(2,1), labels = c("a",NA))
+dev.off()
+```
+
+Step 7: Plot multiple rolling-mean windows (SI)
+
+```{r}
+all_30 <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "30-day rolling mean")
+all_50 <- read.csv("../Compiled data/Correlations - 50 day rolling mean surf bot.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "50-day rolling mean")
+all_10 <- read.csv("../Compiled data/Correlations - 10 day rolling mean surf bot.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "10-day rolling mean")
+
+all <- all_30 %>%
+  full_join(all_50) %>%
+  full_join(all_10)
+
+memory_windows <- all %>% 
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer epi. DO sat",
+                    "Summer hypo. temperature",
+                    "Summer VHOD",
+                    "Summer hypo. DO")) %>%
+  mutate(var = factor(var, levels = levels_no_n,
+                      labels = labels_no_n),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, window) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (spring - summer)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
+
+jpeg("../Figures/Monthly correlations - sum long concept v2 many windows.jpg", 
+     width = 7, height = 3, res = 600, units = "in")
+memory_windows %>%
+  filter(!var == "Summer\nepi. DO sat") %>%
+  group_by(var, window) %>%
+  mutate(var = factor(var, 
+                      levels = labels_no_n,
+                      labels = labels_no_n))%>%
+  group_by(var, window) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=ggplot2::margin(c(0,0,0,0)),
+        legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#c16586","#25469a"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1,4), clip = "off")+
+  facet_wrap(~window)+
+  scale_x_reverse()
+dev.off()
+```
+
+Step 8: Plot multiple summer definitions (SI)
+
+```{r}
+all_ja <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "July 1 - August 31")
+all_jja <- read.csv("../Compiled data/Correlations - 30 day rolling mean - JJA.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "June 1 - August 31")
+all_15 <- read.csv("../Compiled data/Correlations - 30 day rolling mean - 15th to 31st.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "July 15 - August 31")
+
+all <- all_ja %>%
+  full_join(all_jja) %>%
+  full_join(all_15)
+
+memory_mult <- all %>% 
+  filter(var %in% c("Summer epi. temperature",
+                    "Summer hypo. temperature",
+                    "Summer hypo. DO")) %>%
+  mutate(var = factor(var, levels = c("Summer epi. temperature",
+                                      "Summer hypo. temperature",
+                                      "Summer hypo. DO"),
+                      labels = c("Surface-water\ntemperature",
+                                 "Bottom-water\ntemperature",
+                                 "Bottom-water\ndissolved oxygen")),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, window) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (spring - summer)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
+
+jpeg("../Figures/Monthly correlations - sum long concept v2 many summers.jpg", 
+     width = 7, height = 3, res = 600, units = "in")
+memory_mult %>%
+  group_by(var, window) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = 0.7, y = 4.4, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = -0.7, y = 4.4, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits = rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=ggplot2::margin(c(0,0,0,0)),
+        legend.box.margin=ggplot2::margin(t = -2, l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#c16586", "#25469a"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1, 3), clip = "off")+
+  facet_wrap(~window)+
+  scale_x_reverse()
+dev.off()
+```
+
+Step 9: Plot partial and not-partial correlations
+
+```{r}
+all_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "Partial")
+all_not_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean - not partial.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F),
+         window = "Not-partial")
+
+all <- all_partial %>%
+  full_join(all_not_partial)
+
+memory_partial <- all %>% 
+  filter(var %in% levels_no_n) %>%
+  mutate(var = factor(var, levels = levels_no_n,
+                      labels = labels_no_n),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, window) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (spring - summer)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
+
+jpeg("../Figures/Monthly correlations - sum long concept v2 partial not partial.jpg", 
+     width = 5, height = 3, res = 600, units = "in")
+memory_partial %>%
+  group_by(var, window) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits = rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=ggplot2::margin(c(0,0,0,0)),
+        legend.box.margin=ggplot2::margin(t = -2, l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#c16586", "#25469a"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1, 4), clip = "off")+
+  facet_wrap(~window)+
+  scale_x_reverse()
+dev.off()
+
+view <- all %>%
+  filter(var == "Summer hypo. DO",
+         LakeID == "1",
+         doy == 1)
+
+view
+```
+
+Try mean instead of max
+
+```{r}
+memory_mean <- all %>% 
+  filter(var %in% levels_no_n) %>%
+  mutate(var = factor(var, levels = levels_no_n,
+                      labels = labels_no_n),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season, window) %>%
+  summarize(mean = mean(abs(monthly_correlation), na.rm = T),
+            maximum = max(abs(monthly_correlation), na.rm = T)) %>%
+  pivot_longer(cols = c(mean, maximum), names_to = "metric", values_to = "value") %>%
+  pivot_wider(names_from = season, values_from = value) %>%
+  mutate(M = (spring- summer)) %>%
+  group_by(var, window) %>%
+  mutate(p = wilcox.test(M)$p.value)
+
+jpeg("../Figures/Monthly correlations (mean) - sum long concept v2.jpg", 
+     width = 5, height = 3, res = 600, units = "in")
+memory_mean %>%
+  filter(!var == "Summer\nepi. DO sat") %>%
+  group_by(var) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=ggplot2::margin(c(0,0,0,0)),
+        legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#c16586", "#25469a"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1,4), clip = "off") +
+  facet_wrap(~metric)+
+  scale_x_reverse()
 dev.off()
 ```

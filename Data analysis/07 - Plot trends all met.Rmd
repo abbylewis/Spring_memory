@@ -681,6 +681,10 @@ rug_data <- mem_rf_df_bot_temp %>%
                            levels = c("> 0", "<= 0"),
                            labels = c("SEM > 0", "SEM <= 0")))
 
+rug_data %>%
+  group_by(var, M_binary) %>%
+  summarise(n())
+
 part <- M_part %>%
   mutate(M_binary = factor(M_binary,
                            levels = c("SEM > 0", "SEM <= 0"),
