@@ -299,7 +299,7 @@ hypo_vars_unstrat <- all_plot1 %>%
   theme(legend.position = "bottom",
         legend.margin=ggplot2::margin(c(0,0,0,0)),
         strip.background = element_blank())+
-  ggtitle("Polymicitc lakes")
+  ggtitle("Polymictic lakes")
 
 #Save plot
 jpeg("../Figures/Monthly correlations - hypo daily roll mean sd surf bot.jpg", 

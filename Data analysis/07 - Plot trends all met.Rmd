@@ -5,7 +5,16 @@ date: "2023-09-19"
 output: html_document
 ---
 
+This file plots meteorological trends and compares to in-lake trends
 
+Table of Contents:
+- Step 1: Load packages and calculated trends
+- Step 2: Compare surface- vs bottom-water trends
+- Step 3: Random forest for bottom-water temperature trend drivers (spring vs summer)
+- Step 4: Generate plot of bottom water temperature trend drivers (spring vs summer temp)
+
+
+Step 1: Load packages and calculated trends
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -51,17 +60,13 @@ summer_dif <- read.csv("../Compiled data/summer_dif_trends_3m.csv") %>%
 summer_dif_do <- read.csv("../Compiled data/summer_dif_DO_trends_3m.csv") %>%
   rename(summer_dif = trend) %>%
   dplyr::select(summer_dif, LakeID)
-
-met_by_bot_temp %>%
-  mutate(doy = as.Date("2022-01-01") + doy - 1) %>%
-  ggplot(aes(x = doy, y = trend, group = LakeID)) +
-  geom_line(alpha=0.01)+
-  facet_wrap(~Variable, scales = "free_y")
 ```
 
-Compare
+
+Step 2: Compare surface- vs bottom-water trends
 
 ```{r}
+#Combine and format data
 data <- summer_bot_mean %>%
   full_join(summer_surf_mean) %>%
   full_join(summer_surf_do) %>%
@@ -82,11 +87,13 @@ data <- summer_bot_mean %>%
   pivot_wider(names_from = layer,
               values_from = trend)
 
+#Calcualte correlations
 cors <- data %>%
   group_by(var) %>%
   summarize(cor = cor(Surface, Bottom, method = "spearman", use = "complete.obs"),
             cor_p = cor.test(Surface, Bottom, method = "spearman", use = "complete.obs")$p.value)
 
+#Get summary stats
 min_do <- min(c(data$Bottom[data$var == "DO trend\n(mg/L/decade)"], 
                 data$Surface[data$var == "DO trend\n(mg/L/decade)"]),
               na.rm = T)
@@ -112,56 +119,7 @@ sd_temp <- sd(c(data$Bottom[data$var == "Temperature trend\n(ºC/decade)"],
                   data$Surface[data$var == "Temperature trend\n(ºC/decade)"]),
                 na.rm = T)
 
-jpeg("../Figures/spatial_mismatch.jpg", width = 6, height = 3, units = "in", res = 300)
-data %>%
-  ggplot(aes(x = Bottom, y = Surface)) +
-  geom_abline()+
-  geom_point(alpha = 0.5) +
-  geom_label(data = cors, aes(x = Inf, y = Inf, label =  paste0("\u03C1 = ", round(cor,2))), 
-             hjust = 1, vjust = 1)+
-  facet_wrap(~var, scales = "free")+
-  ggh4x::facetted_pos_scales(
-    x = list(
-      scale_x_continuous(limits = c(mean_do - 2*sd_do, 
-                                    mean_do + 2*sd_do)),
-      scale_x_continuous(limits = c(mean_temp - 2*sd_temp, 
-                                    mean_temp + 2*sd_temp))
-    ),
-    y = list(
-      scale_y_continuous(limits = c(mean_do - 2*sd_do, 
-                                    mean_do + 2*sd_do)),
-      scale_y_continuous(limits = c(mean_temp - 2*sd_temp, 
-                                    mean_temp + 2*sd_temp))
-    )
-  )+
-  theme_bw()
-dev.off()
-
-data %>%
-  ggplot(aes(x = Bottom, y = Surface)) +
-  geom_abline()+
-  geom_point(alpha = 0.8, aes(color = M)) +
-  geom_label(data = cors, aes(x = Inf, y = Inf, label =  paste0("\u03C1 = ", round(cor,2))), 
-             hjust = 1, vjust = 1)+
-  facet_wrap(~var, scales = "free")+
-  theme_bw()+
-  scale_color_gradientn(colors = c("#25469a", "#735690","#c16586"), 
-                        limits = c(-0.7, 0.7))+
-  ggh4x::facetted_pos_scales(
-    x = list(
-      scale_x_continuous(limits = c(mean_do - 2*sd_do, 
-                                    mean_do + 2*sd_do)),
-      scale_x_continuous(limits = c(mean_temp - 2*sd_temp, 
-                                    mean_temp + 2*sd_temp))
-    ),
-    y = list(
-      scale_y_continuous(limits = c(mean_do - 2*sd_do, 
-                                    mean_do + 2*sd_do)),
-      scale_y_continuous(limits = c(mean_temp - 2*sd_temp, 
-                                    mean_temp + 2*sd_temp))
-    )
-  )
-
+#Plot surf/bot temp
 a <- data %>%
   filter(var == "Temperature trend\n(ºC/decade)") %>%
   ggplot(aes(x = Bottom*10, y = Surface*10)) +
@@ -175,13 +133,15 @@ a <- data %>%
                filter(var == "Temperature trend\n(ºC/decade)"), 
              aes(x = -10, y = 4, label =  paste0("\u03C1 = ", round(cor,2))), 
              hjust = 0, size = 3)+
-  theme_bw(base_size = 10)
+  theme_bw(base_size = 10) +
+  theme(axis.title = element_text(size = 9))
 
 u <- mean(summer_dif$summer_dif, na.rm = T)
 sd <- sd(summer_dif$summer_dif, na.rm = T)
 p_05 <- quantile(summer_dif$summer_dif*10, 0.05, na.rm = T)
 p_95 <- quantile(summer_dif$summer_dif*10, 0.95, na.rm = T)
 
+#Plot thermal difference
 b <- summer_dif %>% 
   ggplot(aes(x = summer_dif*10)) +
   geom_vline(aes(xintercept = 0), color = "grey70")+
@@ -197,11 +157,8 @@ b <- summer_dif %>%
   xlab("Trend in thermal difference between\n surface and bottom waters (ºC/decade)")+
   ylab("\nDensity") +
   xlim(c(p_05, p_95))+
-  theme_bw(base_size = 10)
-
-jpeg("../Figures/temp_mismatch.jpg", width = 6, height = 3, units = "in", res = 300)
-ggarrange(a, b, labels = "auto")
-dev.off()
+  theme_bw(base_size = 10) +
+  theme(axis.title = element_text(size = 9))
 
 dif_rf <- summer_dif %>%
   left_join(mem %>%
@@ -229,6 +186,7 @@ surf <- max_cor_dates %>%
   select(LakeID, trend) %>%
   rename(summer = trend)
 
+#Plot categorical trends
 c <- bot %>%
   left_join(surf) %>%
   left_join(dif_rf) %>%
@@ -267,6 +225,7 @@ ggarrange(ggarrange(a, b,
           labels = c(NA, "c"), ncol = 2)
 dev.off()
 
+#Plot continuous trends by category
 d <- bot %>%
   left_join(surf) %>%
   left_join(dif_rf) %>%
@@ -303,109 +262,7 @@ dev.off()
 ```
 
 
-Lm
-
-```{r}
-met_trends_matched <- max_cor_dates %>%
-  filter(var == "Summer hypo. temperature") %>%
-  left_join(met_by_bot_temp, 
-            by = c("LakeID", "max_doy" = "doy"), 
-            relationship = "many-to-many") %>%
-  group_by(season, var) %>%
-  rename(cor_date_var = var)
-
-df_for_rf <- summer_bot_mean %>%
-  left_join(met_trends_matched %>% 
-              select(LakeID, trend, season, Variable, cor_date_var) %>%
-              arrange(LakeID) %>%
-              pivot_wider(names_from = Variable,
-                          values_from = trend),
-            by = "LakeID") %>%
-  pivot_wider(names_from = season,
-              values_from = Air_temp_C:Shortwave_mJm2) %>%
-  left_join(mem %>% filter(var == "summer_bot_mean") %>% select(M, LakeID), by = "LakeID") %>%
-  mutate(M_binary = ifelse(M > 0, "> 0", "<= 0"))
-
-responses <- c("summer_bot_mean")
-potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
-mem_rf_df_bot_temp <- df_for_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  #mutate(M = (M + 1)/2) %>%
-  mutate(target = "Bottom-water\ntemperature")
-lm1 <- lm(summer_bot_mean ~ Air_temp_C_spring + Air_temp_C_summer, 
-          data = mem_rf_df_bot_temp)
-summary(lm1)
-
-mem_rf_df_bot_temp %>%
-  ggplot(aes(x = Air_temp_C_spring, y = summer_bot_mean)) +
-  geom_point(alpha = 0.2)+
-  geom_smooth(method = "gam")
-
-# Surface
-met_trends_matched <- max_cor_dates %>%
-  filter(var == "Summer epi. temperature") %>%
-  left_join(met_by_surf_temp, 
-            by = c("LakeID", "max_doy" = "doy"), 
-            relationship = "many-to-many") %>%
-  group_by(season, var) %>%
-  rename(cor_date_var = var)
-
-df_for_rf <- summer_surf_mean %>%
-  left_join(met_trends_matched %>% 
-              select(LakeID, trend, season, Variable) %>%
-              arrange(LakeID) %>%
-              pivot_wider(names_from = Variable,
-                          values_from = trend))  %>%
-  pivot_wider(names_from = season,
-              values_from = Air_temp_C:Shortwave_mJm2) %>%
-  left_join(mem %>% select(M, LakeID, var) %>% filter(var == "summer_surf_mean")) %>%
-  mutate(M_binary = ifelse(M > 0, "> 0", "<= 0"))
-
-responses <- c("summer_surf_mean")
-potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
-mem_rf_df_surf_temp <- df_for_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  #mutate(M = (M + 1)/2) %>%
-  mutate(target = "Surface-water\ntemperature")
-lm1 <- lm(summer_surf_mean ~ Air_temp_C_spring + Air_temp_C_summer, 
-          data = mem_rf_df_surf_temp)
-summary(lm1)
-
-# DO
-met_trends_matched <- max_cor_dates %>%
-  filter(var == "Summer hypo. DO") %>%
-  left_join(met_by_bot_do, 
-            by = c("LakeID", "max_doy" = "doy"), 
-            relationship = "many-to-many") %>%
-  group_by(season, var) %>%
-  rename(cor_date_var = var)
-
-df_for_rf <- summer_bot_do %>%
-  left_join(met_trends_matched %>% 
-              select(LakeID, trend, season, Variable) %>%
-              arrange(LakeID) %>%
-              pivot_wider(names_from = Variable,
-                          values_from = trend))  %>%
-  pivot_wider(names_from = season,
-              values_from = Air_temp_C:Shortwave_mJm2) %>%
-  left_join(mem %>% select(M, LakeID, var) %>% filter(var == "summer_bot_mean")) %>%
-  mutate(M_binary = ifelse(M > 0, "> 0", "<= 0"))
-
-responses <- c("summer_bot_do")
-potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
-mem_rf_df_bot_do <- df_for_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  #mutate(M = (M + 1)/2) %>%
-  mutate(target = "Bottom-water\ndissolved oxygen")
-lm1 <- lm(summer_bot_do ~ Air_temp_C_spring + Air_temp_C_summer, 
-          data = mem_rf_df_bot_do)
-summary(lm1)
-```
-
-RF: bottom-water temperature
+Step 3: Random forest for bottom-water temperature trend drivers (spring vs summer)
 
 ```{r}
 met_trends_matched <- max_cor_dates %>%
@@ -465,161 +322,11 @@ partial_bot_summer <- partialPlot(rf1_bot, as.data.frame(mem_rf_df_bot_temp), "A
 partial_bot_spring <- partialPlot(rf1_bot, as.data.frame(mem_rf_df_bot_temp), "Air_temp_C_spring")
 ```
 
-Repeat for DO
+
+Step 4: Generate plot of bottom water temperature trend drivers (spring vs summer temp)
 
 ```{r}
-met_trends_matched <- max_cor_dates %>%
-  filter(var == "Summer hypo. DO") %>%
-  left_join(met_by_bot_do, 
-            by = c("LakeID", "max_doy" = "doy"), 
-            relationship = "many-to-many") %>%
-  group_by(season, var) %>%
-  rename(cor_date_var = var)
-
-df_for_rf <- summer_bot_do %>%
-  left_join(met_trends_matched %>% 
-              select(LakeID, trend, season, Variable) %>%
-              arrange(LakeID) %>%
-              pivot_wider(names_from = Variable,
-                          values_from = trend))  %>%
-  pivot_wider(names_from = season,
-              values_from = Air_temp_C:Shortwave_mJm2) %>%
-  left_join(mem %>% select(M, LakeID, var) %>% filter(var == "summer_bot_do")) %>%
-  left_join(summer_surf_tp) %>%
-  mutate(M_binary = ifelse(M > 0, "> 0", "<= 0"))
-
-responses <- c("summer_bot_do", "M_binary")
-potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
-mem_rf_df_bot_do <- df_for_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  mutate(target = "Bottom-water\ndissolved oxygen")
-ns <- mem_rf_df_bot_do %>%
-  group_by(M_binary) %>%
-  summarize(n = n())
-rf1 <- randomForest(summer_bot_do ~ Air_temp_C_spring + Air_temp_C_summer,
-                    data = mem_rf_df_bot_do %>%
-                      filter(M_binary == "> 0"),, 
-                    ntree = 1000, 
-                    importance = T)
-rf2 <- randomForest(summer_bot_do ~ Air_temp_C_spring + Air_temp_C_summer,
-                    data = mem_rf_df_bot_do %>%
-                      filter(M_binary == "<= 0"), 
-                    ntree = 1000, 
-                    importance = T)
-
-ImpData_bot_DO <- as.data.frame(importance(rf1)) %>%
-  mutate(Var.Names = row.names(.)) %>%
-  mutate(target = "Bottom-water\nDO",
-         M_binary = "> 0") %>%
-  rbind(rbind(as.data.frame(importance(rf2)) %>%
-               mutate(Var.Names = row.names(.)) %>%
-               mutate(target = "Bottom-water\nDO",
-                      M_binary = "<= 0"))) %>%
-  left_join(ns)
-
-ImpData_bot_DO %>%
-  ggplot(aes(x = `%IncMSE`, y = Var.Names)) +
-  geom_col() +
-  theme_bw() +
-  facet_wrap(~target)
-
-partial_do_summer <- partialPlot(rf1, as.data.frame(mem_rf_df_bot_do), "Air_temp_C_summer")
-partial_do_spring <- partialPlot(rf1, as.data.frame(mem_rf_df_bot_do), "Air_temp_C_spring")
-```
-
-Surface temp
-
-```{r}
-met_trends_matched <- max_cor_dates %>%
-  filter(var == "Summer epi. temperature") %>%
-  left_join(met_by_surf_temp, 
-            by = c("LakeID", "max_doy" = "doy"), 
-            relationship = "many-to-many") %>%
-  group_by(season, var) %>%
-  rename(cor_date_var = var)
-
-df_for_rf <- summer_surf_mean %>%
-  left_join(met_trends_matched %>% 
-              select(LakeID, trend, season, Variable) %>%
-              arrange(LakeID) %>%
-              pivot_wider(names_from = Variable,
-                          values_from = trend))  %>%
-  pivot_wider(names_from = season,
-              values_from = Air_temp_C:Shortwave_mJm2) %>%
-  left_join(mem %>% select(M, LakeID, var) %>% filter(var == "summer_surf_mean")) %>%
-  mutate(M_binary = ifelse(M > 0, "> 0", "<= 0"))
-
-responses <- c("summer_surf_mean", "M_binary")
-potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
-mem_rf_df_surf_temp <- df_for_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  mutate(target = "Surface-water\ntemperature")
-
-rf1 <- randomForest(summer_surf_mean ~ Air_temp_C_spring + Air_temp_C_summer,
-                    data = mem_rf_df_surf_temp %>%
-                      filter(M_binary == "> 0"),, 
-                    ntree = 1000, 
-                    importance = T)
-rf2 <- randomForest(summer_surf_mean ~ Air_temp_C_spring + Air_temp_C_summer,
-                    data = mem_rf_df_surf_temp %>%
-                      filter(M_binary == "<= 0"), 
-                    ntree = 1000, 
-                    importance = T)
-ns <- mem_rf_df_surf_temp %>%
-  group_by(M_binary) %>%
-  summarize(n = n())
-ImpData_surf_temp <- as.data.frame(importance(rf1)) %>%
-  mutate(Var.Names = row.names(.)) %>%
-  mutate(target = "Surface-water\ntemperature",
-         M_binary = "> 0") %>%
-  rbind(as.data.frame(importance(rf2)) %>%
-          mutate(Var.Names = row.names(.)) %>%
-          mutate(target = "Surface-water\ntemperature",
-                 M_binary = "<= 0")) %>%
-  left_join(ns)
-
-partial_surf_summer <- partialPlot(rf1, as.data.frame(mem_rf_df_surf_temp), "Air_temp_C_summer")
-partial_surf_spring <- partialPlot(rf1, as.data.frame(mem_rf_df_surf_temp), "Air_temp_C_spring")
-```
-
-Combine and plot
-
-```{r}
-ImpData_bot_temp %>%
-  rbind(ImpData_bot_DO) %>%
-  rbind(ImpData_surf_temp) %>%
-  mutate(neg = `%IncMSE` > 0) %>%
-  mutate(Var.Names = factor(Var.Names, levels = c("Air_temp_C_spring",
-                                                  "Air_temp_C_summer"),
-                            labels = c("Spring", "Summer")),
-         M_binary = factor(M_binary,
-                           levels = c("> 0", "<= 0"),
-                           labels = c("SEM > 0", "SEM <= 0"))) %>%
-  ggplot(aes(y = `%IncMSE`, x = Var.Names, fill = Var.Names)) +
-  geom_hline(yintercept = 0, color = "grey70") +
-  geom_col(aes(alpha = neg)) +
-  theme_bw() +
-  ylab("Variable importance\n(% increase in MSE)") +
-  xlab("Air temperature trend") +
-  scale_fill_manual(values = c("Spring" = "#25469a",
-                               "Summer" = "#c16586"))+
-  scale_alpha_manual(values = c(0.2, 1)) +
-  facet_grid(target~M_binary, switch = "y") +
-  theme(
-    strip.placement = "outside",   # format to look like title
-    strip.background = element_blank(),
-    #strip.text.y = element_blank(),
-    strip.clip = "off",
-    panel.spacing.y = unit(0.8, "lines"),
-    axis.text.x = element_text(vjust=-0.5),
-    axis.title.y = element_text(size = 9),
-    legend.position = "none"
-  )
-```
-
-```{r}
+#Plot variable importance
 imp <- ImpData_bot_temp %>%
   mutate(Var.Names = factor(Var.Names, levels = c("Air_temp_C_spring",
                                                   "Air_temp_C_summer"),
@@ -650,6 +357,7 @@ imp <- ImpData_bot_temp %>%
     legend.position = "none"
   )
 
+#Calculate partial dependences
 partial_bot_summer_greater <- data.frame(
   partialPlot(rf1_bot, as.data.frame(mem_rf_df_bot_temp), "Air_temp_C_summer")) %>%
     mutate(var = "Summer")
@@ -663,6 +371,7 @@ partial_bot_spring_less <- data.frame(
   partialPlot(rf2_bot, as.data.frame(mem_rf_df_bot_temp), "Air_temp_C_spring")) %>%
     mutate(var = "Spring")
 
+#Combine all
 M_part <- partial_bot_summer_greater %>%
   full_join(partial_bot_spring_greater) %>%
   mutate(M_binary = "SEM > 0") %>%
@@ -670,6 +379,7 @@ M_part <- partial_bot_summer_greater %>%
               full_join(partial_bot_spring_less) %>%
               mutate(M_binary = "SEM <= 0"))
 
+#Format data for rug plot
 rug_data <- mem_rf_df_bot_temp %>%
   pivot_longer(cols = all_of(potential_drivers),
                names_to = "var", values_to = "x") %>%
@@ -681,10 +391,12 @@ rug_data <- mem_rf_df_bot_temp %>%
                            levels = c("> 0", "<= 0"),
                            labels = c("SEM > 0", "SEM <= 0")))
 
+#Summary stats
 rug_data %>%
   group_by(var, M_binary) %>%
   summarise(n())
 
+#Plot partial dependence
 part <- M_part %>%
   mutate(M_binary = factor(M_binary,
                            levels = c("SEM > 0", "SEM <= 0"),
@@ -712,6 +424,7 @@ part <- M_part %>%
   ) +
   ylab("Bottom-water temperature trend")
 
+# Plot air trends (density)
 air_trends_wide_blank <- rug_data %>%
   mutate(spacer = "") %>%
   ggplot(aes(x = x*10))+
@@ -746,113 +459,5 @@ ggarrange(ggarrange(ggplot() + geom_blank() + theme_void(),
                     heights = c(0.2, 1), nrow = 2, labels = c("", "b")),
           ncol = 2, widths = c(.5,1))
 dev.off()
-```
-
-```{r}
-met_trends_matched <- max_cor_dates %>%
-  filter(var == "Summer hypo. temperature") %>%
-  left_join(met_by_bot_temp, 
-            by = c("LakeID", "max_doy" = "doy"), 
-            relationship = "many-to-many") %>%
-  group_by(season, var) %>%
-  rename(cor_date_var = var)
-
-df_for_rf <- summer_bot_mean %>%
-  left_join(met_trends_matched %>% 
-              select(LakeID, trend, season, Variable) %>%
-              arrange(LakeID) %>%
-              pivot_wider(names_from = Variable,
-                          values_from = trend))  %>%
-  pivot_wider(names_from = season,
-              values_from = Air_temp_C:Shortwave_mJm2) %>%
-  left_join(mem %>% select(M, LakeID, var) %>% filter(var == "summer_bot_mean")) %>%
-  mutate(M_binary = ifelse(M > 0, "> 0", "<= 0"))
-
-responses <- c("summer_bot_mean", "M_binary")
-potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer", "M")
-mem_rf_df_bot_temp <- df_for_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  mutate(target = "Surface-water\ntemperature")
-
-rf1 <- randomForest(summer_bot_mean ~ Air_temp_C_spring + Air_temp_C_summer + M,
-                    data = mem_rf_df_bot_temp, 
-                    ntree = 1000, 
-                    importance = T)
-
-library(vivid)
-viviRF <- vivi(rf1, 
-               data = mem_rf_df_bot_temp,
-               response = "summer_bot_mean",
-               gridSize = 50,
-               importanceType = "agnostic",
-               nmax = 500,
-               reorder = TRUE,
-               predictFun = NULL,
-               numPerm = 4,
-               showVimpError = FALSE)
-viviNetwork(mat = viviRF)
-top5 <- colnames(viviRF)[1:3]
-pdpVars(data = mem_rf_df_bot_temp,
-        fit = rf1,
-        response = 'summer_bot_mean',
-        vars = top5,
-        nIce = 100)
-
-pdpPairs(data = mem_rf_df_bot_temp,
-         fit = rf1,
-         response = 'summer_bot_mean',
-         nmax = 500, 
-         gridSize = 10,         
-         vars = colnames(viviRF)[1:3],
-         nIce = 100)
-
-p <- pdpZen(data = mem_rf_df_bot_temp, 
-       fit = rf1, 
-       response = 'summer_bot_mean', 
-       nmax = 500, 
-       zpath = colnames(viviRF)[1:3],
-       gridSize = 10)
-
-#+
-  geom_hline(yintercept = 0, color = "grey70")
-
-
-M_part <- partials_surf_temp %>%
-  full_join(partials_hypo_temp) %>%
-  full_join(partials_hypo_do) %>%
-  full_join(partials_vhod)  %>%
-  mutate(Type = "M")
-
-part <- M_part %>%
-  mutate(target = factor(target, levels = c("Surface-water\ntemperature",
-                                            "Bottom-water\ntemperature", 
-                                            "Bottom-water\noxygen demand",
-                                            "Bottom-water\ndissolved oxygen"))) %>%
-  group_by(Type, var, target) %>%
-  arrange(x, .by_group = TRUE) %>%
-  reframe(x_interp = approx(x = x, y = y, xout = seq(min(x), max(x), length.out = 10000))$x,
-          y_interp = approx(x = x, y = y, xout = seq(min(x), max(x), length.out = 10000))$y) %>%
-  ggplot(aes(x = x_interp)) +
-  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
-  geom_point(aes(y = y_interp, color = y_interp), size = 0.1) +
-  geom_rug(aes(x = x), sides = "b", data = rug_data, alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
-  coord_cartesian(clip = "off") +
-  facet_grid(target~var, scales = "free_x", switch = "both") +
-  labs(x=NULL) +
-  theme_bw() +
-  scale_color_gradientn(colors = c("#25469a", "#735690","#c16586"), 
-                        limits = c(-0.3, 0.3)) +
-  theme(
-    strip.placement = "outside",   # format to look like title
-    strip.background = element_blank(),
-    #strip.text.y = element_blank(),
-    strip.clip = "off",
-    panel.spacing.y = unit(0.8, "lines"),
-    axis.text.x = element_text(vjust=-0.5),
-    axis.title.y = element_text(size = 9),
-    legend.position = "none"
-  ) +
-  ylab("Partial dependence of memory statistic")
 ```
 

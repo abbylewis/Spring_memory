@@ -11,7 +11,7 @@ Table of contents:
 
 - Step 1: Load packages and lake metadata
 - Step 2: Compile to epi/hypo means
-- Step 3: Load air temp data (NEED TO UPDATE WITH NEW DATA)
+- Step 3: Load air temp data
 
 Step 1: Load packages and lake metadata
 
