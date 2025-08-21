@@ -44,20 +44,6 @@ full <- do %>%
 #Create a Date_22 column, so that I can filter to only the end of summer
 full$Date_22 <- full$Date
 year(full$Date_22) <- 2022
-
-jpeg("../Figures/Data_hist.jpg", width = 3, height = 3, units = "in", res = 300)
-full %>%
-  group_by(Date, LakeID) %>%
-  summarize(n = length(!is.na(Temp_C))) %>%
-  filter(n > 0) %>%
-  mutate(month = as.numeric(month(Date))) %>%
-  ggplot(aes(x = month)) +
-  geom_histogram(bins = 12) +
-  scale_x_continuous(breaks = seq(1, 12, by = 2), labels = month.abb[seq(1, 12, by = 2)])+
-  ylab("Total number of sampling events") +
-  theme_bw() +
-  theme(axis.title.x = element_blank())
-dev.off()
 ```
 
 Step 3: Filter to summer period and calculate thermocline depths
@@ -212,6 +198,82 @@ summer_avgs <- surf_bot %>%
 #All done!
 write.csv(summer_avgs, "../Compiled data/summer_averages_wi.csv", row.names = F)
 ```
+
+Plot 
+```{r}
+jpeg("../Figures/Data_hist.jpg", width = 3, height = 3, units = "in", res = 300)
+all <- full_shallow %>%
+  filter(Depth_m == 1) %>%
+  group_by(Date_22, LakeID) %>%
+  summarize(n = length(!is.na(Temp_C))) %>%
+  filter(n > 0) %>%
+  mutate(month = as.numeric(month(Date_22)),
+         focal = ifelse(month %in% c(7,8),
+                        "Summer",
+                        "All"),
+         title = "Annual") %>%
+  ggplot(aes(x = month, fill = focal)) +
+  geom_histogram(bins = 12) +
+  scale_x_continuous(breaks = seq(1, 12, by = 2), labels = month.abb[seq(1, 12, by = 2)])+
+  ylab("Total number of sampling events") +
+  scale_fill_manual(values = c("grey50", "grey20"))+
+  theme_bw() +
+  facet_wrap(~title)+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+all
+dev.off()
+
+for_summer_plot <- full_shallow %>%
+  mutate(Date = as.Date(Date)) %>%
+  filter(!is.na(Temp_C),
+         Depth_m ==1,
+         month(Date) %in% c(6:9)) %>%
+  mutate(focal = ifelse(month(Date) %in% c(7,8),
+                        "Summer",
+                        "All")) 
+
+summer <- for_summer_plot %>%
+  mutate(title = "Summer") %>%
+  ggplot(aes(x = Date_22, fill = focal)) +
+  geom_histogram(bins = 122) +
+  ylab("Total number of sampling events") +
+  scale_fill_manual(values = c("grey50", "grey20"))+
+  scale_x_date(breaks = as.Date(c("2022-07-01", "2022-08-01", "2022-09-01")),
+               labels = c(month.abb[7:9]))+
+  theme_bw() +
+  facet_wrap(~title)+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none",
+        axis.title.y = element_blank())+
+  coord_cartesian(xlim = as.Date(c("2022-07-01", "2022-08-31")))
+
+for_n_dates <- for_summer_plot %>%
+  mutate(year = year(Date)) %>%
+  group_by(year, LakeID) %>%
+  summarize(n = length(unique(Date)))
+
+n_dates <- for_n_dates %>%
+  ggplot(aes(x = n))+
+  xlab("Sampling dates per summer")+
+  geom_vline(xintercept = median(for_n_dates$n))+
+  geom_text(aes(x = x + 2),
+            y = 0.18,
+            label = paste0("Median: ", median(for_n_dates$n), " sampling dates"),
+            hjust = 0,
+            data = data.frame(x = median(for_n_dates$n)))+
+  geom_density()+
+  theme_bw()
+
+jpeg("../figures/date_dist.jpg", width = 6, height = 4, units = "in", res = 300)
+p <- ggpubr::ggarrange(all + theme(axis.title.y = element_blank()), 
+                       ggpubr::ggarrange(summer, n_dates), nrow = 2)
+ggpubr::annotate_figure(p, left = grid::textGrob("Total number of sampling events", 
+                                         rot = 90, vjust = 1, 
+                                         gp = grid::gpar(cex = .9)))
+dev.off()
+```
+
 
 Step 6: Repeat steps 3, 4, and 5 for July 15-August 31
 
