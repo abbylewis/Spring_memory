@@ -119,7 +119,7 @@ memory <- all %>%
   group_by(LakeID, var, season, p) %>%
   summarize(max = max(abs(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) 
+  mutate(M = (spring - summer)) 
 
 jpeg("../Figures/ISIMIP monthly correlations - sum long concept v3.jpg", width = 3.5, height = 2, res = 600, units = "in")
 memory %>%
@@ -138,13 +138,14 @@ memory %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith spring", 
+  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith summer", 
+  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
   scale_y_discrete(limits=rev, position = "right") +
+  scale_x_reverse()+
   xlab("Relative correlation with summer\nvs. spring air temperature")+
   guides(color = guide_legend(nrow = 2))+
   theme(axis.title.y = element_blank(),
@@ -157,8 +158,8 @@ memory %>%
         legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#25469a","#c16586"), name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,2), clip = "off")
+  scale_color_manual(values = c("#c16586", "#25469a"), name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1,2), clip = "off")
 dev.off()
 ```
 
@@ -265,21 +266,21 @@ dates_cor <- dates %>%
 
 jpeg("../Figures/Correlation between stratification onset and hypo. temp.jpg", width = 5.5, height = 4, res = 300, units = "in")
 dates_cor %>%
-  mutate(Memory = max_summer - max_spring) %>%
+  mutate(Memory = max_spring - max_summer) %>%
   ggplot(aes(x = strat_onset, y = max_day_spring)) +
   geom_abline(slope = 1) +
   geom_smooth(method = "lm", color = "grey50", lty = "11")+
   geom_point(aes(fill = Memory), color = "black", shape = 21, size = 2) +
-  scale_fill_gradient2(low = "#25469a", mid = "white", high = "#c16586", 
+  scale_fill_gradient2(low = "#c16586", mid = "white", high = "#25469a", 
                        midpoint = 0, limits = c(-0.7, 0.7), 
                        breaks = c(-0.6, -0.3, 0, 0.3, 0.6),
-                       labels = c("More correlated\nwith spring",
+                       labels = c("More correlated\nwith summer",
                                   "-0.3",
                                   "0",
                                   "0.3",
-                                  "More correlated\nwith summer"),
+                                  "More correlated\nwith spring"),
                        name = "")+
-  ylab("Day of year most correlated with\nsummer bottom-water temperature (spring)") +
+  ylab("Day of year most correlated with\nsummer bottom-water temperature") +
   xlab("Median stratification onset (day of year)")+
   theme_bw()
 dev.off()

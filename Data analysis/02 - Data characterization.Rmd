@@ -122,7 +122,7 @@ Step 4: Generate data summary plots
 depth <- lat_long %>%
   ggplot(aes(x = MaximumDepth_m))+
   geom_density(color = "#3087D9")+
-  scale_x_log10(n.breaks = 4)+
+  scale_x_log10(breaks = c(2, 20, 200))+
   theme_bw(base_size = 9)+
   xlab(expression("Maximum depth (m)"))+
   theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
@@ -130,7 +130,8 @@ depth <- lat_long %>%
 area <- lat_long %>%
   ggplot(aes(x = SurfaceArea_ha/100))+
   geom_density(color = "#3087D9")+
-  scale_x_log10(n.breaks = 3)+
+  scale_x_log10(breaks = c(0.1, 10, 1000),
+                labels = c(0.1, 10, 1000))+
   theme_bw(base_size = 9)+
   xlab(expression("Surface area (km"^{2}*")"))+
   theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"),

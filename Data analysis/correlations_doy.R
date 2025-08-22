@@ -24,7 +24,7 @@ correlations_doy <- function(wi_lakes_all_data,
     filter(nyear>=10,
            #max(value)-min(value)>2
     ) %>%
-    dplyr::select(LakeID, doy, Year, !!variable, !!value)
+    dplyr::select(LakeID, doy, Year, !!variable, !!value, nyear)
   
   many_lake_stat <- purrr::map(unique(many_lake_stat1$LakeID), 
              daily_cors, 
@@ -50,6 +50,7 @@ daily_cors <- function(lake, data, variable, value, partial) {
       group_by(LakeID, doy) %>%
       summarize(monthly_correlation = ppcor::pcor.test(!!variable, !!value, 
                                                        Year, method = "spearman")$estimate,
+                nyear = unique(nyear),
                 .groups = "drop")
   } else {
     result <- data %>%
@@ -57,6 +58,7 @@ daily_cors <- function(lake, data, variable, value, partial) {
       group_by(LakeID, doy) %>%
       summarize(monthly_correlation = cor(!!variable, !!value, 
                                           method = "spearman"),
+                nyear = unique(nyear),
                 .groups = "drop")
   }
   return(result)
