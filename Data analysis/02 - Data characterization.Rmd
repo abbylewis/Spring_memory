@@ -31,8 +31,7 @@ Step 2: Summary statistics
 
 ```{r}
 #Load data from EDI
-lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") %>%
-  filter(Latitude_DD < -23.5 | Latitude_DD > 23.5)
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") 
 #Load interpolated DO data file and memory calculations to  identify which lakes were included in the analysis
 mem <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
 do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
@@ -41,10 +40,16 @@ full <- do %>%
   full_join(lat_long, by = c("LakeID")) %>%
   mutate(Date = as.Date(Date)) %>%
   filter(LakeID %in% mem$LakeID)
-#filter to rows with data
+#filter to rows with 15 years of data
 not_na <- full %>%
   filter(if_any(.cols = c(Temp_C, DO_mgL),
-                .fns = ~ !is.na(.x)))
+                .fns = ~ !is.na(.x))) %>%
+  filter(length(unique(year(Date[!is.na(Temp_C)]))) >= 15 |
+           length(unique(year(Date[!is.na(DO_mgL)]))) >= 15)
+
+lat_long_for_sum <- lat_long %>%
+  filter(LakeID %in% not_na$LakeID) %>%
+  filter(abs(Latitude_DD) >= 23.5)
 
 not_na%>%
   dplyr::summarise(profiles = length(unique(paste0(Date,LakeID))),
@@ -79,7 +84,7 @@ lat_long%>%
                                      min(.x,na.rm=T), 
                                      max(.x,na.rm=T))))
 
-unique(lat_long$Country)
+unique(lat_long$Country[lat_long$LakeID %in% not_na$LakeID])
 ```
 
 Step 3: Map distribution of lakes
@@ -96,7 +101,7 @@ library(ggspatial)
 #Create a world map of the sites in this analysis
 world <- ne_countries(scale = "medium", returnclass = "sf")
 states <- ne_states(returnclass = "sf",country = "United States of America")
-for_map <- lat_long
+for_map <- lat_long_for_sum
 
 jpeg("../Figures/World Map - just points.jpg", res = 300, width = 6, height = 3.2, units = "in")
 world_map <- ggplot(data = world) +
@@ -119,7 +124,7 @@ dev.off()
 Step 4: Generate data summary plots
 
 ```{r}
-depth <- lat_long %>%
+depth <- lat_long_for_sum %>%
   ggplot(aes(x = MaximumDepth_m))+
   geom_density(color = "#3087D9")+
   scale_x_log10(breaks = c(2, 20, 200))+
@@ -127,7 +132,7 @@ depth <- lat_long %>%
   xlab(expression("Maximum depth (m)"))+
   theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
 
-area <- lat_long %>%
+area <- lat_long_for_sum %>%
   ggplot(aes(x = SurfaceArea_ha/100))+
   geom_density(color = "#3087D9")+
   scale_x_log10(breaks = c(0.1, 10, 1000),

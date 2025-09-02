@@ -23,15 +23,29 @@ library(ggpubr)
 library(ggtext)
 library(randomForest)
 source("lmer_functions.R")
+source("run_rf_analysis.R")
 
 #Set global options
-sp <- yday(c("2022-03-01", "2022-04-30"))
+sp <- yday(c("2022-03-01", "2022-05-01"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 
 #Load saved data
 with_temp = read.csv("../Compiled data/All_data_annual_3m.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
+
+all %>%
+  left_join(lat_long) %>%
+  filter(doy>35,
+         nyear >= 15,
+         abs(Latitude_DD) >= 23.5) %>%
+  group_by(LakeID, var) %>%
+  summarize(nyear = DescTools::Mode(nyear)) %>%
+  group_by(var) %>%
+  summarize(min = min(nyear),
+            max = max(nyear),
+            median = median(nyear))
+
 #Buoyancy frequency
 bf = read.csv("../Compiled data/summer_averages_wi.csv")%>%
   group_by(LakeID) %>%
@@ -59,10 +73,10 @@ memory <- all %>%
                                       "Summer hypo. temperature",
                                       "Summer VHOD",
                                       "Summer hypo. DO"),
-                      labels = c("Summer epi. temperature",
-                                 "Summer bottom-water\ntemperature",
-                                 "Summer VHOD",
-                                 "Summer bottom-water\ndissolved oxygen")),
+                      labels = c("Surface-water temperature",
+                                 "Bottom-water temperature", 
+                                 "Bottom-water oxygen demand",
+                                 "Bottom-water dissolved oxygen")),
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(var) %>%
@@ -72,13 +86,61 @@ memory <- all %>%
   summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
             max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
   ungroup() %>%
-  mutate(val = ifelse(var %in% c("Summer bottom-water\ndissolved oxygen"),
+  mutate(val = ifelse(var %in% c("Bottom-water dissolved oxygen"),
                          min, max)) %>%
   select(-min, -max) %>%
   pivot_wider(names_from = season, values_from = val) %>%
   mutate(M = (spring - summer)) 
 
 write.csv(memory, "../Compiled data/memory_3m.csv")
+
+for_one_to_one <- memory %>%
+  left_join(other_drivers) %>%
+  filter(DO_mgL_BOT >= 1 | !var == "Bottom-water dissolved oxygen")
+
+medians <- for_one_to_one %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID))) %>%
+  mutate(layer = ifelse(grepl("Surf", var), "Surface-water", "Bottom-water")) %>%
+  group_by(var, layer) %>%
+  summarize(spring = median(spring, na.rm = T),
+            summer = median(summer, na.rm = T),
+            color = summer > spring)
+
+ns <- for_one_to_one %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID))) %>%
+  mutate(layer = ifelse(grepl("Surf", var), "Surface-water", "Bottom-water"),
+         color = summer > spring) %>%
+  group_by(var, color) %>%
+  summarize(n = n(), 
+            text = paste0("n = ", n)) %>%
+  mutate(y = ifelse(color, .99, -0.1),
+         x = ifelse(color, 0, .2),
+         text = ifelse(color, paste0("Summer-driven, ", text), paste0("Spring-driven, ", text)))
+
+one_to_one <- for_one_to_one %>%
+  group_by(var) %>%
+  mutate(layer = ifelse(grepl("Surf", var), "Surface-water", "Bottom-water"),
+         color = summer > spring)%>%
+  ggplot(aes(x = spring, y = summer, color = color)) +
+  geom_abline(slope = 1, color = "grey50") +
+  geom_point() +
+  facet_wrap(~var) +
+  scale_color_manual(values = c("#25469a", "#c16586"))+
+  scale_fill_manual(values = c("#25469a", "#c16586"))+
+  xlab("Correlation with spring air temperature") +
+  ylab("Correlation with summer air temeprature") +
+  theme_bw() +
+  ylim(-0.1,1.05)+
+  theme(legend.position = "none") +
+  geom_point(data = medians, color = "white", fill = "black", size = 7, shape = 21, stroke = 0.5) +
+  geom_point(data = medians, aes(fill = color), color = "white", size = 4, shape = 21, stroke = 1) +
+  geom_text(aes(x = x, y = y, label = text), data = ns, hjust = 0, vjust = 0) 
+
+jpeg("../Figures/one_to_one.jpg", width = 5, height = 5, units = "in", res = 300)
+one_to_one
+dev.off()
 ```
 
 Step 3: Run driver analysis
@@ -96,281 +158,95 @@ mem_rf <- memory %>%
          log_chla = log(Chla_ugL_SURF),
          abs_lat = abs(Latitude_DD)) %>%
   filter(abs_lat >= 23.5,
-         abs_lat <= 60) %>% #From Jane et al
+         #abs_lat <= 60
+         ) %>% #From Jane et al
   pivot_wider(names_from = var, values_from = M) %>%
-  rename(epi_temp = `Summer epi. temperature`,
-         hypo_temp = `Summer bottom-water\ntemperature`,
-         hypo_do = `Summer bottom-water\ndissolved oxygen`,
-         vhod = `Summer VHOD`) %>%
+  rename(epi_temp = `Surface-water temperature`,
+         hypo_temp = `Bottom-water temperature`,
+         hypo_do = `Bottom-water dissolved oxygen`,
+         vhod = `Bottom-water oxygen demand`) %>%
   ungroup()
 
-pairs(mem_rf %>% select(c("log_SA", "buoyancy_freq", "log_max_depth",
-                          "log_chla", "log_DOC", "log_TP", "DO_mgL_BOT", 
-                          "abs_lat")))
 jpeg("../Figures/driver correlations.jpg", width = 5, height = 5, 
      units = "in", res = 400)
 GGally::ggpairs(mem_rf %>% 
-                  select(c("log_SA", "buoyancy_freq", "log_TP")) %>%
-                  rename("Log surface area (ha)" = log_SA,
+                  select(c("log_max_depth", "buoyancy_freq", "abs_lat")) %>%
+                  rename("Log maximum depth (m)" = log_max_depth,
                          "Buoyancy frequency (1/s)" = buoyancy_freq,
-                         "Log TP (µg/L)" = log_TP))+
+                         "Absolute latitude (DD)" = abs_lat))+
   theme_bw()+
   theme(text = element_text(size = 9))
 dev.off()
 
-cor(mem_rf %>% select(c("log_max_depth", "buoyancy_freq", "log_SA", "abs_lat")), 
-    use = "pairwise.complete.obs")
-
-responses <- c("epi_temp")
 potential_drivers <- c("buoyancy_freq", "abs_lat", "log_max_depth")
-mem_rf_df_surf_temp <- mem_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  mutate(target = "Surface-water\ntemperature")
-rf1 <- randomForest(
-  as.formula(paste(responses, "~", paste(potential_drivers, collapse = " + "))), 
-  data = mem_rf_df_surf_temp, 
-  ntree = 1000, 
-  importance = T)
-rf1_r2 = rf1$rsq[length(rf1$rsq)]
-ImpData_rf1 <- as.data.frame(importance(rf1)) %>%
-  mutate(Var.Names = row.names(.)) %>%
-  mutate(target = "Surface-water\ntemperature")
-partials_surf_temp <- pdp::partial(rf1, pred.var = potential_drivers[1], 
-                                 train = as.data.frame(mem_rf_df_surf_temp)) %>%
-  pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-  rename(y = yhat)
-for(i in 2:length(potential_drivers)){
-  new <- pdp::partial(rf1, pred.var = potential_drivers[i], 
-                      train = as.data.frame(mem_rf_df_surf_temp)) %>%
-    pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-    rename(y = yhat)
-  partials_surf_temp = rbind(partials_surf_temp, new)
-}
-
-responses <- c("hypo_temp")
-mem_rf_df_hypo_temp <- mem_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  mutate(target = "Bottom-water\ntemperature")
-rf2 <- randomForest(
-  as.formula(paste(responses, "~", paste(potential_drivers, collapse = " + "))), 
-  data = mem_rf_df_hypo_temp, 
-  ntree = 1000, 
-  importance = T)
-rf2_r2 = rf2$rsq[length(rf2$rsq)]
-ImpData_rf2 <- as.data.frame(importance(rf2)) %>%
-  mutate(Var.Names = row.names(.)) %>%
-  mutate(target = "Bottom-water\ntemperature")
-partials_hypo_temp <- pdp::partial(rf2, pred.var = potential_drivers[1], 
-                                 train = as.data.frame(mem_rf_df_hypo_temp)) %>%
-  pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-  rename(y = yhat)
-for(i in 2:length(potential_drivers)){
-  new <- pdp::partial(rf2, pred.var = potential_drivers[i], 
-                      train = as.data.frame(mem_rf_df_hypo_temp)) %>%
-    pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-    rename(y = yhat)
-  partials_hypo_temp = rbind(partials_hypo_temp, new)
-}
-
-responses <- c("hypo_do")
-mem_rf_df_hypo_do <- mem_rf %>%
-  select(all_of(c(responses, potential_drivers, "DO_mgL_BOT"))) %>%
-  na.omit() %>%
-  mutate(target = "Bottom-water\ndissolved oxygen") %>%
-  filter(DO_mgL_BOT >= 1)
-rf3 <- randomForest(
-  as.formula(paste(responses, "~", paste(potential_drivers, collapse = " + "))), 
-  data = mem_rf_df_hypo_do, 
-  ntree = 1000, 
-  importance = T)
-rf3_r2 = rf3$rsq[length(rf3$rsq)]
-ImpData_rf3 <- as.data.frame(importance(rf3)) %>%
-  mutate(Var.Names = row.names(.)) %>%
-  mutate(target = "Bottom-water\ndissolved oxygen")
-partials_hypo_do <- pdp::partial(rf3, pred.var = potential_drivers[1], 
-                                 train = as.data.frame(mem_rf_df_hypo_do)) %>%
-  pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-  rename(y = yhat)
-for(i in 2:length(potential_drivers)){
-  new <- pdp::partial(rf3, pred.var = potential_drivers[i], 
-                      train = as.data.frame(mem_rf_df_hypo_do)) %>%
-    pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-    rename(y = yhat)
-  partials_hypo_do = rbind(partials_hypo_do, new)
-}
-
-responses <- c("vhod")
-mem_rf_df_vhod <- mem_rf %>%
-  select(all_of(c(responses, potential_drivers))) %>%
-  na.omit() %>%
-  mutate(target = "Bottom-water\noxygen demand")
-rf4 <- randomForest(
-  as.formula(paste(responses, "~", paste(potential_drivers, collapse = " + "))), 
-  data = mem_rf_df_vhod, 
-  ntree = 1000, 
-  importance = T)
-rf4_r2 = rf4$rsq[length(rf4$rsq)]
-ImpData_rf4 <- as.data.frame(importance(rf4)) %>%
-  mutate(Var.Names = row.names(.)) %>%
-  mutate(target = "Bottom-water\noxygen demand")
-partials_vhod <- pdp::partial(rf4, pred.var = potential_drivers[1], 
-                                 train = as.data.frame(mem_rf_df_vhod)) %>%
-  pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-  rename(y = yhat)
-for(i in 2:length(potential_drivers)){
-  new <- pdp::partial(rf4, pred.var = potential_drivers[i], 
-                      train = as.data.frame(mem_rf_df_hypo_do)) %>%
-    pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
-    rename(y = yhat)
-  partials_vhod = rbind(partials_vhod, new)
-}
-
-rug_data <- mem_rf_df_surf_temp %>%
-  full_join(mem_rf_df_hypo_temp) %>%
-  full_join(mem_rf_df_vhod) %>%
-  full_join(mem_rf_df_hypo_do) %>%
-  pivot_longer(cols = all_of(potential_drivers),
-               names_to = "var", values_to = "x") %>%
-  mutate(var = recode(var, 
-                      "log_SA" = "Log surface\narea (km^2)",
-                      "log_max_depth" = "Log maximum\ndepth (m)",
-                      "buoyancy_freq" = "Buoyancy\nfrequency (1/s)",
-                      "abs_lat" = "Absolute latitude\n(DD)",
-                      "log_DOC" = "Log DOC\n(mg/L)",
-                      "log_chla" = "Log chlorophyll-a\n(ug/L)",
-                      "log_TP" = "Log TP\n(µg/L)")) %>%
-  mutate(target = factor(target, 
-                         levels = c("Surface-water\ntemperature",
-                                    "Bottom-water\ntemperature", 
-                                    "Bottom-water\noxygen demand",
-                                    "Bottom-water\ndissolved oxygen"))) %>%
-  filter(!is.na(x))
-
-r2s <- data.frame(target = c("Surface-water\ntemperature",
-                             "Bottom-water\ntemperature", 
-                             "Bottom-water\noxygen demand",
-                             "Bottom-water\ndissolved oxygen"),
-                  r2 = c(rf1_r2, rf2_r2, rf4_r2, rf3_r2),
-                  ns = c(nrow(mem_rf_df_surf_temp),
-                         nrow(mem_rf_df_hypo_temp),
-                         nrow(mem_rf_df_vhod),
-                         nrow(mem_rf_df_hypo_do))) %>%
-  mutate(lab = paste0("paste('n = ", ns, " lakes;'~R^2~'= ",round(r2, 2), "')"))
-
-ImpData <- ImpData_rf1 %>%
-  bind_rows(ImpData_rf2) %>%
-  bind_rows(ImpData_rf3) %>%
-  bind_rows(ImpData_rf4) %>%
-  left_join(r2s) %>%
-  mutate(target = factor(target, levels = c("Surface-water\ntemperature",
-                                            "Bottom-water\ntemperature", 
-                                            "Bottom-water\noxygen demand",
-                                            "Bottom-water\ndissolved oxygen")))
-```
-
-Step 4: Plot identified drivers
-
-```{r}
-imp_mem <- ImpData %>%
-  mutate(Var.Names = recode(Var.Names, "log_SA" = "Log surface\narea",
-                            "log_max_depth" = "Maximum\ndepth",
-                            "buoyancy_freq" = "Buoyancy\nfrequency",
-                            "log_DOC" = "DOC",
-                            "abs_lat" = "Absolute\nlatitude",
-                            "log_chla" = "Log chlorophyll-a",
-                            "log_TP" = "Log TP"),
-         Var.Names = factor(Var.Names),
-         Var.Names = fct_relevel(Var.Names, "Buoyancy\nfrequency", 
-                                 "Maximum\ndepth",
-                                 "Log surface\narea", 
-                                 "Absolute\nlatitude"),
-         xlab = "") %>%
-  ggplot(aes(y = `%IncMSE`, x = Var.Names)) +
-  geom_col() +
-  geom_text(aes(x = 0.7, y = 83, label = lab), 
-            hjust = 0, size = 3, parse = T,
-            data = . %>% select(target, lab) %>% distinct())+
-  coord_cartesian(clip = "off") +
-  facet_grid(target~xlab, switch = "both") + 
-  labs(y = "Variable importance (% increase in MSE)") + 
-  ylim(c(0,90))+
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        strip.placement = "outside",   # format to look like title
-        strip.background = element_blank(),
-        strip.clip = "off",
-        panel.spacing.y = unit(0.8, "lines"),
-        axis.title.y = element_text(size = 9))
-
-M_part <- partials_surf_temp %>%
-  mutate(target = "Surface-water\ntemperature") %>%
-  bind_rows(partials_hypo_temp %>%
-              mutate(target = "Bottom-water\ntemperature")) %>%
-  bind_rows(partials_hypo_do%>%
-              mutate(target = "Bottom-water\ndissolved oxygen")) %>%
-  bind_rows(partials_vhod%>%
-              mutate(target = "Bottom-water\noxygen demand"))  %>%
-  mutate(Type = "M") %>%
-  mutate(var = recode(var, 
-                      "log_SA" = "Log surface\narea (km^2)",
-                      "log_max_depth" = "Log maximum\ndepth (m)",
-                      "buoyancy_freq" = "Buoyancy\nfrequency (1/s)",
-                      "abs_lat" = "Absolute latitude\n(DD)",
-                      "log_DOC" = "Log DOC\n(mg/L)",
-                      "log_chla" = "Log chlorophyll-a\n(ug/L)",
-                      "log_TP" = "Log TP\n(µg/L)"))
-
-part <- M_part %>%
-  mutate(target = factor(target, 
-                         levels = c("Surface-water\ntemperature",
-                                    "Bottom-water\ntemperature", 
-                                    "Bottom-water\noxygen demand",
-                                    "Bottom-water\ndissolved oxygen"))) %>%
-  group_by(Type, var, target) %>%
-  arrange(x, .by_group = TRUE) %>%
-  reframe(x_interp = approx(x = x, y = y, 
-                            xout = seq(min(x), max(x), 
-                                       length.out = 10000))$x,
-          y_interp = approx(x = x, y = y, 
-                            xout = seq(min(x), max(x), 
-                                       length.out = 10000))$y) %>%
-  mutate(var = factor(var),
-         var = fct_relevel(var, "Buoyancy\nfrequency (1/s)", 
-                           "Log surface\narea (km^2)", 
-                           "Absolute latitude\n(DD)")) %>%
-  ggplot(aes(x = x_interp)) +
-  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
-  geom_point(aes(y = y_interp, color = y_interp), size = 0.1) +
-  geom_rug(aes(x = x), sides = "b", 
-           data = rug_data %>%
-             mutate(var = factor(var),
-                    var = fct_relevel(var, "Buoyancy\nfrequency (1/s)", 
-                                      "Log surface\narea (km^2)", 
-                                      "Absolute latitude\n(DD)")), 
-           alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
-  coord_cartesian(clip = "off") +
-  facet_grid(target~var, scales = "free_x", switch = "both") +
-  labs(x=NULL) +
-  theme_bw() +
-  scale_color_gradientn(colors = c("#c16586", "#735690", "#25469a"), 
-                        limits = c(-0.45, 0.45)) +
-  theme(
-    strip.placement = "outside",   # format to look like title
-    strip.background = element_blank(),
-    #strip.text.y = element_blank(),
-    strip.clip = "off",
-    panel.spacing.y = unit(0.8, "lines"),
-    axis.text.x = element_text(vjust=-0.5),
-    axis.title.y = element_text(size = 9),
-    legend.position = "none"
-  ) +
-  ylab("Partial dependence of CSEM")
-
+#Figure 4
 jpeg("../Figures/partials.jpg", width = 7, height = 4.5, 
-     units = "in", res = 400)
-ggarrange(imp_mem, part, widths = c(0.8, 1))
+       units = "in", res = 400)
+run_rf_analysis(potential_drivers, mem_rf)
+dev.off()
+
+#20 years
+jpeg("../Figures/partials_20year.jpg", width = 7, height = 4.5, 
+       units = "in", res = 400)
+run_rf_analysis(potential_drivers, mem_rf %>% filter(nyear >= 20))
+dev.off()
+
+#25 years
+jpeg("../Figures/partials_25year.jpg", width = 7, height = 4.5, 
+       units = "in", res = 400)
+run_rf_analysis(potential_drivers, mem_rf %>% filter(nyear >= 25))
+dev.off()
+
+#25 years
+jpeg("../Figures/partials_spring.jpg", width = 7, height = 4.5, 
+       units = "in", res = 400)
+run_rf_analysis(potential_drivers, 
+                memory %>%
+                  select(LakeID, var, spring, nyear) %>%
+                  left_join(bf) %>%
+                  left_join(lat_long) %>%
+                  left_join(other_drivers) %>%
+                  mutate(log_SA = log(SurfaceArea_ha),
+                         log_max_depth = log(MaximumDepth_m),
+                         log_TP = log(TP_ugL_SURF),
+                         log_DOC = log(DOC_mgL_SURF),
+                         log_chla = log(Chla_ugL_SURF),
+                         abs_lat = abs(Latitude_DD)) %>%
+                  filter(abs_lat >= 23.5,
+                         #abs_lat <= 60
+                  ) %>% #From Jane et al
+                  pivot_wider(names_from = var, values_from = spring) %>%
+                  rename(epi_temp = `Surface-water temperature`,
+                         hypo_temp = `Bottom-water temperature`,
+                         hypo_do = `Bottom-water dissolved oxygen`,
+                         vhod = `Bottom-water oxygen demand`) %>%
+                  ungroup())
+dev.off()
+
+jpeg("../Figures/partials_summer.jpg", width = 7, height = 4.5, 
+       units = "in", res = 400)
+run_rf_analysis(potential_drivers, 
+                memory %>%
+                  select(LakeID, var, summer, nyear) %>%
+                  left_join(bf) %>%
+                  left_join(lat_long) %>%
+                  left_join(other_drivers) %>%
+                  mutate(log_SA = log(SurfaceArea_ha),
+                         log_max_depth = log(MaximumDepth_m),
+                         log_TP = log(TP_ugL_SURF),
+                         log_DOC = log(DOC_mgL_SURF),
+                         log_chla = log(Chla_ugL_SURF),
+                         abs_lat = abs(Latitude_DD)) %>%
+                  filter(abs_lat >= 23.5,
+                         #abs_lat <= 60
+                  ) %>% #From Jane et al
+                  pivot_wider(names_from = var, values_from = summer) %>%
+                  rename(epi_temp = `Surface-water temperature`,
+                         hypo_temp = `Bottom-water temperature`,
+                         hypo_do = `Bottom-water dissolved oxygen`,
+                         vhod = `Bottom-water oxygen demand`) %>%
+                  ungroup())
 dev.off()
 ```
+
 

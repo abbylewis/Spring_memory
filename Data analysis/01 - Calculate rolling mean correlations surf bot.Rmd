@@ -93,8 +93,8 @@ write.csv(all,
           row.names = F)
 
 hypo_do_sat_roll <- correlations_doy(many_lake_temp_sum, 
-                                 "DO_sat_BOT", "DO_sat", 
-                                 "Summer hypo. temperature ")
+                                 "DO_sat_BOT", "DO_sat_BOT", 
+                                 "Summer hypo. DO sat ")
 
 all %>%
   group_by(LakeID, var) %>%

@@ -35,7 +35,7 @@ all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
 #Format air temperature
 daily_temp <- daily_temp_raw %>%
   mutate(Date = as.Date(Date),
-         Date = ifelse(Lat < 0, Date - months(6), Date),
+         Date = ifelse(Lat < 0, Date + months(6), Date),
          Date = as.Date(Date, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date))

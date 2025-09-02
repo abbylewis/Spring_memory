@@ -27,13 +27,15 @@ library(tidyverse)
 library(lubridate)
 
 #Set global options
-sp <- yday(c("2022-03-01", "2022-05-31"))
+sp <- yday(c("2022-03-01", "2022-05-01"))
 su <- yday(c("2022-07-01", "2022-08-31"))
-alpha <- 0.00001
+alpha <- 0.05
 
 #Load saved data
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F))
+hypo_do_sat <- read.csv("../Compiled data/Correlations - 30 day rolling mean - DO sat.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 onset <- read.csv("../Compiled data/stratification_onset.csv")
 
@@ -58,6 +60,7 @@ Step 2: Calculate seasonal ecological memory
 
 ```{r}
 memory <- all %>% 
+  filter(nyear >= 15) %>%
   filter(var %in% levels_no_n) %>%
   mutate(var = factor(var, 
                       levels = levels_no_n,
@@ -66,23 +69,27 @@ memory <- all %>%
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season) %>%
-  summarize(max = max(abs(monthly_correlation))) %>%
-  pivot_wider(names_from = season, values_from = max) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min, max)) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
   mutate(M = (spring - summer)) %>%
   group_by(var) %>%
   mutate(p = wilcox.test(M)$p.value)
 
-#memory_sat <- hypo_do_sat %>%
-#  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
-#                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-#  filter(!is.na(season)) %>%
-#  group_by(LakeID, var, season) %>%
-#  summarize(max = max(abs(monthly_correlation))) %>%
-#  pivot_wider(names_from = season, values_from = max) %>%
-#  mutate(M = (summer - spring)) %>%
-#  group_by(var) %>%
-#  mutate(p = wilcox.test(M)$p.value)
-memory
+memory_sat <- hypo_do_sat %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season) %>%
+  summarize(max = max(abs(monthly_correlation))) %>%
+  pivot_wider(names_from = season, values_from = max) %>%
+  mutate(M = (summer - spring)) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(M)$p.value)
 ```
 
 Step 3: Generate Figure 1 (summary boxplot)
@@ -95,14 +102,14 @@ memory %>%
   mutate(n = length(unique(LakeID)),
          var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
-                      levels = c("Surface-water\ntemperature (n = 561)",
-                                 "Bottom-water\ntemperature (n = 560)",
-                                 "Bottom-water\noxygen demand (n = 194)",
-                                 "Bottom-water\ndissolved oxygen (n = 480)"),
-                      labels = c("Surface-water\ntemperature (n = 561)",
-                                 "Bottom-water\ntemperature (n = 560)",
-                                 "Bottom-water oxygen\ndemand (n = 194)",
-                                 "Bottom-water dissolved\noxygen (n = 480)")))%>%
+                      levels = c("Surface-water\ntemperature (n = 366)",
+                                 "Bottom-water\ntemperature (n = 366)",
+                                 "Bottom-water\noxygen demand (n = 155)",
+                                 "Bottom-water\ndissolved oxygen (n = 213)"),
+                      labels = c("Surface-water\ntemperature (n = 366)",
+                                 "Bottom-water\ntemperature (n = 366)",
+                                 "Bottom-water\noxygen demand (n = 155)",
+                                 "Bottom-water\ndissolved oxygen (n = 213)")))%>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
@@ -112,10 +119,12 @@ memory %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = 0.7, y = 5, label = "More correlated\nwith spring", 
+  annotate("text", x = max(memory$M) + 0.1, y = 5, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = -0.7, y = 5, label = "More correlated\nwith summer", 
+  annotate("text", x = min(memory$M) - 0.1, y = 5, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  coord_cartesian(xlim = c(max(memory$M),min(memory$M)),
+                  ylim = c(1,4), clip = "off")+
   theme_bw() +
   ggtitle("\n")+
   scale_y_discrete(limits=rev, position = "right") +
@@ -123,11 +132,9 @@ memory %>%
   guides(color = guide_legend(nrow = 2))+
   theme(axis.title.y = element_blank(),
         axis.title.x = element_text(size = 8),
-        legend.position = "none"
-        )+
-  scale_color_manual(values = c("#25469a","#c16586"), 
+        legend.position = "none")+
+  scale_color_manual(values = c("#25469a","#c16586", "black"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(ylim = c(1,4), clip = "off")+
   scale_x_reverse()
 dev.off()
 ```
@@ -135,50 +142,66 @@ dev.off()
 Step 3b: Compare hypo DO concentration (mg/L) to hypo DO saturation (%)
 
 ```{r}
-#jpeg("../Figures/Monthly correlations - DO sat comp surf bot.jpg", width = 3.5, height = 2, res = 600, units = "in")
-#memory_sat %>%
-#  mutate(var = "Summer hypo. DO\nsaturation") %>%
-#  full_join(memory %>% 
-#              filter(var == "Bottom-water\ndissolved oxygen") %>%
-#              mutate(var = "Summer hypo. DO\nconcentration")) %>%
-#  group_by(var) %>%
-#  mutate(n = length(unique(LakeID)),
-#         var = paste0(var, " (n = ",n,")")) %>%
-#  group_by(var) %>%
-#  mutate(color = ifelse(p > alpha, "Insignificant", 
-#                        ifelse(median(M) > 0, "median > 0", "median < 0")),
-#         color = factor(color, levels = c("median < 0", 
-#                                          "Insignificant", 
-#                                          "median > 0"))) %>%
-#  ggplot(aes(y = var, x = M, color = color))+
-#  geom_vline(xintercept = 0, color = "grey70")+
-#  geom_boxplot()+
-#  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith spring", 
-#           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-#  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith summer", 
-#           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
-#  theme_bw() +
-#  ggtitle("\n")+
-#  scale_y_discrete(limits=rev, position = "right") +
-#  xlab("Relative correlation with summer\nvs. spring air temperature")+
-#  guides(color = guide_legend(nrow = 2))+
-#  theme(axis.title.y = element_blank(),
-#        axis.title.x = element_text(size= 8),
-#        legend.position = "none",
-#        legend.text = element_text(size = 8),
-#        legend.key.size = unit(1, "line"),
-#        legend.title = element_text(size = 8),
-#        legend.margin=ggplot2::margin(c(0,0,0,0)),
-#        legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
-#        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
-#        )+
-#  scale_color_manual(values = c("#25469a","#c16586"), 
-#                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-#  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,2), clip = "off")
-#dev.off()
+jpeg("../Figures/Monthly correlations - DO sat comp surf bot.jpg", width = 3.5, height = 2, res = 600, units = "in")
+memory_sat %>%
+  mutate(var = "Summer hypo. DO\nsaturation") %>%
+  full_join(memory %>% 
+              filter(var == "Bottom-water\ndissolved oxygen") %>%
+              mutate(var = "Summer hypo. DO\nconcentration")) %>%
+  group_by(var) %>%
+  mutate(n = length(unique(LakeID)),
+         var = paste0(var, " (n = ",n,")")) %>%
+  group_by(var) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=ggplot2::margin(c(0,0,0,0)),
+        legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#25469a","#c16586"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,2), clip = "off")
+dev.off()
 ```
 
-Step 4: Plot rolling means (hypolimnetic variables)
+Step 4: Export dates
+
+```{r}
+dates_to_plot <- all %>%
+  filter(nyear >= 15) %>%
+  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(var, LakeID, season) %>%
+  summarize(max_doy = doy[which.max(abs(monthly_correlation))]) 
+
+write.csv(dates_to_plot, 
+          "../Compiled data/strongest_correlation_dates_all_met_3m.csv", 
+          row.names = F)
+```
+
+Step 5: Plot rolling means (hypolimnetic variables)
 
 ```{r}
 #Function to deliniate periods of significant vs insignificant correlations
@@ -196,6 +219,7 @@ group_fun <- function(sig) {
 
 #Calculate mean and SD
 all_plot <- all %>%
+  filter(nyear >= 15) %>%
   mutate(strat = LakeID %in% stratified$LakeID) %>%
   group_by(var, strat) %>%
   mutate(n = length(unique(LakeID)), #Some lakes are missing from January because our air temp only goes back to 1980
@@ -223,27 +247,50 @@ all_plot2 <- all_plot %>%
          mean = ifelse(!is.na(lead(var)) & lead(var) == var, lead(mean), mean),
          sd = ifelse(lead(var) == var, lead(sd), sd))
 
+dates_to_plot_strat <- dates_to_plot %>%
+  filter(LakeID %in% stratified$LakeID) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer hypo. temperature",
+                                 "Summer VHOD",
+                                 "Summer hypo. DO"
+                                 ),
+                      labels = c("Summer bottom-water\ntemperature (n = 317)",
+                                 "Summer bottom-water\noxygen demand (n = 155)",
+                                 "Summer bottom-water\nDO (n = 162)")),
+         x_val = as.Date("2022-01-01")+days(max_doy)) %>%
+  filter(!is.na(var))
+
+dates_to_plot_unstrat <- dates_to_plot %>%
+  filter(!LakeID %in% stratified$LakeID) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer hypo. temperature",
+                                 "Summer hypo. DO"
+                                 ),
+                      labels = c("Summer bottom-water\ntemperature (n = 49)",
+                                 "Summer bottom-water\nDO (n = 51)")),
+         x_val = as.Date("2022-01-01")+days(max_doy)) %>%
+  filter(!is.na(var))
+
 #Plot hypolimnetic variables
-hypo_vars_strat <- all_plot1 %>%
-  full_join(all_plot2) %>%
+hypo_vars_strat <-all_plot1 %>%
+  bind_rows(all_plot2) %>%
   filter(doy>=30) %>% #remove first 29 days (these include previous year) 
   filter(strat == T) %>%
-  filter(var %in% c("Summer VHOD (n = 192)",
-                    #"Summer epi. temperature (n = 469)",
-                    "Summer hypo. DO (n = 383)",
-                    "Summer hypo. temperature (n = 468)")) %>%
+  filter(var %in% c("Summer VHOD (n = 155)",
+                    #"Summer epi. temperature (n = 317)",
+                    "Summer hypo. DO (n = 162)",
+                    "Summer hypo. temperature (n = 317)")) %>%
   mutate(var = factor(var, 
                       levels = c(#"Summer epi. temperature (n = 469)",
-                                 "Summer hypo. temperature (n = 468)",
-                                 "Summer VHOD (n = 192)",
-                                 "Summer hypo. DO (n = 383)"
+                                 "Summer hypo. temperature (n = 317)",
+                                 "Summer VHOD (n = 155)",
+                                 "Summer hypo. DO (n = 162)"
                                  ),
                       labels = c(#"Summer surface-water\ntemperature (n = 469)",
-                                 "Summer bottom-water\ntemperature (n = 468)",
-                                 "Summer bottom-water\noxygen demand (n = 192)",
-                                 "Summer bottom-water\nDO (n = 383)")),
+                                 "Summer bottom-water\ntemperature (n = 317)",
+                                 "Summer bottom-water\noxygen demand (n = 155)",
+                                 "Summer bottom-water\nDO (n = 162)")),
          layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
-  filter(!var == "Summer bottom-water\noxygen demand") %>%
   ggplot() + 
   geom_hline(yintercept=0, color = "grey60", linewidth = 0.3)+
   geom_vline(xintercept = as_datetime("2022-01-01")+
@@ -253,6 +300,11 @@ hypo_vars_strat <- all_plot1 %>%
                   ymin = mean - sd, ymax = mean + sd,
                   fill = sig, group = group),
               alpha = 0.5) +
+  geom_jitter(aes(x = as_datetime(x_val), 
+                 y = 0.6,
+                 color = season), 
+             shape = 21, size = 0.5, width = 0, height = 0.1,
+             data = dates_to_plot_strat)+
   geom_line(aes(x = DateTime, y = mean)) +
   xlab("Air temperature date (right-aligned 30-day rolling mean)")+
   ylab("Correlation")+
@@ -266,21 +318,21 @@ hypo_vars_strat <- all_plot1 %>%
   ggtitle("Dimictic and warm-monomictic lakes")
 
 hypo_vars_unstrat <- all_plot1 %>%
-  full_join(all_plot2) %>%
+  bind_rows(all_plot2) %>%
   filter(doy>=30) %>% #remove first 29 days (these include previous year)
   filter(var %in% c(#"Summer epi. temperature (n = 92)",
-                    "Summer hypo. DO (n = 97)",
-                    "Summer hypo. temperature (n = 92)")) %>%
+                    "Summer hypo. DO (n = 51)",
+                    "Summer hypo. temperature (n = 49)")) %>%
   mutate(var = factor(var, 
                       levels = c(#"Summer epi. temperature (n = 92)",
-                                 "Summer hypo. temperature (n = 92)",
+                                 "Summer hypo. temperature (n = 49)",
                                  "Summer VHOD (n = 2)",
-                                 "Summer hypo. DO (n = 97)"
+                                 "Summer hypo. DO (n = 51)"
                                  ),
                       labels = c(#"Summer surface-water\ntemperature (n = 92)",
-                                 "Summer bottom-water\ntemperature (n = 92)",
+                                 "Summer bottom-water\ntemperature (n = 49)",
                                  "Summer bottom-water\noxygen demand",
-                                 "Summer bottom-water\nDO (n = 97)")),
+                                 "Summer bottom-water\nDO (n = 51)")),
          layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
   filter(!var == "Summer bottom-water\noxygen demand") %>%
   ggplot() + 
@@ -289,6 +341,11 @@ hypo_vars_unstrat <- all_plot1 %>%
                   ymin = mean - sd, ymax = mean + sd,
                   fill = sig, group = group),
               alpha = 0.5) +
+  geom_jitter(aes(x = as_datetime(x_val), 
+                 y = 0.6,
+                 color = season), 
+             shape = 21, size = 0.5, width = 0, height = 0.1,
+             data = dates_to_plot_unstrat)+
   geom_line(aes(x = DateTime, y = mean)) +
   xlab("Air temperature date (right-aligned 30-day rolling mean)")+
   ylab("Correlation")+
@@ -304,23 +361,9 @@ hypo_vars_unstrat <- all_plot1 %>%
 #Save plot
 jpeg("../Figures/Monthly correlations - hypo daily roll mean sd surf bot.jpg", 
      width = 7, height = 4, res = 300, units = "in")
-ggpubr::ggarrange(hypo_vars_strat, hypo_vars_unstrat, nrow = 2, align = "hv", common.legend = T, legend = "bottom")
+ggpubr::ggarrange(hypo_vars_strat, hypo_vars_unstrat, 
+                  nrow = 2, align = "hv", common.legend = T, legend = "bottom")
 dev.off()
-```
-
-Step 5: Export dates
-
-```{r}
-dates_to_plot <- all %>%
-  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
-                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  filter(!is.na(season)) %>%
-  group_by(var, LakeID, season) %>%
-  summarize(max_doy = doy[which.max(abs(monthly_correlation))]) 
-
-write.csv(dates_to_plot, 
-          "../Compiled data/strongest_correlation_dates_all_met_3m.csv", 
-          row.names = F)
 ```
 
 Step 6: Map
