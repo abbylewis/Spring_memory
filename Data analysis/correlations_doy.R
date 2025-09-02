@@ -21,7 +21,7 @@ correlations_doy <- function(wi_lakes_all_data,
     filter(!is.na(!!variable), !is.na(!!value), doy < yday("2022-08-31")) %>%
     group_by(LakeID, doy) %>%
     mutate(nyear = length(unique(Year))) %>%
-    filter(nyear>=10,
+    filter(nyear>=15,
            #max(value)-min(value)>2
     ) %>%
     dplyr::select(LakeID, doy, Year, !!variable, !!value, nyear)

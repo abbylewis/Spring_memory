@@ -64,7 +64,7 @@ Step 2: Calculate rolling correlations
 ```{r}
 daily_temp <- climate %>%
   mutate(Date = as.Date(Date),
-         Date = ifelse(Lat < 0, Date - months(6), Date),
+         Date = ifelse(Lat < 0, Date + months(6), Date),
          Date = as.Date(Date, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date))
@@ -101,7 +101,7 @@ alpha <- 0.05
 all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean v3.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
-sp <- yday(c("2022-03-01", "2022-05-31"))
+sp <- yday(c("2022-03-01", "2022-04-30"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 
 memory <- all %>% 
@@ -117,7 +117,7 @@ memory <- all %>%
   mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, p) %>%
-  summarize(max = max(abs(monthly_correlation))) %>%
+  summarize(max = abs(max(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = max) %>%
   mutate(M = (spring - summer)) 
 
@@ -163,7 +163,7 @@ memory %>%
 dev.off()
 ```
 
-Step 4: Plots rolling means
+Step 4: Plot rolling means
 
 ```{r}
 alpha <- 0.001
@@ -252,8 +252,8 @@ dates <- all %>%
   mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, p) %>%
-  summarize(max_day = doy[which.max(abs(monthly_correlation))],
-            max = max(abs(monthly_correlation))) %>%
+  summarize(max_day = doy[which.max(monthly_correlation)],
+            max = abs(max(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = c(max, max_day)) 
 
 strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset_v3.csv") %>%

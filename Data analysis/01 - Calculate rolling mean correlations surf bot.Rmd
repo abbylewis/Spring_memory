@@ -41,7 +41,7 @@ Step 2: Load and format air temperature data
 daily_temp_raw <- read.csv("../Compiled data/historical_met_output_era5_daily.csv")
 daily_temp <- daily_temp_raw %>%
   mutate(Date = as.Date(Date),
-         Date = ifelse(Lat < 0, Date - months(6), Date),
+         Date = ifelse(Lat < 0, Date + months(6), Date),
          Date = as.Date(Date, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date)) %>%
@@ -63,7 +63,7 @@ many_lake_temp_sum <- with_temp %>%
 # ---
 
 hypo_do_roll <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
 
@@ -88,7 +88,21 @@ all <- hypo_do_roll %>%
   full_join(hypo_demand_roll %>% 
               mutate(var = "Summer VHOD")) 
 
-write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - surf bot.csv", row.names = F)
+write.csv(all, 
+          "../Compiled data/Correlations - 30 day rolling mean - surf bot.csv", 
+          row.names = F)
+
+hypo_do_sat_roll <- correlations_doy(many_lake_temp_sum, 
+                                 "DO_sat_BOT", "DO_sat", 
+                                 "Summer hypo. temperature ")
+
+all %>%
+  group_by(LakeID, var) %>%
+  summarize(nyear = unique(nyear)) %>%
+  group_by(var) %>%
+  summarize(min = min(nyear),
+            max = max(nyear),
+            median = median(nyear))
 ```
 
 Step 4: Try using Spearman's correlation, rather than partial Spearman's correlation
