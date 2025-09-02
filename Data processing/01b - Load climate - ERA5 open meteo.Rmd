@@ -5,7 +5,9 @@ date: "2022-10-10"
 output: html_document
 ---
 
-This script loads climate data from the ERA5 re-analysis data product through ROpenMeteo. The output of this file is too large to store on GitHub, so data will need to be re-processed for replication. 
+This script loads climate data from the ERA5 re-analysis data product through ROpenMeteo. I am not using this code currently, but it would allow you to look at meteorological drivers other than temperature.
+
+The output of this file is too large to store on GitHub, so data would need to be re-processed for replication. 
 
 Table of Contents:
 - Step 1: Load packages

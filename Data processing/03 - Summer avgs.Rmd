@@ -160,9 +160,7 @@ surf_bot_daily <- full_trimmed_shallow %>%
                    DOC_mgL = mean(DOC_mgL, na.rm = T),
                    Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
   filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
-  ungroup() %>%
-  mutate(Year = year(Date)) %>%
-  group_by(Year, LakeID, Date) %>%
+  group_by(LakeID, Date) %>%
   dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
                    DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
                    DO_sat_SURF = mean(DO_sat[Depth_m == 1], na.rm=T),
@@ -174,6 +172,7 @@ surf_bot_daily <- full_trimmed_shallow %>%
                    TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T)) 
 
 surf_bot <- surf_bot_daily %>%
+  mutate(Year = year(Date)) %>%
   group_by(Year, LakeID) %>%
   dplyr::summarize(DO_mgL_SURF = mean(DO_mgL_SURF, na.rm=T),
                    DO_mgL_BOT = mean(DO_mgL_BOT, na.rm=T),
@@ -193,7 +192,7 @@ buoyancy_shallow <- full_trimmed_shallow %>%
   group_by(Date, LakeID) %>%
   dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C,Depth_m),na.rm=T)) %>%
   mutate(Year=year(Date)) %>%
-  group_by(Year,LakeID) %>%
+  group_by(Year, LakeID) %>%
   dplyr::summarize(buoyancy_freq = mean(buoyancy_freq,na.rm=T))
 ```
 
@@ -249,8 +248,8 @@ for_summer_plot <- full_shallow %>%
   mutate(Date = as.Date(Date)) %>%
   filter(!is.na(Temp_C),
          Depth_m ==1,
-         month(Date_22) %in% c(6:9)) %>%
-  mutate(focal = ifelse(month(Date_22) %in% c(7,8),
+         month(Date) %in% c(6:9)) %>%
+  mutate(focal = ifelse(month(Date) %in% c(7,8),
                         "Summer",
                         "All")) 
 
@@ -273,7 +272,7 @@ for_n_dates <- for_summer_plot %>%
   filter(focal == "Summer") %>%
   mutate(year = year(Date)) %>%
   group_by(year, LakeID) %>%
-  summarize(n = length(unique(Date_22))) %>%
+  summarize(n = length(unique(Date))) %>%
   group_by(LakeID) %>%
   summarize(n = mean(n))
 
