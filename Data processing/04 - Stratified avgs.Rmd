@@ -85,9 +85,9 @@ date_end <- full_format %>%
   group_by(Year,LakeID) %>%
   filter(unstrat==1,
          month(Date_unif)>7) %>%
-  filter(Date==min(Date_unif)) %>%
-  dplyr::select(Date, Year, LakeID) %>%
-  rename(Date_end = Date)
+  filter(Date_unif==min(Date_unif)) %>%
+  dplyr::select(Date_unif, Year, LakeID) %>%
+  rename(Date_end = Date_unif)
 #Stratification duration
 strat_dur <- date_start%>%
   full_join(date_end)

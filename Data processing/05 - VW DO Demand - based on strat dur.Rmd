@@ -23,7 +23,8 @@ library(rLakeAnalyzer)
 
 #Load data and stratification boundaries. This file is created by "03 - Stratified avgs.Rmd"
 full_with_thermo <- read.csv("../Compiled data/Stratified_period_data_with_thermo.csv") %>%
-  mutate(Date=as.Date(Date))
+  mutate(Date_original=as.Date(Date),
+         Date = as.Date(Date_unif))
 #Load lake metadata
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 ```
@@ -40,7 +41,7 @@ lake_bats <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/ba7
   ungroup()
 
 #Check bathymetric data availability
-unique(lat_long$LakeID)[!unique(lat_long$LakeID) %in%unique(lake_bats$LakeID)] #missing full bathymetry for 37 lakes
+unique(lat_long$LakeID)[!unique(lat_long$LakeID) %in% unique(lake_bats$LakeID)] #missing full bathymetry for 37 lakes
 
 #Total n to start: 604
 length(unique(full_with_thermo$LakeID))
