@@ -38,7 +38,11 @@ Step 2: QAQC
 #Merge P, DO, and lake info (from lat long file)
 full <- do %>%
   left_join(lat_long, by = c("LakeID")) %>%
-  mutate(Date = as.Date(Date)) %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Latitude_DD>0,
+                       Date,
+                       Date + months(6)),
+         Date = as.Date(Date)) %>%
   filter(is.na(MaximumDepth_m) | !MaximumDepth_m < 6.4)
 
 #Create a Date_22 column, so that I can filter to only the end of summer
@@ -49,9 +53,8 @@ year(full$Date_22) <- 2022
 Step 3: Filter to summer period and calculate thermocline depths
 
 ```{r}
-full_trimmed <- full%>%
-  filter(((Latitude_DD>0)&Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31"))|
-           ((Latitude_DD<0)&Date_22>=as.Date("2022-01-01")&Date_22<=as.Date("2022-02-28"))) %>%
+full_trimmed <- full %>%
+  filter(Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31")) %>%
   dplyr::select(-Date_22)
 
 #Calculate thermocline depths
@@ -62,16 +65,16 @@ thermo_depths <- full_trimmed%>%
   ungroup() %>%
   group_by(Date, LakeID) %>%
   dplyr::summarize(epi_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[1],
-            hypo_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[2],
-            max_depth = max(Depth_m),
-            thermo = thermo.depth.density(Temp_C,Depth_m, mixed.cutoff = 0.1, seasonal = F)) %>% #use custom density threshold function
+                   hypo_depth = meta.depths(Temp_C,Depth_m,mixed.cutoff = 0)[2],
+                   max_depth = max(Depth_m),
+                   thermo = thermo.depth.density(Temp_C,Depth_m, mixed.cutoff = 0.1, seasonal = F)) %>% #use custom density threshold function
   mutate(Year= year(Date),
          unstrat = as.numeric(is.na(thermo))) %>%
   group_by(Year,LakeID) %>%
   dplyr::summarize(epi_depth = mean(epi_depth, na.rm = T),
-            hypo_depth = mean(hypo_depth, na.rm = T),
-            count_unstrat = sum(unstrat),
-            n = n())
+                   hypo_depth = mean(hypo_depth, na.rm = T),
+                   count_unstrat = sum(unstrat),
+                   n = n())
 
 #How many are removed by filtering out lakes with 10% of profiles being unstratified? 19
 thermo_depths%>%
@@ -107,8 +110,8 @@ full_with_thermo <- full_trimmed %>%
   mutate(Year = year(Date)) %>%
   full_join(thermo_depths_sum) %>%
   filter(!is.na(epi_depth),
-         !is.na(hypo_depth),
-         )
+         !is.na(hypo_depth))
+
 #Add discrete layer designations
 summer_layers <- full_with_thermo %>%
   mutate(Layer = ifelse(!is.na(Depth_m) & Depth_m<epi_depth, 
@@ -134,35 +137,53 @@ Add surface and bottom that aren't defined by thermal layer
 full_shallow <- do %>%
   full_join(p) %>%
   left_join(lat_long, by = c("LakeID")) %>%
-  mutate(Date = as.Date(Date)) %>%
+  mutate(Date = as.Date(Date),
+         Date = ifelse(Latitude_DD>0,
+                       Date,
+                       Date + months(6)),
+         Date = as.Date(Date)) %>%
   filter(is.na(MaximumDepth_m) | !MaximumDepth_m < 3)
 
 full_shallow$Date_22 <- full_shallow$Date
 year(full_shallow$Date_22) <- 2022
 
 full_trimmed_shallow <- full_shallow %>%
-  filter(((Latitude_DD>0) & Date_22 >= as.Date("2022-07-01") & Date_22 <= as.Date("2022-08-31"))|
-           ((Latitude_DD<0) & Date_22 >= as.Date("2022-01-01") & Date_22 <= as.Date("2022-02-28"))) %>%
+  filter(Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31")) %>%
   dplyr::select(-Date_22)
 
-surf_bot <- full_trimmed_shallow %>%
+surf_bot_daily <- full_trimmed_shallow %>%
   group_by(Date, LakeID, Depth_m) %>%
   dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
                    DO_mgL = mean(DO_mgL, na.rm = T),
+                   DO_sat = mean(DO_sat, na.rm = T),
                    TP_ugL = mean(TP_ugL, na.rm = T),
                    DOC_mgL = mean(DOC_mgL, na.rm = T),
                    Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
   filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
   ungroup() %>%
   mutate(Year = year(Date)) %>%
-  group_by(Year, LakeID) %>%
+  group_by(Year, LakeID, Date) %>%
   dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
                    DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DO_sat_SURF = mean(DO_sat[Depth_m == 1], na.rm=T),
+                   DO_sat_BOT = mean(DO_sat[Depth_m >= max(Depth_m)-1], na.rm=T),
                    Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
                    Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
                    DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
                    Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
-                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T))
+                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T)) 
+
+surf_bot <- surf_bot_daily %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(DO_mgL_SURF = mean(DO_mgL_SURF, na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL_BOT, na.rm=T),
+                   DO_sat_SURF = mean(DO_sat_SURF, na.rm=T),
+                   DO_sat_BOT = mean(DO_sat_BOT, na.rm=T),
+                   Temp_C_SURF = mean(Temp_C_SURF, na.rm=T),
+                   Temp_C_BOT = mean(Temp_C_BOT, na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL_SURF, na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL_SURF, na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL_SURF, na.rm=T))
 
 buoyancy_shallow <- full_trimmed_shallow %>%
   group_by(Date, LakeID, Depth_m) %>%
@@ -228,15 +249,15 @@ for_summer_plot <- full_shallow %>%
   mutate(Date = as.Date(Date)) %>%
   filter(!is.na(Temp_C),
          Depth_m ==1,
-         month(Date) %in% c(6:9)) %>%
-  mutate(focal = ifelse(month(Date) %in% c(7,8),
+         month(Date_22) %in% c(6:9)) %>%
+  mutate(focal = ifelse(month(Date_22) %in% c(7,8),
                         "Summer",
                         "All")) 
 
 summer <- for_summer_plot %>%
   mutate(title = "Summer") %>%
   ggplot(aes(x = Date_22, fill = focal)) +
-  geom_histogram(bins = 122) +
+  geom_histogram(bins = length(unique(for_summer_plot$Date_22))) +
   ylab("Total number of sampling events") +
   scale_fill_manual(values = c("grey50", "grey20"))+
   scale_x_date(breaks = as.Date(c("2022-07-01", "2022-08-01", "2022-09-01")),
@@ -249,17 +270,20 @@ summer <- for_summer_plot %>%
   coord_cartesian(xlim = as.Date(c("2022-07-01", "2022-08-31")))
 
 for_n_dates <- for_summer_plot %>%
+  filter(focal == "Summer") %>%
   mutate(year = year(Date)) %>%
   group_by(year, LakeID) %>%
-  summarize(n = length(unique(Date)))
+  summarize(n = length(unique(Date_22))) %>%
+  group_by(LakeID) %>%
+  summarize(n = mean(n))
 
 n_dates <- for_n_dates %>%
   ggplot(aes(x = n))+
   xlab("Sampling dates per summer")+
   geom_vline(xintercept = median(for_n_dates$n))+
-  geom_text(aes(x = x + 2),
-            y = 0.18,
-            label = paste0("Median: ", median(for_n_dates$n), " sampling dates"),
+  geom_text(aes(x = x + 0.5),
+            y = 0.35,
+            label = paste0("Median: ", round(median(for_n_dates$n),0), " sampling dates"),
             hjust = 0,
             data = data.frame(x = median(for_n_dates$n)))+
   geom_density()+
@@ -272,16 +296,26 @@ ggpubr::annotate_figure(p, left = grid::textGrob("Total number of sampling event
                                          rot = 90, vjust = 1, 
                                          gp = grid::gpar(cex = .9)))
 dev.off()
+
+surf_bot_table <- surf_bot_daily %>%
+  pivot_longer(c(DO_mgL_SURF, DO_mgL_BOT, DO_sat_SURF, DO_sat_BOT, Temp_C_SURF, 
+                 Temp_C_BOT, DOC_mgL_SURF, Chla_ugL_SURF, TP_ugL_SURF)) %>%
+  group_by(LakeID, name, Year) %>%
+  filter(!is.na(value)) %>%
+  summarize(n = n()) %>%
+  group_by(LakeID, name) %>%
+  summarize(mean_n = mean(n)) %>%
+  group_by(name) %>%
+  summarize(median_n = median(mean_n, na.rm = T))
 ```
 
 
 Step 6: Repeat steps 3, 4, and 5 for July 15-August 31
 
 ```{r}
-full_trimmed <- full%>%
-  filter(((Latitude_DD>0)&Date_22>=as.Date("2022-07-15")&Date_22<=as.Date("2022-08-31"))|
-           ((Latitude_DD<0)&Date_22>=as.Date("2022-01-15")&Date_22<=as.Date("2022-02-28"))) %>%
-  dplyr::select(-Date_22) 
+full_trimmed <- full %>%
+  filter(Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31")) %>%
+  dplyr::select(-Date_22)
 
 #Calculate thermocline depths
 thermo_depths <- full_trimmed%>%
@@ -354,28 +388,42 @@ summer_avgs <- summer_avgs%>%
   left_join(buoyancy)
 
 full_trimmed_shallow <- full_shallow %>%
-  filter(((Latitude_DD>0) & Date_22 >= as.Date("2022-07-15") & Date_22 <= as.Date("2022-08-31"))|
-           ((Latitude_DD<0) & Date_22 >= as.Date("2022-01-15") & Date_22 <= as.Date("2022-02-28"))) %>%
+  filter(Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31")) %>%
   dplyr::select(-Date_22)
 
-surf_bot <- full_trimmed_shallow %>%
+surf_bot_daily <- full_trimmed_shallow %>%
   group_by(Date, LakeID, Depth_m) %>%
   dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
                    DO_mgL = mean(DO_mgL, na.rm = T),
+                   DO_sat = mean(DO_sat, na.rm = T),
                    TP_ugL = mean(TP_ugL, na.rm = T),
                    DOC_mgL = mean(DOC_mgL, na.rm = T),
                    Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
   filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
   ungroup() %>%
   mutate(Year = year(Date)) %>%
-  group_by(Year, LakeID) %>%
+  group_by(Year, LakeID, Date) %>%
   dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
                    DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DO_sat_SURF = mean(DO_sat[Depth_m == 1], na.rm=T),
+                   DO_sat_BOT = mean(DO_sat[Depth_m >= max(Depth_m)-1], na.rm=T),
                    Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
                    Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
                    DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
                    Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
-                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T))
+                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T)) 
+
+surf_bot <- surf_bot_daily %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(DO_mgL_SURF = mean(DO_mgL_SURF, na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL_BOT, na.rm=T),
+                   DO_sat_SURF = mean(DO_sat_SURF, na.rm=T),
+                   DO_sat_BOT = mean(DO_sat_BOT, na.rm=T),
+                   Temp_C_SURF = mean(Temp_C_SURF, na.rm=T),
+                   Temp_C_BOT = mean(Temp_C_BOT, na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL_SURF, na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL_SURF, na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL_SURF, na.rm=T))
 
 buoyancy_shallow <- full_trimmed_shallow %>%
   group_by(Date, LakeID, Depth_m) %>%
@@ -400,11 +448,8 @@ Step 7: Repeat steps 3, 4, and 5 for June/July/August
 
 ```{r}
 full_date <- full %>%
-  mutate(Date = ifelse(Latitude_DD < 0, Date + months(6), Date)) %>%
-  mutate(Date = as.Date(Date, origin = "1970-01-01"),
-         Date_22 = Date)
-
-year(full_date$Date_22) <- 2022
+  filter(Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31")) %>%
+  dplyr::select(-Date_22)
 
 full_trimmed <- full_date %>%
   filter(Date_22 >= "2022-06-01", 
@@ -482,35 +527,47 @@ summer_avgs <- summer_avgs%>%
   left_join(buoyancy)
 
 full_trimmed_shallow <- full_shallow %>%
-  mutate(Date = ifelse(Latitude_DD < 0, Date + months(6), Date)) %>%
-  mutate(Date = as.Date(Date, origin = "1970-01-01"),
-         Date_22 = Date)
-
-year(full_trimmed_shallow$Date_22) <- 2022
+  filter(Date_22>=as.Date("2022-07-01")&Date_22<=as.Date("2022-08-31")) %>%
+  dplyr::select(-Date_22)
 
 full_trimmed <- full_trimmed_shallow %>%
   filter(Date_22 >= "2022-06-01", 
          Date_22 <= "2022-08-31") %>%
   dplyr::select(-Date_22)
 
-surf_bot <- full_trimmed_shallow %>%
+surf_bot_daily <- full_trimmed_shallow %>%
   group_by(Date, LakeID, Depth_m) %>%
   dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
                    DO_mgL = mean(DO_mgL, na.rm = T),
+                   DO_sat = mean(DO_sat, na.rm = T),
                    TP_ugL = mean(TP_ugL, na.rm = T),
                    DOC_mgL = mean(DOC_mgL, na.rm = T),
                    Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
   filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
   ungroup() %>%
   mutate(Year = year(Date)) %>%
-  group_by(Year, LakeID) %>%
+  group_by(Year, LakeID, Date) %>%
   dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
                    DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DO_sat_SURF = mean(DO_sat[Depth_m == 1], na.rm=T),
+                   DO_sat_BOT = mean(DO_sat[Depth_m >= max(Depth_m)-1], na.rm=T),
                    Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
                    Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
                    DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
                    Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
-                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T))
+                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T)) 
+
+surf_bot <- surf_bot_daily %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(DO_mgL_SURF = mean(DO_mgL_SURF, na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL_BOT, na.rm=T),
+                   DO_sat_SURF = mean(DO_sat_SURF, na.rm=T),
+                   DO_sat_BOT = mean(DO_sat_BOT, na.rm=T),
+                   Temp_C_SURF = mean(Temp_C_SURF, na.rm=T),
+                   Temp_C_BOT = mean(Temp_C_BOT, na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL_SURF, na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL_SURF, na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL_SURF, na.rm=T))
 
 buoyancy_shallow <- full_trimmed_shallow %>%
   group_by(Date, LakeID, Depth_m) %>%
