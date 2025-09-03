@@ -83,7 +83,8 @@ memory <- all %>%
   mutate(p = wilcox.test(monthly_correlation)$p.value) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, p) %>%
-  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+  summarize(nyear = max(nyear),
+            min = abs(monthly_correlation[which.min(monthly_correlation)]),
             max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
   ungroup() %>%
   mutate(val = ifelse(var %in% c("Bottom-water dissolved oxygen"),
@@ -147,7 +148,7 @@ Step 3: Run driver analysis
 
 ```{r}
 mem_rf <- memory %>%
-  select(LakeID, var, M) %>%
+  select(LakeID, var, M, nyear) %>%
   left_join(bf) %>%
   left_join(lat_long) %>%
   left_join(other_drivers) %>%
