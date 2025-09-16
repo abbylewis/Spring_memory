@@ -14,9 +14,10 @@ Table of contents for this markdown file:
 Step 1: Load packages
 Step 2: QAQC
 Step 3: Plot the results of QAQC (this is presented as a figure in Appendix S3)
-Step 4: Interpolate DO, following Jane et al. (2021) - note that this will take up to 30 min to run all lakes
-Step 5: Interpolate temperature - note that this will take up to 30 min to run all lakes
-Step 6: Combine DO and temp
+Step 4: Interpolate DO concentration, following Jane et al. (2021) - note that this will take up to 30 min to run all lakes
+Step 5: Interpolate DO saturation
+Step 6: Interpolate temperature - note that this will take up to 30 min to run all lakes
+Step 7: Combine DO and temp
 
 
 Step 1: Load packages
@@ -29,6 +30,7 @@ library(pracma)
 library(tidyverse)
 library(ggpubr)
 library(furrr)
+library(rMR)
 
 plan(multisession) #Set up parallel processing to speed up interpolation
 ```
@@ -37,39 +39,41 @@ Step 2: QAQC
 Load data from EDI and run QAQC
 
 ```{r}
-#import data
-#options(timeout=300) may be needed depending on internet connection speed
+# Import data
+#options(timeout=300) may be needed depending on internet speed
 to_profiles_all <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/caf59a118a1490e7cb1a219c55b920f9")
 to_profiles_all$Date <- as.Date(to_profiles_all$Date)
-lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") #Metadata
+#Metadata
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 
-#Remove very shallow lakes
-to_profiles <- to_profiles_all%>%
-  left_join(lat_long, by = c("LakeID"))%>%
-  filter(is.na(MaximumDepth_m)|MaximumDepth_m>=3)%>%
+# Remove very shallow lakes
+to_profiles <- to_profiles_all %>%
+  left_join(lat_long, by = c("LakeID")) %>%
+  filter(is.na(MaximumDepth_m) | MaximumDepth_m >= 3) %>%
   rename(reported_max_depth = MaximumDepth_m)
 
-#Remove max depth outliers using IQR
-test_depth_removal <- to_profiles%>%
-  group_by(LakeID,Date)%>%
-  mutate(max_depth = max(Depth_m, na.rm = T))%>%
-  group_by(LakeID)%>%
+# Remove max depth outliers using IQR
+test_depth_removal <- to_profiles %>%
+  group_by(LakeID, Date) %>%
+  mutate(max_depth = max(Depth_m, na.rm = T)) %>%
+  group_by(LakeID) %>%
   filter(is.na(max_depth) | max_depth >= 2,
          abs(max_depth-reported_max_depth) < 0.3 * reported_max_depth | 
            abs(max_depth-reported_max_depth) <= 2
-         )%>%
-  group_by(LakeID)%>%
-  mutate(outlier = (max_depth < (quantile(max_depth, .25) - 1.5 * IQR(max_depth))|
+         ) %>%
+  group_by(LakeID) %>%
+  mutate(outlier = (max_depth < (quantile(max_depth, .25) - 1.5 * IQR(max_depth)) |
                       max_depth > (quantile(max_depth, .75) + 1.5 * IQR(max_depth)))&
-           (max_depth - quantile(max_depth,.5)) > 5)%>%
+           (max_depth - quantile(max_depth,.5)) > 5) %>%
   filter(!outlier)
 
-#Some still have fairly large ranges even after outlier removal. HOWEVER these are mostly very deep lakes
+# Some still have fairly large ranges even after outlier removal. 
+# HOWEVER these are mostly very deep lakes
 range <- test_depth_removal%>%
-  group_by(LakeID)%>%
-  dplyr::summarize(range = max(max_depth) - min(max_depth))%>%
-  left_join(lat_long, by = c("LakeID"="LakeID"))%>%
-  mutate(range_frac = range / MaximumDepth_m)%>%
+  group_by(LakeID) %>%
+  dplyr::summarize(range = max(max_depth) - min(max_depth)) %>%
+  left_join(lat_long, by = c("LakeID"="LakeID")) %>%
+  mutate(range_frac = range / MaximumDepth_m) %>%
   filter(range > 5 & range_frac > .3)
 
 #Saving this as our current workflow
@@ -80,41 +84,66 @@ to_profiles_depth_checked <- test_depth_removal%>%
 nrow(to_profiles)
 nrow(to_profiles_depth_checked)
 nrow(to_profiles_depth_checked) / nrow(to_profiles) #84% of the data points remain
-nrow(to_profiles %>% filter(reported_max_depth > 6.4)) #The loss of profiles is not primarily because of shallow lakes
 
 length(unique(to_profiles$LakeID))
 unique(to_profiles$LakeID[is.na(to_profiles$reported_max_depth)])
 length(unique(to_profiles_depth_checked$LakeID)) #~50 lakes lost entirely. 
-#NOTE I looked into this and it is almost entirely from removing lakes without measurements below 3m deep (typically very shallow lakes)
+# NOTE I looked into this and it is almost entirely from removing lakes without 
+# surface measurements
+
+# Fill in missing oxygen saturation and concentration data
+to_profiles_oxy_units <- to_profiles_depth_checked %>%
+  mutate(DO_sat = ifelse(is.na(DO_sat),
+                         DO.unit.convert(DO_mgL, 
+                                         DO.units.in = "mg/L", 
+                                         DO.units.out = "pct", 
+                                         bar.units.in = "atm",
+                                         bar.press = 1, 
+                                         temp.C = Temp_C),
+                         DO_sat),
+         DO_mgL = ifelse(is.na(DO_mgL),
+                         DO.unit.convert(DO_sat, 
+                                         DO.units.in = "pct", 
+                                         DO.units.out = "mg/L", 
+                                         bar.units.in = "atm",
+                                         bar.press = 1, 
+                                         temp.C = Temp_C),
+                         DO_mgL))
+
+sum(!is.na(to_profiles_depth_checked$DO_mgL))
+sum(!is.na(to_profiles_oxy_units$DO_mgL)) #Added a few DO concs
+
+sum(!is.na(to_profiles_depth_checked$DO_sat))
+sum(!is.na(to_profiles_oxy_units$DO_sat)) #Added a lot of DO pct saturation
 ```
 
 Step 3: Plot the results of QAQC
 
 ```{r}
-#Calculate stats for the original dataset (before QAQC)
+# Calculate stats for the original dataset (before QAQC)
 unclean <- to_profiles%>%
-  group_by(Date,LakeID)%>%
-  mutate(max_depth = max(Depth_m, na.rm = T))%>%
-  group_by(LakeID, Date, reported_max_depth)%>%
+  group_by(Date,LakeID) %>%
+  mutate(max_depth = max(Depth_m, na.rm = T)) %>%
+  group_by(LakeID, Date, reported_max_depth) %>%
   dplyr::summarize(dif = unique(reported_max_depth) - unique(max_depth),
-                   max_depth = unique(max_depth))%>%
-  group_by(LakeID,reported_max_depth)%>%
+                   max_depth = unique(max_depth)) %>%
+  group_by(LakeID,reported_max_depth) %>%
   dplyr::summarize(mean_dif = mean(dif, na.rm=T),
                    mean_max = mean(max_depth, na.rm=T),
                    sd_max = sd(max_depth, na.rm = T),
                    pct_sampled = unique(mean_max) / unique(reported_max_depth) * 100,
                    sd_pct_sampled = sd(max_depth, na.rm = T) / 
-                     unique(reported_max_depth) * 100)%>%
-  ungroup()%>%
-  unique()%>%
-  filter(pct_sampled<300)%>%
+                     unique(reported_max_depth) * 100) %>%
+  ungroup() %>%
+  unique() %>%
+  filter(pct_sampled<300) %>%
   mutate(n_lakes = length(unique(LakeID)),
          mean_pct_sampled = mean(pct_sampled, na.rm=T),
          median_pct_sampled = median(pct_sampled, na.rm=T),
          mean_sd_max = mean(sd_max, na.rm=T),
          median_sd_max = median(sd_max, na.rm=T))
 
-#Plot
+# Plot
 unclean_plot <- unclean%>%
   ggplot(aes(x = reported_max_depth,y = pct_sampled))+
   geom_point(alpha = 0.3, color = "blue")+
@@ -144,30 +173,30 @@ unclean_sd <- unclean%>%
   ylab("Standard deviation of\nmaximum sampled depth")+
   xlab("Reported maximum depth")
 
-#Calculate stats for the qaqc-ed dataset
+# Calculate stats for the QAQC-ed dataset
 clean <- test_depth_removal%>%
-  group_by(Date, LakeID)%>%
-  mutate(max_depth = max(Depth_m, na.rm = T))%>%
-  group_by(LakeID, Date, reported_max_depth)%>%
+  group_by(Date, LakeID) %>%
+  mutate(max_depth = max(Depth_m, na.rm = T)) %>%
+  group_by(LakeID, Date, reported_max_depth) %>%
   dplyr::summarize(dif = unique(reported_max_depth) - unique(max_depth),
-                   max_depth = unique(max_depth))%>%
-  group_by(LakeID, reported_max_depth)%>%
+                   max_depth = unique(max_depth)) %>%
+  group_by(LakeID, reported_max_depth) %>%
   dplyr::summarize(mean_dif = mean(dif, na.rm=T),
                    mean_max = mean(max_depth, na.rm=T),
                    sd_max = sd(max_depth, na.rm = T),
                    pct_sampled = unique(mean_max) / unique(reported_max_depth) * 100,
                    sd_pct_sampled = sd(max_depth, na.rm = T) / 
-                     unique(reported_max_depth) * 100)%>%
-  ungroup()%>%
-  unique()%>%
-  filter(pct_sampled<300)%>%
+                     unique(reported_max_depth) * 100) %>%
+  ungroup() %>%
+  unique() %>%
+  filter(pct_sampled<300) %>%
   mutate(n_lakes = length(unique(LakeID)),
          mean_pct_sampled = mean(pct_sampled, na.rm=T),
          median_pct_sampled = median(pct_sampled, na.rm=T),
          mean_sd_max = mean(sd_max, na.rm=T),
          median_sd_max = median(sd_max, na.rm=T))
 
-#Plot
+# Plot
 clean_plot <- clean%>%
   ggplot(aes(x = reported_max_depth, y = pct_sampled))+
   geom_point(alpha = 0.3, color = "blue")+
@@ -212,17 +241,17 @@ Step 4: Interpolate DO, following Jane et al. (2021)
 (note: this will take up to 30 minutes to run all lakes)
 
 ```{r}
-#Prep for interpolation
+# Prep for interpolation
 
-#Filter to profiles with at least 3 measurements
-to_profiles_cleaning1 <- to_profiles_depth_checked %>%
+# Filter to profiles with at least 3 measurements
+to_profiles_cleaning1 <- to_profiles_oxy_units %>%
   filter(!is.na(DO_mgL)) %>%
   group_by(LakeID,Date) %>% 
-  filter(length(unique(Depth_m)) > 2,#less than three measurement depths
+  filter(length(unique(Depth_m)) > 2, #at least three measurement depths
          ) %>%
   mutate(crit = min(Depth_m)) %>% 
   ungroup() %>%
-  filter(crit <= 3)#remove profiles where the shallowest value is larger than 3
+  filter(crit <= 3) #remove profiles where the shallowest value is larger than 3
 
 #take care of all the non-zeros
 nozeros <- to_profiles_cleaning1 %>% 
@@ -234,20 +263,20 @@ nozeros <- to_profiles_cleaning1 %>%
 #change anything Depth <0.5 to 0 (remove them first)
 nozeros_case1<-nozeros %>% 
   filter(crit <= 0.5) %>%
-  mutate(Depth_m = ifelse(Depth_m == crit,0,Depth_m))
+  mutate(Depth_m = ifelse(Depth_m == crit, 0, Depth_m))
 
-#add additional 0m measurement for depths between 0.5 and 3
+#add additional 0 m measurement for depths between 0.5 and 3
 nozeros_case2_zeros<-nozeros %>% 
   filter(crit>0.5) %>% 
   filter(crit<=3) %>%
   ungroup() %>%
   filter(Depth_m==crit) %>% #only take the lowest value
   mutate(Depth_m=0) %>% unique()
+
 nozeros_case2 <- nozeros %>% 
   filter(crit>0.5) %>% 
   filter(crit<=3) %>%
   full_join(nozeros_case2_zeros)
-
 
 to_profiles_cleaning2 <- to_profiles_cleaning1 %>% 
   filter(crit==0) %>%
@@ -257,8 +286,10 @@ to_profiles_cleaning2 <- to_profiles_cleaning1 %>%
   arrange(LakeID,Date,Depth_m)  %>%
   group_by(LakeID,Date) %>% 
   mutate(somany=n_distinct(Depth_m)) %>% 
-  ungroup() %>% filter(somany >= 2)%>%
+  ungroup() %>% filter(somany >= 2) %>%
   dplyr::select(-somany, -crit)
+
+# Create functions to map across all lakes
 
 interp_do <- function(lake,to_profiles_cleaning2){
   alldates<-to_profiles_cleaning2 %>% dplyr::select(LakeID,Date,Depth_m,DO_mgL) %>%
@@ -295,28 +326,30 @@ run_all_dates_do <- function(alldates,lake_data,lake){
   return(output)
 }
 
+#Total number of lakes
 laken <- to_profiles_cleaning2$LakeID %>% unique()
 
+#Interpolate DO
 interpolatedvalues.do <- furrr::future_map(laken, interp_do, to_profiles_cleaning2) |> list_rbind()
 
+#Plot
 ploto <- ggplot(interpolatedvalues.do)+
   geom_line(aes(y = DO_mgL, x = -Depth_m, group = Date))+
   facet_wrap(LakeID~., scales="free")+
   coord_flip()
 ```
 
-Step 4.5: Interpolate DO pSat, following Jane et al. (2021)
-(note: this will take up to 30 minutes to run all lakes)
+Step 5: Interpolate DO pSat
 
 ```{r}
 #Prep for interpolation
 
 #Filter to profiles with at least 3 measurements
-to_profiles_cleaning1 <- to_profiles_depth_checked %>%
-  filter(!is.na(DO_sat))%>%
+to_profiles_cleaning1 <- to_profiles_oxy_units %>%
+  filter(!is.na(DO_sat)) %>%
   group_by(LakeID,Date) %>% 
   filter(length(unique(Depth_m)) > 2,#less than three measurement depths
-         )%>%
+         ) %>%
   mutate(crit = min(Depth_m)) %>% 
   ungroup() %>%
   filter(crit <= 3)#remove profiles where the shallowest value is larger than 3
@@ -330,7 +363,7 @@ nozeros <- to_profiles_cleaning1 %>%
 
 #change anything Depth <0.5 to 0 (remove them first)
 nozeros_case1<-nozeros %>% 
-  filter(crit <= 0.5)%>%
+  filter(crit <= 0.5) %>%
   mutate(Depth_m = ifelse(Depth_m == crit,0,Depth_m))
 
 #add additional 0m measurement for depths between 0.5 and 3
@@ -340,11 +373,11 @@ nozeros_case2_zeros<-nozeros %>%
   ungroup() %>%
   filter(Depth_m==crit) %>% #only take the lowest value
   mutate(Depth_m=0) %>% unique()
+
 nozeros_case2 <- nozeros %>% 
   filter(crit>0.5) %>% 
   filter(crit<=3) %>%
   full_join(nozeros_case2_zeros)
-
 
 to_profiles_cleaning2 <- to_profiles_cleaning1 %>% 
   filter(crit==0) %>%
@@ -354,9 +387,10 @@ to_profiles_cleaning2 <- to_profiles_cleaning1 %>%
   arrange(LakeID,Date,Depth_m)  %>%
   group_by(LakeID,Date) %>% 
   mutate(somany=n_distinct(Depth_m)) %>% 
-  ungroup() %>% filter(somany >= 2)%>%
+  ungroup() %>% filter(somany >= 2) %>%
   dplyr::select(-somany, -crit)
 
+#Functions to map across all lakes
 interp_do_sat <- function(lake,to_profiles_cleaning2){
   alldates<-to_profiles_cleaning2 %>% dplyr::select(LakeID,Date,Depth_m,DO_sat) %>%
     filter(LakeID==lake) %>%
@@ -395,18 +429,20 @@ run_all_dates_do_sat <- function(alldates,lake_data,lake){
   return(output)
 }
 
+#Number of lakes
 laken <- to_profiles_cleaning2$LakeID %>% unique()
 
+#Interpolate
 interpolatedvalues.do_sat <- furrr::future_map(laken, interp_do_sat, to_profiles_cleaning2) |> list_rbind()
 
+#Plot
 ploto_sat <- ggplot(interpolatedvalues.do_sat)+
   geom_line(aes(y = DO_sat, x = -Depth_m, group = Date))+
   facet_wrap(LakeID~., scales="free")+
   coord_flip()
 ```
 
-Step 5: Interpolate temperature
-(note: this will take up to 30 minutes to run all lakes)
+Step 6: Interpolate temperature
 
 ```{r}
 #Prep for interpolation
@@ -415,7 +451,7 @@ to_profiles_cleaning1 <- to_profiles_depth_checked %>%
   filter(!is.na(Temp_C)) %>%
   group_by(LakeID,Date) %>% 
   filter(length(unique(Depth_m)) > 2, #less than three measurement depths
-         )%>%
+         ) %>%
   mutate(crit = min(Depth_m)) %>% 
   ungroup() %>%
   filter(crit <= 3)#remove profiles where the lowest value is larger than 3
@@ -437,8 +473,9 @@ nozeros_case2_zeros<-nozeros %>%
   filter(crit > 0.5) %>% 
   filter(crit <= 3) %>%
   ungroup() %>%
-  filter(Depth_m == crit)%>%#only take the lowest value
+  filter(Depth_m == crit) %>%#only take the lowest value
   mutate(Depth_m=0) %>% unique()
+
 nozeros_case2 = nozeros %>% 
   filter(crit>0.5) %>% 
   filter(crit<=3) %>%
@@ -456,6 +493,7 @@ to_profiles_cleaning2 <- to_profiles_cleaning1 %>%
   filter(somany>=2) %>% #less than three measurement depths
   dplyr::select(-somany)
 
+#Functions to map across all lakes
 
 interp_t <- function(lake, to_profiles_cleaning2){
   alldates<-to_profiles_cleaning2 %>% 
@@ -500,16 +538,20 @@ run_all_dates_t <- function(alldates, lake_data, lake){
   return(output)
 }
 
+#Total number of lakes
 laken <- to_profiles_cleaning2$LakeID %>% unique()
+
+#Interpolate
 interpolatedvalues.t <- furrr::future_map(laken,interp_t,to_profiles_cleaning2) |> list_rbind()
 
+#Plot
 plott<-ggplot(interpolatedvalues.t)+
   geom_line(aes(y = Temp_C, x = -Depth_m, group = Date))+
   facet_wrap(LakeID~., scales = "free")+
   coord_flip()
 ```
 
-Step 6: Combine DO and temp
+Step 7: Combine DO and temp
 
 ```{r}
 database.interp <- interpolatedvalues.t %>%
@@ -527,18 +569,4 @@ database.interp %>% filter(!is.na(DO_mgL)) %>% group_by(LakeID) %>% dplyr::selec
 #temp
 to_profiles %>% filter(!is.na(Temp_C)) %>% group_by(LakeID) %>% dplyr::select(Date) %>% unique() #105481
 database.interp %>% filter(!is.na(Temp_C)) %>% group_by(LakeID) %>% dplyr::select(Date) %>% unique() #83503
-
-#look at the presence of data over time
-ggplot(database.interp %>% 
-         group_by(LakeID,Date)%>%
-         dplyr::summarize(meando=mean(DO_mgL))) +
-  geom_point(aes(x = as.Date(Date, origin = "1970-01-01"),
-                 y = LakeID,
-                 group = LakeID))
-
-ggplot(to_profiles %>% 
-         group_by(LakeID,Date)%>%
-         dplyr::summarize(meando=mean(DO_mgL))) +
-  geom_point(aes(x = as.Date(Date, origin = "1970-01-01"),
-                 y = LakeID,group = LakeID))
 ```
