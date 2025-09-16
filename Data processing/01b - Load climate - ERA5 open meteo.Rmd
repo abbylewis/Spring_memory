@@ -5,13 +5,14 @@ date: "2022-10-10"
 output: html_document
 ---
 
-This script loads climate data from the ERA5 re-analysis data product through ROpenMeteo. I am not using this code currently, but it would allow you to look at meteorological drivers other than temperature.
+This script loads climate data from the ERA5 re-analysis data product through ROpenMeteo. It saves lake-specifc meteorology in "./Compiled data/met_downloads/", then combines these files in "./Compiled data/historical_met_output_era5_daily.csv"
 
-The output of this file is too large to store on GitHub, so data would need to be re-processed for replication. 
+The combined meteorology for all lakes is too large to store on GitHub, so would need to be re-processed (Step 3) for replication. 
 
 Table of Contents:
 - Step 1: Load packages
 - Step 2: Load and synthesize data
+- Step 3: Combine all lakes
 
 Step 1: Load packages
 
@@ -51,7 +52,7 @@ read_url <- function(url, max_tries = 5){
 ```
 
 Step 2: Load and synthesize data 
-(note: this will take several minutes to run on a personal computer)
+(note: this will take a long time to run on a personal computer, and will need to be re-started periodically due to rate limitation from open meteo)
 
 ```{r}
 #Read and format our lake metadata
@@ -109,10 +110,14 @@ plan(multisession)
 #                                 .progress = T)
 
 met_outputs <- map_dfr(ids_to_rerun, 
-                                     download_met, 
-                                     lakes_format = lakes_format, 
-                                     .progress = T)
+                       download_met, 
+                       lakes_format = lakes_format, 
+                       .progress = T)
+```
 
+Step 3: Combine all lakes
+
+```{r}
 all_outputs <- list.files("../Compiled data/met_downloads/", 
                           full.names = T) %>%
   read_csv()
