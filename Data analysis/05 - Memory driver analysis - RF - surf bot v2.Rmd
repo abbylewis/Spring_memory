@@ -179,7 +179,7 @@ GGally::ggpairs(mem_rf %>%
   theme(text = element_text(size = 9))
 dev.off()
 
-potential_drivers <- c("buoyancy_freq", "abs_lat", "log_max_depth")
+potential_drivers <- c("buoyancy_freq", "abs_lat", "log_max_depth", "log_SA")
 #Figure 4
 jpeg("../Figures/partials.jpg", width = 7, height = 4.5, 
        units = "in", res = 400)

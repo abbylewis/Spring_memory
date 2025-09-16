@@ -68,18 +68,19 @@ Step 3: Calculate daily met trends
 ```{r}
 #Load data
 climate_era5 = read.csv("../Compiled data/historical_met_output_era5_daily.csv") %>%
-  mutate(Date_unif = ifelse(Lat > 0, Date, Date + months(6)),
+  mutate(Date = as.Date(Date),
+         Date_unif = ifelse(Lat > 0, Date, Date + months(6)),
          Date_unif = as.Date(Date_unif))
 
 run_year_set <- function(climate_era5, water_trend, name){
   climate_era5_roll <- climate_era5 %>%
-    mutate(doy = yday(Date),
-           Year = year(Date)) %>%
+    mutate(doy = yday(Date_unif),
+           Year = year(Date_unif)) %>%
     group_by(LakeID) %>%
     left_join(water_trend) %>%
     filter(Year >= min_year,
            Year <= max_year) %>%
-    arrange(Date) %>%
+    arrange(Date_unif) %>%
     mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA),
            Wind_ms = zoo::rollmean(Wind_ms, 30, align = "right", fill = NA),
            Shortwave_mJm2 = zoo::rollmean(Shortwave_mJm2, 30, align = "right", fill = NA))%>%
