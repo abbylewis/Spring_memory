@@ -1,17 +1,17 @@
 "var","LakeID","season","max_doy"
-"Summer VHOD","1","spring",129
+"Summer VHOD","1","spring",95
 "Summer VHOD","1","summer",234
 "Summer VHOD","11","spring",97
 "Summer VHOD","11","summer",206
 "Summer VHOD","110","spring",113
 "Summer VHOD","110","summer",230
-"Summer VHOD","114","spring",119
+"Summer VHOD","114","spring",65
 "Summer VHOD","114","summer",206
-"Summer VHOD","115","spring",92
+"Summer VHOD","115","spring",60
 "Summer VHOD","115","summer",191
-"Summer VHOD","122","spring",135
+"Summer VHOD","122","spring",117
 "Summer VHOD","122","summer",189
-"Summer VHOD","124","spring",128
+"Summer VHOD","124","spring",98
 "Summer VHOD","124","summer",184
 "Summer VHOD","144","spring",85
 "Summer VHOD","144","summer",183
@@ -19,36 +19,36 @@
 "Summer VHOD","146","summer",210
 "Summer VHOD","147","spring",83
 "Summer VHOD","147","summer",197
-"Summer VHOD","149","spring",93
-"Summer VHOD","149","summer",195
-"Summer VHOD","15","spring",83
+"Summer VHOD","149","spring",61
+"Summer VHOD","149","summer",224
+"Summer VHOD","15","spring",60
 "Summer VHOD","15","summer",182
 "Summer VHOD","153","spring",77
 "Summer VHOD","153","summer",183
-"Summer VHOD","155","spring",109
-"Summer VHOD","155","summer",211
+"Summer VHOD","155","spring",114
+"Summer VHOD","155","summer",182
 "Summer VHOD","157","spring",110
 "Summer VHOD","157","summer",232
 "Summer VHOD","158","spring",110
 "Summer VHOD","158","summer",227
-"Summer VHOD","168","spring",77
+"Summer VHOD","168","spring",73
 "Summer VHOD","168","summer",186
 "Summer VHOD","172","spring",111
 "Summer VHOD","172","summer",199
 "Summer VHOD","173","spring",75
 "Summer VHOD","173","summer",240
-"Summer VHOD","174","spring",135
+"Summer VHOD","174","spring",97
 "Summer VHOD","174","summer",204
-"Summer VHOD","175","spring",132
+"Summer VHOD","175","spring",75
 "Summer VHOD","175","summer",191
-"Summer VHOD","177","spring",75
+"Summer VHOD","177","spring",73
 "Summer VHOD","177","summer",197
 "Summer VHOD","178","spring",95
 "Summer VHOD","178","summer",232
-"Summer VHOD","179","spring",108
-"Summer VHOD","179","summer",214
-"Summer VHOD","182","spring",114
-"Summer VHOD","182","summer",228
+"Summer VHOD","179","spring",109
+"Summer VHOD","179","summer",221
+"Summer VHOD","182","spring",64
+"Summer VHOD","182","summer",193
 "Summer VHOD","186","spring",113
 "Summer VHOD","186","summer",235
 "Summer VHOD","187","spring",111
@@ -63,21 +63,23 @@
 "Summer VHOD","194","summer",205
 "Summer VHOD","195","spring",97
 "Summer VHOD","195","summer",219
-"Summer VHOD","199","spring",121
+"Summer VHOD","198","spring",76
+"Summer VHOD","198","summer",197
+"Summer VHOD","199","spring",103
 "Summer VHOD","199","summer",240
-"Summer VHOD","2","spring",135
+"Summer VHOD","2","spring",60
 "Summer VHOD","2","summer",189
-"Summer VHOD","204","spring",135
+"Summer VHOD","204","spring",73
 "Summer VHOD","204","summer",212
-"Summer VHOD","205","spring",135
+"Summer VHOD","205","spring",117
 "Summer VHOD","205","summer",216
-"Summer VHOD","208","spring",112
-"Summer VHOD","208","summer",214
+"Summer VHOD","208","spring",118
+"Summer VHOD","208","summer",184
 "Summer VHOD","209","spring",87
 "Summer VHOD","209","summer",237
 "Summer VHOD","210","spring",79
 "Summer VHOD","210","summer",226
-"Summer VHOD","211","spring",131
+"Summer VHOD","211","spring",112
 "Summer VHOD","211","summer",188
 "Summer VHOD","214","spring",90
 "Summer VHOD","214","summer",182
@@ -85,7 +87,7 @@
 "Summer VHOD","216","summer",183
 "Summer VHOD","217","spring",98
 "Summer VHOD","217","summer",186
-"Summer VHOD","218","spring",130
+"Summer VHOD","218","spring",120
 "Summer VHOD","218","summer",229
 "Summer VHOD","22","spring",114
 "Summer VHOD","22","summer",192
@@ -101,29 +103,29 @@
 "Summer VHOD","231","summer",228
 "Summer VHOD","234","spring",87
 "Summer VHOD","234","summer",182
-"Summer VHOD","235","spring",128
+"Summer VHOD","235","spring",119
 "Summer VHOD","235","summer",182
 "Summer VHOD","238","spring",103
 "Summer VHOD","238","summer",219
 "Summer VHOD","24","spring",78
 "Summer VHOD","24","summer",225
-"Summer VHOD","242","spring",133
+"Summer VHOD","242","spring",113
 "Summer VHOD","242","summer",194
-"Summer VHOD","26","spring",87
-"Summer VHOD","26","summer",228
+"Summer VHOD","26","spring",83
+"Summer VHOD","26","summer",240
 "Summer VHOD","27","spring",82
 "Summer VHOD","27","summer",241
-"Summer VHOD","281","spring",134
+"Summer VHOD","281","spring",109
 "Summer VHOD","281","summer",193
 "Summer VHOD","282","spring",91
-"Summer VHOD","282","summer",193
-"Summer VHOD","285","spring",79
+"Summer VHOD","282","summer",195
+"Summer VHOD","285","spring",67
 "Summer VHOD","285","summer",207
 "Summer VHOD","287","spring",104
 "Summer VHOD","287","summer",211
 "Summer VHOD","288","spring",90
 "Summer VHOD","288","summer",229
-"Summer VHOD","289","spring",131
+"Summer VHOD","289","spring",102
 "Summer VHOD","289","summer",223
 "Summer VHOD","29","spring",109
 "Summer VHOD","29","summer",189
@@ -131,113 +133,115 @@
 "Summer VHOD","290","summer",242
 "Summer VHOD","294","spring",95
 "Summer VHOD","294","summer",235
-"Summer VHOD","295","spring",84
+"Summer VHOD","295","spring",64
 "Summer VHOD","295","summer",242
 "Summer VHOD","296","spring",81
-"Summer VHOD","296","summer",190
-"Summer VHOD","297","spring",114
-"Summer VHOD","297","summer",214
+"Summer VHOD","296","summer",196
+"Summer VHOD","297","spring",121
+"Summer VHOD","297","summer",183
 "Summer VHOD","298","spring",94
 "Summer VHOD","298","summer",229
-"Summer VHOD","299","spring",111
-"Summer VHOD","299","summer",203
+"Summer VHOD","299","spring",66
+"Summer VHOD","299","summer",205
 "Summer VHOD","30","spring",113
 "Summer VHOD","30","summer",184
-"Summer VHOD","300","spring",130
-"Summer VHOD","300","summer",189
+"Summer VHOD","300","spring",60
+"Summer VHOD","300","summer",190
 "Summer VHOD","301","spring",90
 "Summer VHOD","301","summer",185
-"Summer VHOD","302","spring",129
+"Summer VHOD","302","spring",61
 "Summer VHOD","302","summer",212
-"Summer VHOD","303","spring",123
+"Summer VHOD","303","spring",114
 "Summer VHOD","303","summer",205
-"Summer VHOD","304","spring",124
+"Summer VHOD","304","spring",60
 "Summer VHOD","304","summer",223
-"Summer VHOD","305","spring",88
-"Summer VHOD","305","summer",212
+"Summer VHOD","305","spring",85
+"Summer VHOD","305","summer",210
 "Summer VHOD","306","spring",98
 "Summer VHOD","306","summer",189
-"Summer VHOD","31","spring",121
+"Summer VHOD","31","spring",71
 "Summer VHOD","31","summer",211
-"Summer VHOD","32","spring",130
+"Summer VHOD","32","spring",119
 "Summer VHOD","32","summer",183
-"Summer VHOD","324","spring",135
+"Summer VHOD","324","spring",83
 "Summer VHOD","324","summer",194
-"Summer VHOD","327","spring",135
+"Summer VHOD","327","spring",96
 "Summer VHOD","327","summer",193
 "Summer VHOD","329","spring",80
 "Summer VHOD","329","summer",233
 "Summer VHOD","33","spring",77
 "Summer VHOD","33","summer",189
-"Summer VHOD","336","spring",103
+"Summer VHOD","336","spring",67
 "Summer VHOD","336","summer",236
 "Summer VHOD","344","spring",117
 "Summer VHOD","344","summer",187
-"Summer VHOD","35","spring",134
+"Summer VHOD","35","spring",90
 "Summer VHOD","35","summer",202
 "Summer VHOD","357","spring",120
 "Summer VHOD","357","summer",242
 "Summer VHOD","362","spring",109
 "Summer VHOD","362","summer",208
-"Summer VHOD","366","spring",94
-"Summer VHOD","366","summer",231
+"Summer VHOD","366","spring",70
+"Summer VHOD","366","summer",237
 "Summer VHOD","380","spring",96
 "Summer VHOD","380","summer",230
 "Summer VHOD","384","spring",117
 "Summer VHOD","384","summer",184
-"Summer VHOD","389","spring",131
+"Summer VHOD","389","spring",116
 "Summer VHOD","389","summer",226
-"Summer VHOD","390","spring",131
-"Summer VHOD","390","summer",184
+"Summer VHOD","390","spring",118
+"Summer VHOD","390","summer",242
 "Summer VHOD","391","spring",86
 "Summer VHOD","391","summer",196
-"Summer VHOD","408","spring",105
+"Summer VHOD","408","spring",107
 "Summer VHOD","408","summer",233
-"Summer VHOD","41","spring",135
+"Summer VHOD","41","spring",94
 "Summer VHOD","41","summer",227
-"Summer VHOD","410","spring",84
-"Summer VHOD","410","summer",209
+"Summer VHOD","410","spring",69
+"Summer VHOD","410","summer",208
 "Summer VHOD","412","spring",104
 "Summer VHOD","412","summer",196
 "Summer VHOD","415","spring",77
 "Summer VHOD","415","summer",195
-"Summer VHOD","46","spring",100
+"Summer VHOD","46","spring",62
 "Summer VHOD","46","summer",226
-"Summer VHOD","47","spring",107
+"Summer VHOD","47","spring",62
 "Summer VHOD","47","summer",223
 "Summer VHOD","48","spring",112
 "Summer VHOD","48","summer",184
-"Summer VHOD","49","spring",80
+"Summer VHOD","49","spring",67
 "Summer VHOD","49","summer",184
 "Summer VHOD","5","spring",90
 "Summer VHOD","5","summer",191
-"Summer VHOD","50","spring",107
+"Summer VHOD","50","spring",60
 "Summer VHOD","50","summer",234
+"Summer VHOD","51","spring",105
+"Summer VHOD","51","summer",182
 "Summer VHOD","52","spring",108
 "Summer VHOD","52","summer",190
-"Summer VHOD","53","spring",123
+"Summer VHOD","53","spring",114
 "Summer VHOD","53","summer",226
-"Summer VHOD","54","spring",127
+"Summer VHOD","54","spring",105
 "Summer VHOD","54","summer",240
 "Summer VHOD","6","spring",121
 "Summer VHOD","6","summer",202
-"Summer VHOD","7","spring",131
+"Summer VHOD","7","spring",65
 "Summer VHOD","7","summer",182
 "Summer VHOD","79","spring",96
 "Summer VHOD","79","summer",242
-"Summer VHOD","MIDAS-103","spring",135
+"Summer VHOD","MIDAS-103","spring",102
 "Summer VHOD","MIDAS-103","summer",210
 "Summer VHOD","MIDAS-1802","spring",97
 "Summer VHOD","MIDAS-1802","summer",210
 "Summer VHOD","MIDAS-3130","spring",86
 "Summer VHOD","MIDAS-3130","summer",201
-"Summer VHOD","MIDAS-3132","spring",113
+"Summer VHOD","MIDAS-3132","spring",71
 "Summer VHOD","MIDAS-3132","summer",182
 "Summer VHOD","MIDAS-3134","spring",91
 "Summer VHOD","MIDAS-3134","summer",182
 "Summer VHOD","MIDAS-3201","spring",111
 "Summer VHOD","MIDAS-3201","summer",186
-"Summer VHOD","MIDAS-3232","spring",134
+"Summer VHOD","MIDAS-3232","spring",121
 "Summer VHOD","MIDAS-3232","summer",185
 "Summer VHOD","MIDAS-3234","spring",92
 "Summer VHOD","MIDAS-3234","summer",182
@@ -245,7 +249,7 @@
 "Summer VHOD","MIDAS-3374","summer",188
 "Summer VHOD","MIDAS-3382","spring",111
 "Summer VHOD","MIDAS-3382","summer",198
-"Summer VHOD","MIDAS-3396","spring",74
+"Summer VHOD","MIDAS-3396","spring",72
 "Summer VHOD","MIDAS-3396","summer",242
 "Summer VHOD","MIDAS-3416","spring",76
 "Summer VHOD","MIDAS-3416","summer",240
@@ -263,8 +267,8 @@
 "Summer VHOD","MIDAS-3734","summer",212
 "Summer VHOD","MIDAS-3832","spring",76
 "Summer VHOD","MIDAS-3832","summer",238
-"Summer VHOD","MIDAS-3838","spring",129
-"Summer VHOD","MIDAS-3838","summer",215
+"Summer VHOD","MIDAS-3838","spring",121
+"Summer VHOD","MIDAS-3838","summer",214
 "Summer VHOD","MIDAS-5222","spring",74
 "Summer VHOD","MIDAS-5222","summer",201
 "Summer VHOD","MIDAS-5236","spring",93
@@ -273,87 +277,87 @@
 "Summer VHOD","MIDAS-5307","summer",205
 "Summer VHOD","MIDAS-5312","spring",112
 "Summer VHOD","MIDAS-5312","summer",204
-"Summer VHOD","MIDAS-5408","spring",135
-"Summer VHOD","MIDAS-5408","summer",229
-"Summer VHOD","MIDAS-5416","spring",96
-"Summer VHOD","MIDAS-5416","summer",195
+"Summer VHOD","MIDAS-5408","spring",121
+"Summer VHOD","MIDAS-5408","summer",234
+"Summer VHOD","MIDAS-5416","spring",99
+"Summer VHOD","MIDAS-5416","summer",233
 "Summer VHOD","MIDAS-5448","spring",95
 "Summer VHOD","MIDAS-5448","summer",182
-"Summer VHOD","MIDAS-5582","spring",129
+"Summer VHOD","MIDAS-5582","spring",99
 "Summer VHOD","MIDAS-5582","summer",225
 "Summer VHOD","MIDAS-5706","spring",114
 "Summer VHOD","MIDAS-5706","summer",183
-"Summer VHOD","MIDAS-5780","spring",103
+"Summer VHOD","MIDAS-5780","spring",60
 "Summer VHOD","MIDAS-5780","summer",219
-"Summer VHOD","MIDAS-9685","spring",135
+"Summer VHOD","MIDAS-9685","spring",87
 "Summer VHOD","MIDAS-9685","summer",184
 "Summer VHOD","MIDAS-98","spring",112
 "Summer VHOD","MIDAS-98","summer",182
 "Summer VHOD","MIDAS-9961","spring",113
 "Summer VHOD","MIDAS-9961","summer",186
-"Summer VHOD","NHLAK801060402-05-01","spring",125
+"Summer VHOD","NHLAK801060402-05-01","spring",115
 "Summer VHOD","NHLAK801060402-05-01","summer",227
 "Summer VHOD","WI-213123","spring",83
 "Summer VHOD","WI-213123","summer",232
-"Summer VHOD","WI-673206","spring",130
+"Summer VHOD","WI-673206","spring",87
 "Summer VHOD","WI-673206","summer",203
-"Summer VHOD","WI-683129","spring",79
-"Summer VHOD","WI-683129","summer",222
-"Summer VHOD","aba04","spring",126
+"Summer VHOD","WI-683129","spring",93
+"Summer VHOD","WI-683129","summer",220
+"Summer VHOD","aba04","spring",60
 "Summer VHOD","aba04","summer",206
-"Summer VHOD","aba06","spring",111
+"Summer VHOD","aba06","spring",107
 "Summer VHOD","aba06","summer",223
-"Summer VHOD","aba08","spring",104
+"Summer VHOD","aba08","spring",62
 "Summer VHOD","aba08","summer",188
 "Summer VHOD","aba26","spring",101
-"Summer VHOD","aba26","summer",191
-"Summer VHOD","aba27","spring",74
+"Summer VHOD","aba26","summer",199
+"Summer VHOD","aba27","spring",61
 "Summer VHOD","aba27","summer",200
-"Summer epi. temperature","1","spring",134
+"Summer epi. temperature","1","spring",94
 "Summer epi. temperature","1","summer",227
-"Summer epi. temperature","10","spring",83
+"Summer epi. temperature","10","spring",60
 "Summer epi. temperature","10","summer",220
-"Summer epi. temperature","106","spring",74
+"Summer epi. temperature","106","spring",65
 "Summer epi. temperature","106","summer",241
-"Summer epi. temperature","108","spring",128
+"Summer epi. temperature","108","spring",117
 "Summer epi. temperature","108","summer",217
 "Summer epi. temperature","11","spring",117
 "Summer epi. temperature","11","summer",208
-"Summer epi. temperature","110","spring",135
+"Summer epi. temperature","110","spring",105
 "Summer epi. temperature","110","summer",221
 "Summer epi. temperature","114","spring",104
 "Summer epi. temperature","114","summer",224
 "Summer epi. temperature","115","spring",115
 "Summer epi. temperature","115","summer",226
-"Summer epi. temperature","116","spring",134
-"Summer epi. temperature","116","summer",200
+"Summer epi. temperature","116","spring",88
+"Summer epi. temperature","116","summer",202
 "Summer epi. temperature","118","spring",116
 "Summer epi. temperature","118","summer",225
 "Summer epi. temperature","119","spring",110
 "Summer epi. temperature","119","summer",233
-"Summer epi. temperature","12","spring",135
+"Summer epi. temperature","12","spring",121
 "Summer epi. temperature","12","summer",225
 "Summer epi. temperature","120","spring",104
 "Summer epi. temperature","120","summer",222
-"Summer epi. temperature","122","spring",124
+"Summer epi. temperature","122","spring",121
 "Summer epi. temperature","122","summer",219
 "Summer epi. temperature","124","spring",105
 "Summer epi. temperature","124","summer",225
 "Summer epi. temperature","126","spring",120
 "Summer epi. temperature","126","summer",219
-"Summer epi. temperature","129","spring",117
-"Summer epi. temperature","129","summer",208
-"Summer epi. temperature","134","spring",128
+"Summer epi. temperature","129","spring",89
+"Summer epi. temperature","129","summer",209
+"Summer epi. temperature","134","spring",119
 "Summer epi. temperature","134","summer",225
 "Summer epi. temperature","135","spring",109
 "Summer epi. temperature","135","summer",238
-"Summer epi. temperature","136","spring",74
+"Summer epi. temperature","136","spring",73
 "Summer epi. temperature","136","summer",236
 "Summer epi. temperature","140","spring",121
 "Summer epi. temperature","140","summer",198
-"Summer epi. temperature","141","spring",108
-"Summer epi. temperature","141","summer",193
-"Summer epi. temperature","144","spring",126
+"Summer epi. temperature","141","spring",107
+"Summer epi. temperature","141","summer",201
+"Summer epi. temperature","144","spring",108
 "Summer epi. temperature","144","summer",206
 "Summer epi. temperature","146","spring",108
 "Summer epi. temperature","146","summer",228
@@ -361,18 +365,18 @@
 "Summer epi. temperature","147","summer",212
 "Summer epi. temperature","148","spring",88
 "Summer epi. temperature","148","summer",241
-"Summer epi. temperature","149","spring",88
-"Summer epi. temperature","149","summer",209
+"Summer epi. temperature","149","spring",66
+"Summer epi. temperature","149","summer",210
 "Summer epi. temperature","15","spring",83
 "Summer epi. temperature","15","summer",237
-"Summer epi. temperature","150","spring",134
+"Summer epi. temperature","150","spring",73
 "Summer epi. temperature","150","summer",242
 "Summer epi. temperature","153","spring",101
 "Summer epi. temperature","153","summer",216
 "Summer epi. temperature","154","spring",103
 "Summer epi. temperature","154","summer",223
-"Summer epi. temperature","155","spring",92
-"Summer epi. temperature","155","summer",218
+"Summer epi. temperature","155","spring",104
+"Summer epi. temperature","155","summer",217
 "Summer epi. temperature","157","spring",114
 "Summer epi. temperature","157","summer",218
 "Summer epi. temperature","158","spring",114
@@ -385,43 +389,43 @@
 "Summer epi. temperature","167","summer",191
 "Summer epi. temperature","168","spring",120
 "Summer epi. temperature","168","summer",209
-"Summer epi. temperature","17","spring",124
+"Summer epi. temperature","17","spring",109
 "Summer epi. temperature","17","summer",238
-"Summer epi. temperature","171","spring",118
+"Summer epi. temperature","171","spring",63
 "Summer epi. temperature","171","summer",212
 "Summer epi. temperature","172","spring",102
 "Summer epi. temperature","172","summer",217
-"Summer epi. temperature","173","spring",126
+"Summer epi. temperature","173","spring",107
 "Summer epi. temperature","173","summer",201
 "Summer epi. temperature","174","spring",107
-"Summer epi. temperature","174","summer",207
+"Summer epi. temperature","174","summer",206
 "Summer epi. temperature","175","spring",105
 "Summer epi. temperature","175","summer",195
 "Summer epi. temperature","177","spring",105
 "Summer epi. temperature","177","summer",217
 "Summer epi. temperature","178","spring",104
 "Summer epi. temperature","178","summer",217
-"Summer epi. temperature","179","spring",89
-"Summer epi. temperature","179","summer",221
-"Summer epi. temperature","18","spring",74
+"Summer epi. temperature","179","spring",99
+"Summer epi. temperature","179","summer",224
+"Summer epi. temperature","18","spring",73
 "Summer epi. temperature","18","summer",186
 "Summer epi. temperature","180","spring",94
 "Summer epi. temperature","180","summer",239
 "Summer epi. temperature","181","spring",112
 "Summer epi. temperature","181","summer",202
 "Summer epi. temperature","182","spring",108
-"Summer epi. temperature","182","summer",234
+"Summer epi. temperature","182","summer",193
 "Summer epi. temperature","184","spring",92
 "Summer epi. temperature","184","summer",232
-"Summer epi. temperature","185","spring",74
+"Summer epi. temperature","185","spring",67
 "Summer epi. temperature","185","summer",186
-"Summer epi. temperature","186","spring",102
+"Summer epi. temperature","186","spring",62
 "Summer epi. temperature","186","summer",224
-"Summer epi. temperature","187","spring",126
+"Summer epi. temperature","187","spring",110
 "Summer epi. temperature","187","summer",221
 "Summer epi. temperature","188","spring",110
 "Summer epi. temperature","188","summer",237
-"Summer epi. temperature","189","spring",135
+"Summer epi. temperature","189","spring",71
 "Summer epi. temperature","189","summer",236
 "Summer epi. temperature","190","spring",105
 "Summer epi. temperature","190","summer",227
@@ -433,16 +437,16 @@
 "Summer epi. temperature","193","summer",210
 "Summer epi. temperature","194","spring",106
 "Summer epi. temperature","194","summer",207
-"Summer epi. temperature","195","spring",81
+"Summer epi. temperature","195","spring",62
 "Summer epi. temperature","195","summer",193
-"Summer epi. temperature","196","spring",135
+"Summer epi. temperature","196","spring",72
 "Summer epi. temperature","196","summer",184
 "Summer epi. temperature","197","spring",111
 "Summer epi. temperature","197","summer",204
 "Summer epi. temperature","198","spring",105
 "Summer epi. temperature","198","summer",225
-"Summer epi. temperature","199","spring",135
-"Summer epi. temperature","199","summer",197
+"Summer epi. temperature","199","spring",106
+"Summer epi. temperature","199","summer",209
 "Summer epi. temperature","2","spring",98
 "Summer epi. temperature","2","summer",223
 "Summer epi. temperature","20","spring",74
@@ -451,29 +455,29 @@
 "Summer epi. temperature","200","summer",224
 "Summer epi. temperature","201","spring",79
 "Summer epi. temperature","201","summer",224
-"Summer epi. temperature","202","spring",78
-"Summer epi. temperature","202","summer",231
-"Summer epi. temperature","204","spring",82
-"Summer epi. temperature","204","summer",221
+"Summer epi. temperature","202","spring",79
+"Summer epi. temperature","202","summer",230
+"Summer epi. temperature","204","spring",62
+"Summer epi. temperature","204","summer",226
 "Summer epi. temperature","205","spring",104
 "Summer epi. temperature","205","summer",241
-"Summer epi. temperature","206","spring",126
-"Summer epi. temperature","206","summer",222
+"Summer epi. temperature","206","spring",115
+"Summer epi. temperature","206","summer",234
 "Summer epi. temperature","207","spring",114
 "Summer epi. temperature","207","summer",241
-"Summer epi. temperature","208","spring",131
+"Summer epi. temperature","208","spring",118
 "Summer epi. temperature","208","summer",237
-"Summer epi. temperature","209","spring",132
+"Summer epi. temperature","209","spring",104
 "Summer epi. temperature","209","summer",238
 "Summer epi. temperature","210","spring",92
 "Summer epi. temperature","210","summer",192
 "Summer epi. temperature","211","spring",104
 "Summer epi. temperature","211","summer",210
-"Summer epi. temperature","212","spring",127
+"Summer epi. temperature","212","spring",105
 "Summer epi. temperature","212","summer",242
 "Summer epi. temperature","214","spring",90
 "Summer epi. temperature","214","summer",233
-"Summer epi. temperature","215","spring",122
+"Summer epi. temperature","215","spring",62
 "Summer epi. temperature","215","summer",235
 "Summer epi. temperature","216","spring",105
 "Summer epi. temperature","216","summer",219
@@ -483,23 +487,23 @@
 "Summer epi. temperature","218","summer",223
 "Summer epi. temperature","219","spring",76
 "Summer epi. temperature","219","summer",223
-"Summer epi. temperature","22","spring",109
+"Summer epi. temperature","22","spring",70
 "Summer epi. temperature","22","summer",223
 "Summer epi. temperature","220","spring",93
 "Summer epi. temperature","220","summer",231
 "Summer epi. temperature","221","spring",80
-"Summer epi. temperature","221","summer",220
-"Summer epi. temperature","224","spring",98
+"Summer epi. temperature","221","summer",219
+"Summer epi. temperature","224","spring",60
 "Summer epi. temperature","224","summer",201
-"Summer epi. temperature","225","spring",135
+"Summer epi. temperature","225","spring",103
 "Summer epi. temperature","225","summer",223
-"Summer epi. temperature","226","spring",106
+"Summer epi. temperature","226","spring",61
 "Summer epi. temperature","226","summer",206
 "Summer epi. temperature","228","spring",102
 "Summer epi. temperature","228","summer",223
-"Summer epi. temperature","229","spring",107
-"Summer epi. temperature","229","summer",213
-"Summer epi. temperature","23","spring",124
+"Summer epi. temperature","229","spring",121
+"Summer epi. temperature","229","summer",222
+"Summer epi. temperature","23","spring",121
 "Summer epi. temperature","23","summer",213
 "Summer epi. temperature","230","spring",106
 "Summer epi. temperature","230","summer",222
@@ -509,13 +513,13 @@
 "Summer epi. temperature","234","summer",211
 "Summer epi. temperature","235","spring",105
 "Summer epi. temperature","235","summer",226
-"Summer epi. temperature","237","spring",105
+"Summer epi. temperature","237","spring",60
 "Summer epi. temperature","237","summer",232
 "Summer epi. temperature","238","spring",104
 "Summer epi. temperature","238","summer",210
 "Summer epi. temperature","24","spring",104
 "Summer epi. temperature","24","summer",207
-"Summer epi. temperature","241","spring",114
+"Summer epi. temperature","241","spring",71
 "Summer epi. temperature","241","summer",241
 "Summer epi. temperature","242","spring",105
 "Summer epi. temperature","242","summer",223
@@ -523,7 +527,7 @@
 "Summer epi. temperature","244","summer",233
 "Summer epi. temperature","246","spring",100
 "Summer epi. temperature","246","summer",220
-"Summer epi. temperature","247","spring",131
+"Summer epi. temperature","247","spring",96
 "Summer epi. temperature","247","summer",237
 "Summer epi. temperature","248","spring",81
 "Summer epi. temperature","248","summer",215
@@ -533,65 +537,65 @@
 "Summer epi. temperature","250","summer",241
 "Summer epi. temperature","252","spring",118
 "Summer epi. temperature","252","summer",225
-"Summer epi. temperature","253","spring",127
+"Summer epi. temperature","253","spring",100
 "Summer epi. temperature","253","summer",212
-"Summer epi. temperature","254","spring",74
+"Summer epi. temperature","254","spring",71
 "Summer epi. temperature","254","summer",186
 "Summer epi. temperature","255","spring",115
 "Summer epi. temperature","255","summer",236
-"Summer epi. temperature","256","spring",135
+"Summer epi. temperature","256","spring",106
 "Summer epi. temperature","256","summer",228
 "Summer epi. temperature","257","spring",106
-"Summer epi. temperature","257","summer",193
+"Summer epi. temperature","257","summer",189
 "Summer epi. temperature","258","spring",103
 "Summer epi. temperature","258","summer",223
 "Summer epi. temperature","259","spring",86
 "Summer epi. temperature","259","summer",183
-"Summer epi. temperature","26","spring",125
-"Summer epi. temperature","26","summer",208
+"Summer epi. temperature","26","spring",104
+"Summer epi. temperature","26","summer",221
 "Summer epi. temperature","260","spring",105
 "Summer epi. temperature","260","summer",204
 "Summer epi. temperature","261","spring",77
 "Summer epi. temperature","261","summer",237
-"Summer epi. temperature","263","spring",135
+"Summer epi. temperature","263","spring",83
 "Summer epi. temperature","263","summer",238
 "Summer epi. temperature","264","spring",98
 "Summer epi. temperature","264","summer",242
 "Summer epi. temperature","266","spring",115
 "Summer epi. temperature","266","summer",239
-"Summer epi. temperature","267","spring",128
+"Summer epi. temperature","267","spring",98
 "Summer epi. temperature","267","summer",226
 "Summer epi. temperature","268","spring",87
 "Summer epi. temperature","268","summer",238
-"Summer epi. temperature","269","spring",135
+"Summer epi. temperature","269","spring",64
 "Summer epi. temperature","269","summer",207
 "Summer epi. temperature","27","spring",104
 "Summer epi. temperature","27","summer",216
-"Summer epi. temperature","270","spring",110
+"Summer epi. temperature","270","spring",63
 "Summer epi. temperature","270","summer",229
-"Summer epi. temperature","271","spring",104
+"Summer epi. temperature","271","spring",60
 "Summer epi. temperature","271","summer",236
-"Summer epi. temperature","272","spring",82
+"Summer epi. temperature","272","spring",67
 "Summer epi. temperature","272","summer",186
 "Summer epi. temperature","274","spring",91
 "Summer epi. temperature","274","summer",229
-"Summer epi. temperature","275","spring",77
+"Summer epi. temperature","275","spring",71
 "Summer epi. temperature","275","summer",239
-"Summer epi. temperature","277","spring",75
+"Summer epi. temperature","277","spring",60
 "Summer epi. temperature","277","summer",242
-"Summer epi. temperature","278","spring",127
+"Summer epi. temperature","278","spring",88
 "Summer epi. temperature","278","summer",242
-"Summer epi. temperature","281","spring",135
+"Summer epi. temperature","281","spring",72
 "Summer epi. temperature","281","summer",202
-"Summer epi. temperature","282","spring",132
+"Summer epi. temperature","282","spring",109
 "Summer epi. temperature","282","summer",212
-"Summer epi. temperature","283","spring",74
+"Summer epi. temperature","283","spring",66
 "Summer epi. temperature","283","summer",240
-"Summer epi. temperature","284","spring",112
-"Summer epi. temperature","284","summer",208
+"Summer epi. temperature","284","spring",121
+"Summer epi. temperature","284","summer",231
 "Summer epi. temperature","285","spring",92
 "Summer epi. temperature","285","summer",212
-"Summer epi. temperature","287","spring",135
+"Summer epi. temperature","287","spring",73
 "Summer epi. temperature","287","summer",203
 "Summer epi. temperature","288","spring",114
 "Summer epi. temperature","288","summer",221
@@ -603,91 +607,91 @@
 "Summer epi. temperature","290","summer",238
 "Summer epi. temperature","294","spring",111
 "Summer epi. temperature","294","summer",209
-"Summer epi. temperature","295","spring",107
+"Summer epi. temperature","295","spring",66
 "Summer epi. temperature","295","summer",241
-"Summer epi. temperature","296","spring",124
+"Summer epi. temperature","296","spring",121
 "Summer epi. temperature","296","summer",221
-"Summer epi. temperature","297","spring",135
+"Summer epi. temperature","297","spring",64
 "Summer epi. temperature","297","summer",202
 "Summer epi. temperature","298","spring",106
 "Summer epi. temperature","298","summer",236
-"Summer epi. temperature","299","spring",135
+"Summer epi. temperature","299","spring",71
 "Summer epi. temperature","299","summer",219
-"Summer epi. temperature","30","spring",107
+"Summer epi. temperature","30","spring",73
 "Summer epi. temperature","30","summer",209
-"Summer epi. temperature","300","spring",84
-"Summer epi. temperature","300","summer",228
+"Summer epi. temperature","300","spring",68
+"Summer epi. temperature","300","summer",238
 "Summer epi. temperature","301","spring",84
 "Summer epi. temperature","301","summer",217
-"Summer epi. temperature","302","spring",75
+"Summer epi. temperature","302","spring",68
 "Summer epi. temperature","302","summer",238
 "Summer epi. temperature","303","spring",111
 "Summer epi. temperature","303","summer",218
-"Summer epi. temperature","304","spring",125
+"Summer epi. temperature","304","spring",121
 "Summer epi. temperature","304","summer",218
-"Summer epi. temperature","305","spring",135
-"Summer epi. temperature","305","summer",213
+"Summer epi. temperature","305","spring",112
+"Summer epi. temperature","305","summer",201
 "Summer epi. temperature","306","spring",92
 "Summer epi. temperature","306","summer",213
 "Summer epi. temperature","308","spring",117
 "Summer epi. temperature","308","summer",208
-"Summer epi. temperature","31","spring",75
+"Summer epi. temperature","31","spring",73
 "Summer epi. temperature","31","summer",212
-"Summer epi. temperature","312","spring",75
+"Summer epi. temperature","312","spring",63
 "Summer epi. temperature","312","summer",240
-"Summer epi. temperature","313","spring",133
+"Summer epi. temperature","313","spring",60
 "Summer epi. temperature","313","summer",226
 "Summer epi. temperature","314","spring",86
-"Summer epi. temperature","314","summer",202
-"Summer epi. temperature","315","spring",129
+"Summer epi. temperature","314","summer",204
+"Summer epi. temperature","315","spring",121
 "Summer epi. temperature","315","summer",188
 "Summer epi. temperature","316","spring",111
 "Summer epi. temperature","316","summer",213
 "Summer epi. temperature","317","spring",101
 "Summer epi. temperature","317","summer",226
-"Summer epi. temperature","318","spring",126
+"Summer epi. temperature","318","spring",82
 "Summer epi. temperature","318","summer",219
-"Summer epi. temperature","319","spring",127
+"Summer epi. temperature","319","spring",82
 "Summer epi. temperature","319","summer",233
-"Summer epi. temperature","32","spring",135
+"Summer epi. temperature","32","spring",73
 "Summer epi. temperature","32","summer",205
 "Summer epi. temperature","320","spring",103
 "Summer epi. temperature","320","summer",238
 "Summer epi. temperature","321","spring",81
 "Summer epi. temperature","321","summer",230
-"Summer epi. temperature","322","spring",81
-"Summer epi. temperature","322","summer",216
-"Summer epi. temperature","323","spring",128
+"Summer epi. temperature","322","spring",71
+"Summer epi. temperature","322","summer",227
+"Summer epi. temperature","323","spring",65
 "Summer epi. temperature","323","summer",237
-"Summer epi. temperature","324","spring",124
+"Summer epi. temperature","324","spring",118
 "Summer epi. temperature","324","summer",221
-"Summer epi. temperature","325","spring",103
+"Summer epi. temperature","325","spring",67
 "Summer epi. temperature","325","summer",239
-"Summer epi. temperature","326","spring",125
+"Summer epi. temperature","326","spring",60
 "Summer epi. temperature","326","summer",204
-"Summer epi. temperature","327","spring",125
+"Summer epi. temperature","327","spring",121
 "Summer epi. temperature","327","summer",231
-"Summer epi. temperature","328","spring",124
+"Summer epi. temperature","328","spring",121
 "Summer epi. temperature","328","summer",226
-"Summer epi. temperature","329","spring",127
+"Summer epi. temperature","329","spring",121
 "Summer epi. temperature","329","summer",242
 "Summer epi. temperature","33","spring",104
 "Summer epi. temperature","33","summer",221
-"Summer epi. temperature","330","spring",127
+"Summer epi. temperature","330","spring",67
 "Summer epi. temperature","330","summer",239
-"Summer epi. temperature","332","spring",135
+"Summer epi. temperature","332","spring",109
 "Summer epi. temperature","332","summer",240
 "Summer epi. temperature","333","spring",74
 "Summer epi. temperature","333","summer",210
-"Summer epi. temperature","334","spring",124
+"Summer epi. temperature","334","spring",92
 "Summer epi. temperature","334","summer",226
-"Summer epi. temperature","336","spring",124
+"Summer epi. temperature","336","spring",119
 "Summer epi. temperature","336","summer",217
-"Summer epi. temperature","337","spring",122
+"Summer epi. temperature","337","spring",121
 "Summer epi. temperature","337","summer",225
 "Summer epi. temperature","339","spring",84
 "Summer epi. temperature","339","summer",234
-"Summer epi. temperature","34","spring",126
+"Summer epi. temperature","34","spring",103
 "Summer epi. temperature","34","summer",234
 "Summer epi. temperature","342","spring",99
 "Summer epi. temperature","342","summer",226
@@ -697,27 +701,27 @@
 "Summer epi. temperature","344","summer",231
 "Summer epi. temperature","345","spring",101
 "Summer epi. temperature","345","summer",238
-"Summer epi. temperature","346","spring",123
-"Summer epi. temperature","346","summer",223
-"Summer epi. temperature","348","spring",128
+"Summer epi. temperature","346","spring",121
+"Summer epi. temperature","346","summer",219
+"Summer epi. temperature","348","spring",121
 "Summer epi. temperature","348","summer",232
-"Summer epi. temperature","349","spring",117
+"Summer epi. temperature","349","spring",71
 "Summer epi. temperature","349","summer",228
 "Summer epi. temperature","35","spring",104
 "Summer epi. temperature","35","summer",224
-"Summer epi. temperature","350","spring",123
+"Summer epi. temperature","350","spring",71
 "Summer epi. temperature","350","summer",231
 "Summer epi. temperature","351","spring",74
-"Summer epi. temperature","351","summer",210
+"Summer epi. temperature","351","summer",211
 "Summer epi. temperature","353","spring",118
 "Summer epi. temperature","353","summer",210
 "Summer epi. temperature","357","spring",118
 "Summer epi. temperature","357","summer",210
-"Summer epi. temperature","359","spring",124
+"Summer epi. temperature","359","spring",121
 "Summer epi. temperature","359","summer",221
-"Summer epi. temperature","360","spring",84
+"Summer epi. temperature","360","spring",69
 "Summer epi. temperature","360","summer",211
-"Summer epi. temperature","362","spring",124
+"Summer epi. temperature","362","spring",121
 "Summer epi. temperature","362","summer",226
 "Summer epi. temperature","363","spring",96
 "Summer epi. temperature","363","summer",240
@@ -725,13 +729,13 @@
 "Summer epi. temperature","364","summer",211
 "Summer epi. temperature","365","spring",74
 "Summer epi. temperature","365","summer",240
-"Summer epi. temperature","366","spring",74
-"Summer epi. temperature","366","summer",218
-"Summer epi. temperature","37","spring",128
+"Summer epi. temperature","366","spring",70
+"Summer epi. temperature","366","summer",209
+"Summer epi. temperature","37","spring",121
 "Summer epi. temperature","37","summer",193
-"Summer epi. temperature","370","spring",125
+"Summer epi. temperature","370","spring",120
 "Summer epi. temperature","370","summer",213
-"Summer epi. temperature","371","spring",126
+"Summer epi. temperature","371","spring",91
 "Summer epi. temperature","371","summer",208
 "Summer epi. temperature","374","spring",121
 "Summer epi. temperature","374","summer",221
@@ -743,52 +747,50 @@
 "Summer epi. temperature","379","summer",206
 "Summer epi. temperature","38","spring",90
 "Summer epi. temperature","38","summer",204
-"Summer epi. temperature","380","spring",75
+"Summer epi. temperature","380","spring",72
 "Summer epi. temperature","380","summer",225
-"Summer epi. temperature","382","spring",116
+"Summer epi. temperature","382","spring",60
 "Summer epi. temperature","382","summer",212
-"Summer epi. temperature","383","spring",127
+"Summer epi. temperature","383","spring",71
 "Summer epi. temperature","383","summer",210
-"Summer epi. temperature","384","spring",128
+"Summer epi. temperature","384","spring",65
 "Summer epi. temperature","384","summer",236
 "Summer epi. temperature","386","spring",115
 "Summer epi. temperature","386","summer",209
-"Summer epi. temperature","388","spring",134
+"Summer epi. temperature","388","spring",114
 "Summer epi. temperature","388","summer",233
 "Summer epi. temperature","389","spring",107
 "Summer epi. temperature","389","summer",239
-"Summer epi. temperature","390","spring",130
+"Summer epi. temperature","390","spring",102
 "Summer epi. temperature","390","summer",242
 "Summer epi. temperature","391","spring",80
 "Summer epi. temperature","391","summer",236
 "Summer epi. temperature","394","spring",99
 "Summer epi. temperature","394","summer",235
-"Summer epi. temperature","396","spring",75
+"Summer epi. temperature","396","spring",104
 "Summer epi. temperature","396","summer",232
 "Summer epi. temperature","400","spring",105
 "Summer epi. temperature","400","summer",228
-"Summer epi. temperature","405","spring",133
+"Summer epi. temperature","405","spring",91
 "Summer epi. temperature","405","summer",223
-"Summer epi. temperature","408","spring",121
+"Summer epi. temperature","408","spring",68
 "Summer epi. temperature","408","summer",217
-"Summer epi. temperature","41","spring",124
+"Summer epi. temperature","41","spring",90
 "Summer epi. temperature","41","summer",214
 "Summer epi. temperature","410","spring",91
-"Summer epi. temperature","410","summer",217
-"Summer epi. temperature","411","spring",135
+"Summer epi. temperature","410","summer",210
+"Summer epi. temperature","411","spring",60
 "Summer epi. temperature","411","summer",194
-"Summer epi. temperature","412","spring",135
+"Summer epi. temperature","412","spring",118
 "Summer epi. temperature","412","summer",225
-"Summer epi. temperature","413","spring",75
+"Summer epi. temperature","413","spring",76
 "Summer epi. temperature","413","summer",213
-"Summer epi. temperature","414","spring",122
+"Summer epi. temperature","414","spring",121
 "Summer epi. temperature","414","summer",212
 "Summer epi. temperature","415","spring",100
 "Summer epi. temperature","415","summer",226
 "Summer epi. temperature","441","spring",106
 "Summer epi. temperature","441","summer",212
-"Summer epi. temperature","442","spring",74
-"Summer epi. temperature","442","summer",204
 "Summer epi. temperature","46","spring",104
 "Summer epi. temperature","46","summer",225
 "Summer epi. temperature","47","spring",111
@@ -797,7 +799,7 @@
 "Summer epi. temperature","48","summer",194
 "Summer epi. temperature","49","spring",117
 "Summer epi. temperature","49","summer",218
-"Summer epi. temperature","5","spring",134
+"Summer epi. temperature","5","spring",121
 "Summer epi. temperature","5","summer",187
 "Summer epi. temperature","50","spring",105
 "Summer epi. temperature","50","summer",217
@@ -809,17 +811,17 @@
 "Summer epi. temperature","53","summer",234
 "Summer epi. temperature","54","spring",104
 "Summer epi. temperature","54","summer",230
-"Summer epi. temperature","55","spring",81
+"Summer epi. temperature","55","spring",61
 "Summer epi. temperature","55","summer",212
-"Summer epi. temperature","6","spring",119
+"Summer epi. temperature","6","spring",64
 "Summer epi. temperature","6","summer",192
 "Summer epi. temperature","7","spring",119
 "Summer epi. temperature","7","summer",236
 "Summer epi. temperature","71","spring",100
 "Summer epi. temperature","71","summer",242
-"Summer epi. temperature","75","spring",134
+"Summer epi. temperature","75","spring",121
 "Summer epi. temperature","75","summer",234
-"Summer epi. temperature","79","spring",135
+"Summer epi. temperature","79","spring",114
 "Summer epi. temperature","79","summer",227
 "Summer epi. temperature","80","spring",110
 "Summer epi. temperature","80","summer",221
@@ -829,7 +831,7 @@
 "Summer epi. temperature","84","summer",228
 "Summer epi. temperature","88","spring",120
 "Summer epi. temperature","88","summer",226
-"Summer epi. temperature","89","spring",74
+"Summer epi. temperature","89","spring",73
 "Summer epi. temperature","89","summer",218
 "Summer epi. temperature","92","spring",112
 "Summer epi. temperature","92","summer",229
@@ -837,11 +839,11 @@
 "Summer epi. temperature","93","summer",185
 "Summer epi. temperature","96","spring",104
 "Summer epi. temperature","96","summer",219
-"Summer epi. temperature","MIDAS-103","spring",129
+"Summer epi. temperature","MIDAS-103","spring",60
 "Summer epi. temperature","MIDAS-103","summer",227
-"Summer epi. temperature","MIDAS-1674","spring",75
+"Summer epi. temperature","MIDAS-1674","spring",84
 "Summer epi. temperature","MIDAS-1674","summer",231
-"Summer epi. temperature","MIDAS-1802","spring",109
+"Summer epi. temperature","MIDAS-1802","spring",61
 "Summer epi. temperature","MIDAS-1802","summer",228
 "Summer epi. temperature","MIDAS-3130","spring",110
 "Summer epi. temperature","MIDAS-3130","summer",200
@@ -849,7 +851,7 @@
 "Summer epi. temperature","MIDAS-3132","summer",198
 "Summer epi. temperature","MIDAS-3134","spring",101
 "Summer epi. temperature","MIDAS-3134","summer",216
-"Summer epi. temperature","MIDAS-3198","spring",78
+"Summer epi. temperature","MIDAS-3198","spring",67
 "Summer epi. temperature","MIDAS-3198","summer",231
 "Summer epi. temperature","MIDAS-3201","spring",116
 "Summer epi. temperature","MIDAS-3201","summer",211
@@ -859,13 +861,13 @@
 "Summer epi. temperature","MIDAS-3234","summer",226
 "Summer epi. temperature","MIDAS-3374","spring",100
 "Summer epi. temperature","MIDAS-3374","summer",218
-"Summer epi. temperature","MIDAS-3376","spring",134
+"Summer epi. temperature","MIDAS-3376","spring",68
 "Summer epi. temperature","MIDAS-3376","summer",185
 "Summer epi. temperature","MIDAS-3382","spring",99
 "Summer epi. temperature","MIDAS-3382","summer",216
 "Summer epi. temperature","MIDAS-3396","spring",94
 "Summer epi. temperature","MIDAS-3396","summer",209
-"Summer epi. temperature","MIDAS-3416","spring",134
+"Summer epi. temperature","MIDAS-3416","spring",104
 "Summer epi. temperature","MIDAS-3416","summer",210
 "Summer epi. temperature","MIDAS-3418","spring",104
 "Summer epi. temperature","MIDAS-3418","summer",219
@@ -873,7 +875,7 @@
 "Summer epi. temperature","MIDAS-3420","summer",210
 "Summer epi. temperature","MIDAS-3424","spring",102
 "Summer epi. temperature","MIDAS-3424","summer",217
-"Summer epi. temperature","MIDAS-3448","spring",135
+"Summer epi. temperature","MIDAS-3448","spring",105
 "Summer epi. temperature","MIDAS-3448","summer",209
 "Summer epi. temperature","MIDAS-3452","spring",105
 "Summer epi. temperature","MIDAS-3452","summer",217
@@ -885,22 +887,22 @@
 "Summer epi. temperature","MIDAS-3832","summer",198
 "Summer epi. temperature","MIDAS-3838","spring",104
 "Summer epi. temperature","MIDAS-3838","summer",241
-"Summer epi. temperature","MIDAS-4822","spring",94
+"Summer epi. temperature","MIDAS-4822","spring",72
 "Summer epi. temperature","MIDAS-4822","summer",240
 "Summer epi. temperature","MIDAS-5172","spring",115
 "Summer epi. temperature","MIDAS-5172","summer",228
-"Summer epi. temperature","MIDAS-5222","spring",126
+"Summer epi. temperature","MIDAS-5222","spring",108
 "Summer epi. temperature","MIDAS-5222","summer",236
 "Summer epi. temperature","MIDAS-5236","spring",104
 "Summer epi. temperature","MIDAS-5236","summer",219
-"Summer epi. temperature","MIDAS-5307","spring",89
+"Summer epi. temperature","MIDAS-5307","spring",60
 "Summer epi. temperature","MIDAS-5307","summer",201
-"Summer epi. temperature","MIDAS-5312","spring",108
+"Summer epi. temperature","MIDAS-5312","spring",61
 "Summer epi. temperature","MIDAS-5312","summer",206
-"Summer epi. temperature","MIDAS-5408","spring",131
+"Summer epi. temperature","MIDAS-5408","spring",93
 "Summer epi. temperature","MIDAS-5408","summer",241
-"Summer epi. temperature","MIDAS-5416","spring",79
-"Summer epi. temperature","MIDAS-5416","summer",197
+"Summer epi. temperature","MIDAS-5416","spring",90
+"Summer epi. temperature","MIDAS-5416","summer",196
 "Summer epi. temperature","MIDAS-5424","spring",76
 "Summer epi. temperature","MIDAS-5424","summer",204
 "Summer epi. temperature","MIDAS-5448","spring",88
@@ -915,17 +917,17 @@
 "Summer epi. temperature","MIDAS-8065","summer",224
 "Summer epi. temperature","MIDAS-9685","spring",101
 "Summer epi. temperature","MIDAS-9685","summer",233
-"Summer epi. temperature","MIDAS-98","spring",106
+"Summer epi. temperature","MIDAS-98","spring",60
 "Summer epi. temperature","MIDAS-98","summer",221
-"Summer epi. temperature","MIDAS-9931","spring",135
+"Summer epi. temperature","MIDAS-9931","spring",108
 "Summer epi. temperature","MIDAS-9931","summer",206
 "Summer epi. temperature","MIDAS-9961","spring",105
 "Summer epi. temperature","MIDAS-9961","summer",223
 "Summer epi. temperature","NHLAK600020804-01-03","spring",103
 "Summer epi. temperature","NHLAK600020804-01-03","summer",237
-"Summer epi. temperature","NHLAK600030607-01","spring",113
+"Summer epi. temperature","NHLAK600030607-01","spring",60
 "Summer epi. temperature","NHLAK600030607-01","summer",200
-"Summer epi. temperature","NHLAK700020108-02-01","spring",133
+"Summer epi. temperature","NHLAK700020108-02-01","spring",80
 "Summer epi. temperature","NHLAK700020108-02-01","summer",216
 "Summer epi. temperature","NHLAK700020108-02-02","spring",87
 "Summer epi. temperature","NHLAK700020108-02-02","summer",185
@@ -939,13 +941,13 @@
 "Summer epi. temperature","NHLAK700030403-03","summer",217
 "Summer epi. temperature","NHLAK700060402-10-01","spring",118
 "Summer epi. temperature","NHLAK700060402-10-01","summer",210
-"Summer epi. temperature","NHLAK801060402-03","spring",131
+"Summer epi. temperature","NHLAK801060402-03","spring",100
 "Summer epi. temperature","NHLAK801060402-03","summer",228
-"Summer epi. temperature","NHLAK801060402-05-01","spring",135
+"Summer epi. temperature","NHLAK801060402-05-01","spring",69
 "Summer epi. temperature","NHLAK801060402-05-01","summer",227
 "Summer epi. temperature","NHLAK802010201-03","spring",118
 "Summer epi. temperature","NHLAK802010201-03","summer",206
-"Summer epi. temperature","NHLAK802020103-08","spring",123
+"Summer epi. temperature","NHLAK802020103-08","spring",118
 "Summer epi. temperature","NHLAK802020103-08","summer",221
 "Summer epi. temperature","WI-013038","spring",105
 "Summer epi. temperature","WI-013038","summer",211
@@ -953,137 +955,137 @@
 "Summer epi. temperature","WI-033140","summer",211
 "Summer epi. temperature","WI-043037","spring",74
 "Summer epi. temperature","WI-043037","summer",212
-"Summer epi. temperature","WI-043126","spring",133
+"Summer epi. temperature","WI-043126","spring",66
 "Summer epi. temperature","WI-043126","summer",239
-"Summer epi. temperature","WI-043148","spring",133
+"Summer epi. temperature","WI-043148","spring",100
 "Summer epi. temperature","WI-043148","summer",206
 "Summer epi. temperature","WI-043156","spring",83
 "Summer epi. temperature","WI-043156","summer",209
-"Summer epi. temperature","WI-043157","spring",83
-"Summer epi. temperature","WI-043157","summer",206
+"Summer epi. temperature","WI-043157","spring",90
+"Summer epi. temperature","WI-043157","summer",209
 "Summer epi. temperature","WI-153112","spring",79
 "Summer epi. temperature","WI-153112","summer",242
 "Summer epi. temperature","WI-163238","spring",99
 "Summer epi. temperature","WI-163238","summer",210
-"Summer epi. temperature","WI-213123","spring",82
+"Summer epi. temperature","WI-213123","spring",73
 "Summer epi. temperature","WI-213123","summer",210
 "Summer epi. temperature","WI-213137","spring",116
 "Summer epi. temperature","WI-213137","summer",241
-"Summer epi. temperature","WI-443060","spring",83
-"Summer epi. temperature","WI-443060","summer",210
+"Summer epi. temperature","WI-443060","spring",103
+"Summer epi. temperature","WI-443060","summer",216
 "Summer epi. temperature","WI-443187","spring",82
 "Summer epi. temperature","WI-443187","summer",213
-"Summer epi. temperature","WI-493103","spring",133
+"Summer epi. temperature","WI-493103","spring",116
 "Summer epi. temperature","WI-493103","summer",240
 "Summer epi. temperature","WI-523120","spring",78
 "Summer epi. temperature","WI-523120","summer",236
 "Summer epi. temperature","WI-663101","spring",85
 "Summer epi. temperature","WI-663101","summer",239
-"Summer epi. temperature","WI-663105","spring",81
+"Summer epi. temperature","WI-663105","spring",72
 "Summer epi. temperature","WI-663105","summer",212
 "Summer epi. temperature","WI-673120","spring",97
 "Summer epi. temperature","WI-673120","summer",224
-"Summer epi. temperature","WI-673202","spring",135
+"Summer epi. temperature","WI-673202","spring",72
 "Summer epi. temperature","WI-673202","summer",237
 "Summer epi. temperature","WI-673206","spring",74
 "Summer epi. temperature","WI-673206","summer",201
-"Summer epi. temperature","WI-683125","spring",75
-"Summer epi. temperature","WI-683125","summer",207
+"Summer epi. temperature","WI-683125","spring",84
+"Summer epi. temperature","WI-683125","summer",206
 "Summer epi. temperature","WI-683129","spring",74
-"Summer epi. temperature","WI-683129","summer",236
+"Summer epi. temperature","WI-683129","summer",237
 "Summer epi. temperature","WI-683143","spring",110
 "Summer epi. temperature","WI-683143","summer",224
-"Summer epi. temperature","WI-703018","spring",135
+"Summer epi. temperature","WI-703018","spring",78
 "Summer epi. temperature","WI-703018","summer",241
 "Summer epi. temperature","aba00","spring",74
 "Summer epi. temperature","aba00","summer",205
-"Summer epi. temperature","aba04","spring",118
+"Summer epi. temperature","aba04","spring",67
 "Summer epi. temperature","aba04","summer",217
-"Summer epi. temperature","aba05","spring",132
+"Summer epi. temperature","aba05","spring",91
 "Summer epi. temperature","aba05","summer",223
-"Summer epi. temperature","aba06","spring",121
+"Summer epi. temperature","aba06","spring",91
 "Summer epi. temperature","aba06","summer",217
-"Summer epi. temperature","aba08","spring",126
-"Summer epi. temperature","aba08","summer",217
-"Summer epi. temperature","aba101","spring",134
+"Summer epi. temperature","aba08","spring",81
+"Summer epi. temperature","aba08","summer",207
+"Summer epi. temperature","aba101","spring",104
 "Summer epi. temperature","aba101","summer",224
-"Summer epi. temperature","aba102","spring",134
+"Summer epi. temperature","aba102","spring",102
 "Summer epi. temperature","aba102","summer",224
-"Summer epi. temperature","aba105","spring",134
+"Summer epi. temperature","aba105","spring",106
 "Summer epi. temperature","aba105","summer",224
-"Summer epi. temperature","aba106","spring",133
+"Summer epi. temperature","aba106","spring",64
 "Summer epi. temperature","aba106","summer",236
-"Summer epi. temperature","aba107","spring",134
+"Summer epi. temperature","aba107","spring",105
 "Summer epi. temperature","aba107","summer",226
-"Summer epi. temperature","aba109","spring",133
+"Summer epi. temperature","aba109","spring",86
 "Summer epi. temperature","aba109","summer",200
-"Summer epi. temperature","aba15","spring",135
+"Summer epi. temperature","aba15","spring",69
 "Summer epi. temperature","aba15","summer",230
-"Summer epi. temperature","aba25","spring",126
+"Summer epi. temperature","aba25","spring",117
 "Summer epi. temperature","aba25","summer",211
 "Summer epi. temperature","aba26","spring",117
-"Summer epi. temperature","aba26","summer",199
-"Summer epi. temperature","aba27","spring",124
-"Summer epi. temperature","aba27","summer",223
-"Summer epi. temperature","aba86","spring",134
+"Summer epi. temperature","aba26","summer",241
+"Summer epi. temperature","aba27","spring",64
+"Summer epi. temperature","aba27","summer",217
+"Summer epi. temperature","aba86","spring",104
 "Summer epi. temperature","aba86","summer",224
-"Summer epi. temperature","aba87","spring",133
+"Summer epi. temperature","aba87","spring",88
 "Summer epi. temperature","aba87","summer",197
-"Summer epi. temperature","aba89","spring",133
+"Summer epi. temperature","aba89","spring",105
 "Summer epi. temperature","aba89","summer",210
-"Summer epi. temperature","aba91","spring",134
+"Summer epi. temperature","aba91","spring",107
 "Summer epi. temperature","aba91","summer",221
-"Summer epi. temperature","aba92","spring",129
+"Summer epi. temperature","aba92","spring",120
 "Summer epi. temperature","aba92","summer",195
-"Summer epi. temperature","aba94","spring",133
+"Summer epi. temperature","aba94","spring",121
 "Summer epi. temperature","aba94","summer",224
-"Summer epi. temperature","aba95","spring",134
+"Summer epi. temperature","aba95","spring",97
 "Summer epi. temperature","aba95","summer",201
-"Summer epi. temperature","aba96","spring",134
+"Summer epi. temperature","aba96","spring",101
 "Summer epi. temperature","aba96","summer",230
-"Summer hypo. DO","1","spring",78
+"Summer hypo. DO","1","spring",71
 "Summer hypo. DO","1","summer",199
-"Summer hypo. DO","10","spring",124
+"Summer hypo. DO","10","spring",63
 "Summer hypo. DO","10","summer",219
 "Summer hypo. DO","106","spring",110
 "Summer hypo. DO","106","summer",184
-"Summer hypo. DO","108","spring",135
+"Summer hypo. DO","108","spring",64
 "Summer hypo. DO","108","summer",233
-"Summer hypo. DO","11","spring",135
+"Summer hypo. DO","11","spring",99
 "Summer hypo. DO","11","summer",241
-"Summer hypo. DO","115","spring",132
+"Summer hypo. DO","115","spring",104
 "Summer hypo. DO","115","summer",229
 "Summer hypo. DO","12","spring",93
 "Summer hypo. DO","12","summer",185
-"Summer hypo. DO","122","spring",110
+"Summer hypo. DO","122","spring",60
 "Summer hypo. DO","122","summer",227
-"Summer hypo. DO","124","spring",134
+"Summer hypo. DO","124","spring",74
 "Summer hypo. DO","124","summer",182
-"Summer hypo. DO","129","spring",123
-"Summer hypo. DO","129","summer",203
+"Summer hypo. DO","129","spring",121
+"Summer hypo. DO","129","summer",215
 "Summer hypo. DO","140","spring",114
 "Summer hypo. DO","140","summer",199
-"Summer hypo. DO","141","spring",135
-"Summer hypo. DO","141","summer",218
+"Summer hypo. DO","141","spring",85
+"Summer hypo. DO","141","summer",184
 "Summer hypo. DO","148","spring",76
 "Summer hypo. DO","148","summer",196
-"Summer hypo. DO","149","spring",109
+"Summer hypo. DO","149","spring",117
 "Summer hypo. DO","149","summer",187
-"Summer hypo. DO","15","spring",135
+"Summer hypo. DO","15","spring",120
 "Summer hypo. DO","15","summer",227
 "Summer hypo. DO","150","spring",102
 "Summer hypo. DO","150","summer",226
-"Summer hypo. DO","153","spring",130
+"Summer hypo. DO","153","spring",91
 "Summer hypo. DO","153","summer",183
-"Summer hypo. DO","155","spring",126
-"Summer hypo. DO","155","summer",211
+"Summer hypo. DO","155","spring",117
+"Summer hypo. DO","155","summer",215
 "Summer hypo. DO","157","spring",110
 "Summer hypo. DO","157","summer",184
 "Summer hypo. DO","161","spring",74
 "Summer hypo. DO","161","summer",198
-"Summer hypo. DO","162","spring",108
+"Summer hypo. DO","162","spring",63
 "Summer hypo. DO","162","summer",200
-"Summer hypo. DO","167","spring",127
+"Summer hypo. DO","167","spring",117
 "Summer hypo. DO","167","summer",183
 "Summer hypo. DO","168","spring",93
 "Summer hypo. DO","168","summer",222
@@ -1091,27 +1093,27 @@
 "Summer hypo. DO","17","summer",242
 "Summer hypo. DO","172","spring",111
 "Summer hypo. DO","172","summer",198
-"Summer hypo. DO","173","spring",82
+"Summer hypo. DO","173","spring",72
 "Summer hypo. DO","173","summer",190
-"Summer hypo. DO","175","spring",129
+"Summer hypo. DO","175","spring",81
 "Summer hypo. DO","175","summer",228
-"Summer hypo. DO","177","spring",74
+"Summer hypo. DO","177","spring",71
 "Summer hypo. DO","177","summer",228
-"Summer hypo. DO","179","spring",130
-"Summer hypo. DO","179","summer",239
-"Summer hypo. DO","18","spring",122
+"Summer hypo. DO","179","spring",63
+"Summer hypo. DO","179","summer",184
+"Summer hypo. DO","18","spring",66
 "Summer hypo. DO","18","summer",197
-"Summer hypo. DO","181","spring",135
+"Summer hypo. DO","181","spring",121
 "Summer hypo. DO","181","summer",185
-"Summer hypo. DO","182","spring",125
-"Summer hypo. DO","182","summer",241
-"Summer hypo. DO","184","spring",94
+"Summer hypo. DO","182","spring",65
+"Summer hypo. DO","182","summer",193
+"Summer hypo. DO","184","spring",60
 "Summer hypo. DO","184","summer",237
 "Summer hypo. DO","185","spring",106
 "Summer hypo. DO","185","summer",223
-"Summer hypo. DO","186","spring",123
+"Summer hypo. DO","186","spring",121
 "Summer hypo. DO","186","summer",189
-"Summer hypo. DO","187","spring",75
+"Summer hypo. DO","187","spring",70
 "Summer hypo. DO","187","summer",198
 "Summer hypo. DO","188","spring",79
 "Summer hypo. DO","188","summer",228
@@ -1119,28 +1121,28 @@
 "Summer hypo. DO","189","summer",183
 "Summer hypo. DO","190","spring",117
 "Summer hypo. DO","190","summer",235
-"Summer hypo. DO","192","spring",88
+"Summer hypo. DO","192","spring",63
 "Summer hypo. DO","192","summer",182
-"Summer hypo. DO","193","spring",74
+"Summer hypo. DO","193","spring",64
 "Summer hypo. DO","193","summer",207
 "Summer hypo. DO","194","spring",81
 "Summer hypo. DO","194","summer",182
 "Summer hypo. DO","195","spring",92
 "Summer hypo. DO","195","summer",239
-"Summer hypo. DO","196","spring",135
+"Summer hypo. DO","196","spring",121
 "Summer hypo. DO","196","summer",219
 "Summer hypo. DO","197","spring",80
 "Summer hypo. DO","197","summer",197
-"Summer hypo. DO","198","spring",99
+"Summer hypo. DO","198","spring",60
 "Summer hypo. DO","198","summer",242
-"Summer hypo. DO","199","spring",89
-"Summer hypo. DO","199","summer",183
-"Summer hypo. DO","2","spring",133
+"Summer hypo. DO","199","spring",62
+"Summer hypo. DO","199","summer",182
+"Summer hypo. DO","2","spring",100
 "Summer hypo. DO","2","summer",216
 "Summer hypo. DO","20","spring",96
 "Summer hypo. DO","20","summer",186
-"Summer hypo. DO","204","spring",126
-"Summer hypo. DO","204","summer",228
+"Summer hypo. DO","204","spring",121
+"Summer hypo. DO","204","summer",229
 "Summer hypo. DO","205","spring",78
 "Summer hypo. DO","205","summer",200
 "Summer hypo. DO","206","spring",87
@@ -1153,23 +1155,23 @@
 "Summer hypo. DO","210","summer",222
 "Summer hypo. DO","212","spring",95
 "Summer hypo. DO","212","summer",227
-"Summer hypo. DO","215","spring",130
+"Summer hypo. DO","215","spring",77
 "Summer hypo. DO","215","summer",191
 "Summer hypo. DO","22","spring",97
 "Summer hypo. DO","22","summer",218
-"Summer hypo. DO","225","spring",135
+"Summer hypo. DO","225","spring",60
 "Summer hypo. DO","225","summer",241
-"Summer hypo. DO","226","spring",74
+"Summer hypo. DO","226","spring",70
 "Summer hypo. DO","226","summer",189
-"Summer hypo. DO","228","spring",130
+"Summer hypo. DO","228","spring",121
 "Summer hypo. DO","228","summer",218
-"Summer hypo. DO","229","spring",109
-"Summer hypo. DO","229","summer",201
+"Summer hypo. DO","229","spring",111
+"Summer hypo. DO","229","summer",219
 "Summer hypo. DO","231","spring",86
 "Summer hypo. DO","231","summer",199
 "Summer hypo. DO","234","spring",118
 "Summer hypo. DO","234","summer",182
-"Summer hypo. DO","235","spring",115
+"Summer hypo. DO","235","spring",69
 "Summer hypo. DO","235","summer",235
 "Summer hypo. DO","237","spring",105
 "Summer hypo. DO","237","summer",217
@@ -1177,17 +1179,17 @@
 "Summer hypo. DO","238","summer",214
 "Summer hypo. DO","241","spring",118
 "Summer hypo. DO","241","summer",194
-"Summer hypo. DO","246","spring",135
+"Summer hypo. DO","246","spring",61
 "Summer hypo. DO","246","summer",200
 "Summer hypo. DO","248","spring",113
 "Summer hypo. DO","248","summer",199
 "Summer hypo. DO","249","spring",116
 "Summer hypo. DO","249","summer",182
-"Summer hypo. DO","250","spring",129
+"Summer hypo. DO","250","spring",60
 "Summer hypo. DO","250","summer",235
-"Summer hypo. DO","252","spring",105
+"Summer hypo. DO","252","spring",63
 "Summer hypo. DO","252","summer",203
-"Summer hypo. DO","256","spring",82
+"Summer hypo. DO","256","spring",69
 "Summer hypo. DO","256","summer",228
 "Summer hypo. DO","258","spring",97
 "Summer hypo. DO","258","summer",241
@@ -1203,25 +1205,25 @@
 "Summer hypo. DO","269","summer",226
 "Summer hypo. DO","270","spring",104
 "Summer hypo. DO","270","summer",201
-"Summer hypo. DO","271","spring",130
+"Summer hypo. DO","271","spring",65
 "Summer hypo. DO","271","summer",241
 "Summer hypo. DO","272","spring",116
 "Summer hypo. DO","272","summer",206
-"Summer hypo. DO","277","spring",131
+"Summer hypo. DO","277","spring",88
 "Summer hypo. DO","277","summer",209
 "Summer hypo. DO","281","spring",83
 "Summer hypo. DO","281","summer",196
-"Summer hypo. DO","282","spring",122
+"Summer hypo. DO","282","spring",119
 "Summer hypo. DO","282","summer",200
 "Summer hypo. DO","283","spring",85
 "Summer hypo. DO","283","summer",188
 "Summer hypo. DO","284","spring",114
-"Summer hypo. DO","284","summer",223
-"Summer hypo. DO","285","spring",75
+"Summer hypo. DO","284","summer",224
+"Summer hypo. DO","285","spring",61
 "Summer hypo. DO","285","summer",203
-"Summer hypo. DO","287","spring",75
+"Summer hypo. DO","287","spring",73
 "Summer hypo. DO","287","summer",205
-"Summer hypo. DO","288","spring",130
+"Summer hypo. DO","288","spring",115
 "Summer hypo. DO","288","summer",224
 "Summer hypo. DO","289","spring",92
 "Summer hypo. DO","289","summer",230
@@ -1231,101 +1233,101 @@
 "Summer hypo. DO","290","summer",238
 "Summer hypo. DO","294","spring",108
 "Summer hypo. DO","294","summer",186
-"Summer hypo. DO","296","spring",93
-"Summer hypo. DO","296","summer",221
-"Summer hypo. DO","297","spring",75
+"Summer hypo. DO","296","spring",97
+"Summer hypo. DO","296","summer",225
+"Summer hypo. DO","297","spring",66
 "Summer hypo. DO","297","summer",211
 "Summer hypo. DO","298","spring",80
 "Summer hypo. DO","298","summer",202
 "Summer hypo. DO","299","spring",120
 "Summer hypo. DO","299","summer",197
-"Summer hypo. DO","300","spring",125
-"Summer hypo. DO","300","summer",193
+"Summer hypo. DO","300","spring",116
+"Summer hypo. DO","300","summer",209
 "Summer hypo. DO","301","spring",115
 "Summer hypo. DO","301","summer",237
-"Summer hypo. DO","302","spring",124
+"Summer hypo. DO","302","spring",67
 "Summer hypo. DO","302","summer",183
-"Summer hypo. DO","303","spring",134
+"Summer hypo. DO","303","spring",115
 "Summer hypo. DO","303","summer",241
 "Summer hypo. DO","304","spring",116
 "Summer hypo. DO","304","summer",183
-"Summer hypo. DO","305","spring",101
-"Summer hypo. DO","305","summer",219
+"Summer hypo. DO","305","spring",80
+"Summer hypo. DO","305","summer",218
 "Summer hypo. DO","306","spring",74
 "Summer hypo. DO","306","summer",197
-"Summer hypo. DO","308","spring",134
-"Summer hypo. DO","308","summer",183
-"Summer hypo. DO","315","spring",81
+"Summer hypo. DO","308","spring",95
+"Summer hypo. DO","308","summer",184
+"Summer hypo. DO","315","spring",82
 "Summer hypo. DO","315","summer",220
-"Summer hypo. DO","318","spring",74
+"Summer hypo. DO","318","spring",72
 "Summer hypo. DO","318","summer",208
 "Summer hypo. DO","323","spring",81
 "Summer hypo. DO","323","summer",183
-"Summer hypo. DO","348","spring",128
+"Summer hypo. DO","348","spring",121
 "Summer hypo. DO","348","summer",199
-"Summer hypo. DO","35","spring",124
+"Summer hypo. DO","35","spring",121
 "Summer hypo. DO","35","summer",183
-"Summer hypo. DO","363","spring",129
+"Summer hypo. DO","363","spring",69
 "Summer hypo. DO","363","summer",199
-"Summer hypo. DO","366","spring",80
-"Summer hypo. DO","366","summer",239
-"Summer hypo. DO","37","spring",132
-"Summer hypo. DO","37","summer",188
-"Summer hypo. DO","370","spring",126
+"Summer hypo. DO","366","spring",62
+"Summer hypo. DO","366","summer",242
+"Summer hypo. DO","37","spring",121
+"Summer hypo. DO","37","summer",224
+"Summer hypo. DO","370","spring",121
 "Summer hypo. DO","370","summer",182
 "Summer hypo. DO","38","spring",79
 "Summer hypo. DO","38","summer",182
-"Summer hypo. DO","388","spring",134
+"Summer hypo. DO","388","spring",60
 "Summer hypo. DO","388","summer",232
-"Summer hypo. DO","389","spring",74
+"Summer hypo. DO","389","spring",62
 "Summer hypo. DO","389","summer",217
-"Summer hypo. DO","390","spring",132
+"Summer hypo. DO","390","spring",66
 "Summer hypo. DO","390","summer",232
-"Summer hypo. DO","391","spring",78
+"Summer hypo. DO","391","spring",69
 "Summer hypo. DO","391","summer",182
-"Summer hypo. DO","394","spring",75
+"Summer hypo. DO","394","spring",69
 "Summer hypo. DO","394","summer",200
-"Summer hypo. DO","396","spring",107
-"Summer hypo. DO","396","summer",231
-"Summer hypo. DO","405","spring",91
+"Summer hypo. DO","396","spring",114
+"Summer hypo. DO","396","summer",240
+"Summer hypo. DO","405","spring",60
 "Summer hypo. DO","405","summer",229
-"Summer hypo. DO","408","spring",104
-"Summer hypo. DO","408","summer",192
+"Summer hypo. DO","408","spring",87
+"Summer hypo. DO","408","summer",205
 "Summer hypo. DO","411","spring",92
 "Summer hypo. DO","411","summer",183
 "Summer hypo. DO","413","spring",93
 "Summer hypo. DO","413","summer",232
 "Summer hypo. DO","441","spring",118
 "Summer hypo. DO","441","summer",212
-"Summer hypo. DO","47","spring",135
+"Summer hypo. DO","47","spring",73
 "Summer hypo. DO","47","summer",184
-"Summer hypo. DO","48","spring",129
+"Summer hypo. DO","48","spring",114
 "Summer hypo. DO","48","summer",183
-"Summer hypo. DO","50","spring",135
+"Summer hypo. DO","50","spring",64
 "Summer hypo. DO","50","summer",242
 "Summer hypo. DO","51","spring",97
 "Summer hypo. DO","51","summer",223
-"Summer hypo. DO","52","spring",127
+"Summer hypo. DO","52","spring",119
 "Summer hypo. DO","52","summer",232
 "Summer hypo. DO","53","spring",118
 "Summer hypo. DO","53","summer",236
-"Summer hypo. DO","6","spring",74
+"Summer hypo. DO","6","spring",72
 "Summer hypo. DO","6","summer",190
 "Summer hypo. DO","7","spring",82
 "Summer hypo. DO","7","summer",192
-"Summer hypo. DO","71","spring",85
+"Summer hypo. DO","71","spring",70
 "Summer hypo. DO","71","summer",182
 "Summer hypo. DO","79","spring",87
 "Summer hypo. DO","79","summer",182
 "Summer hypo. DO","MIDAS-103","spring",120
 "Summer hypo. DO","MIDAS-103","summer",202
-"Summer hypo. DO","MIDAS-1674","spring",81
+"Summer hypo. DO","MIDAS-1674","spring",80
 "Summer hypo. DO","MIDAS-1674","summer",216
 "Summer hypo. DO","MIDAS-3130","spring",88
 "Summer hypo. DO","MIDAS-3130","summer",197
 "Summer hypo. DO","MIDAS-3132","spring",109
 "Summer hypo. DO","MIDAS-3132","summer",217
-"Summer hypo. DO","MIDAS-3134","spring",130
+"Summer hypo. DO","MIDAS-3134","spring",91
 "Summer hypo. DO","MIDAS-3134","summer",183
 "Summer hypo. DO","MIDAS-3234","spring",89
 "Summer hypo. DO","MIDAS-3234","summer",212
@@ -1343,23 +1345,23 @@
 "Summer hypo. DO","MIDAS-3424","summer",198
 "Summer hypo. DO","MIDAS-3448","spring",76
 "Summer hypo. DO","MIDAS-3448","summer",216
-"Summer hypo. DO","MIDAS-3452","spring",74
+"Summer hypo. DO","MIDAS-3452","spring",71
 "Summer hypo. DO","MIDAS-3452","summer",198
 "Summer hypo. DO","MIDAS-3454","spring",76
 "Summer hypo. DO","MIDAS-3454","summer",193
 "Summer hypo. DO","MIDAS-3734","spring",121
 "Summer hypo. DO","MIDAS-3734","summer",200
-"Summer hypo. DO","MIDAS-3838","spring",135
+"Summer hypo. DO","MIDAS-3838","spring",78
 "Summer hypo. DO","MIDAS-3838","summer",200
 "Summer hypo. DO","MIDAS-5222","spring",79
 "Summer hypo. DO","MIDAS-5222","summer",183
-"Summer hypo. DO","MIDAS-5312","spring",74
+"Summer hypo. DO","MIDAS-5312","spring",70
 "Summer hypo. DO","MIDAS-5312","summer",189
 "Summer hypo. DO","MIDAS-5448","spring",118
 "Summer hypo. DO","MIDAS-5448","summer",182
 "Summer hypo. DO","MIDAS-5780","spring",90
 "Summer hypo. DO","MIDAS-5780","summer",215
-"Summer hypo. DO","MIDAS-9685","spring",134
+"Summer hypo. DO","MIDAS-9685","spring",89
 "Summer hypo. DO","MIDAS-9685","summer",197
 "Summer hypo. DO","MIDAS-98","spring",121
 "Summer hypo. DO","MIDAS-98","summer",193
@@ -1369,15 +1371,15 @@
 "Summer hypo. DO","NHLAK600020804-01-03","summer",192
 "Summer hypo. DO","NHLAK600030403-03","spring",116
 "Summer hypo. DO","NHLAK600030403-03","summer",198
-"Summer hypo. DO","NHLAK600030601-05-01","spring",78
+"Summer hypo. DO","NHLAK600030601-05-01","spring",65
 "Summer hypo. DO","NHLAK600030601-05-01","summer",183
 "Summer hypo. DO","NHLAK700020108-02-01","spring",101
 "Summer hypo. DO","NHLAK700020108-02-01","summer",222
 "Summer hypo. DO","NHLAK700020201-05-01","spring",104
-"Summer hypo. DO","NHLAK700020201-05-01","summer",222
-"Summer hypo. DO","NHLAK700030101-05","spring",131
+"Summer hypo. DO","NHLAK700020201-05-01","summer",208
+"Summer hypo. DO","NHLAK700030101-05","spring",107
 "Summer hypo. DO","NHLAK700030101-05","summer",204
-"Summer hypo. DO","NHLAK700030101-12","spring",74
+"Summer hypo. DO","NHLAK700030101-12","spring",64
 "Summer hypo. DO","NHLAK700030101-12","summer",188
 "Summer hypo. DO","NHLAK700030102-01-01","spring",85
 "Summer hypo. DO","NHLAK700030102-01-01","summer",195
@@ -1387,11 +1389,11 @@
 "Summer hypo. DO","NHLAK700030304-05","summer",186
 "Summer hypo. DO","NHLAK700030304-07","spring",102
 "Summer hypo. DO","NHLAK700030304-07","summer",237
-"Summer hypo. DO","NHLAK700030304-08","spring",75
+"Summer hypo. DO","NHLAK700030304-08","spring",60
 "Summer hypo. DO","NHLAK700030304-08","summer",204
-"Summer hypo. DO","NHLAK700030403-03","spring",129
+"Summer hypo. DO","NHLAK700030403-03","spring",63
 "Summer hypo. DO","NHLAK700030403-03","summer",187
-"Summer hypo. DO","NHLAK700060201-03","spring",114
+"Summer hypo. DO","NHLAK700060201-03","spring",61
 "Summer hypo. DO","NHLAK700060201-03","summer",232
 "Summer hypo. DO","NHLAK700060402-10-01","spring",121
 "Summer hypo. DO","NHLAK700060402-10-01","summer",195
@@ -1401,45 +1403,45 @@
 "Summer hypo. DO","NHLAK700060601-01","summer",235
 "Summer hypo. DO","NHLAK801030505-04","spring",98
 "Summer hypo. DO","NHLAK801030505-04","summer",216
-"Summer hypo. DO","NHLAK801060105-04-01","spring",74
+"Summer hypo. DO","NHLAK801060105-04-01","spring",64
 "Summer hypo. DO","NHLAK801060105-04-01","summer",242
 "Summer hypo. DO","NHLAK801060402-03","spring",110
 "Summer hypo. DO","NHLAK801060402-03","summer",216
-"Summer hypo. DO","NHLAK801060402-05-01","spring",87
+"Summer hypo. DO","NHLAK801060402-05-01","spring",62
 "Summer hypo. DO","NHLAK801060402-05-01","summer",238
 "Summer hypo. DO","NHLAK801060402-11","spring",98
 "Summer hypo. DO","NHLAK801060402-11","summer",224
-"Summer hypo. DO","NHLAK802010101-04","spring",135
+"Summer hypo. DO","NHLAK802010101-04","spring",77
 "Summer hypo. DO","NHLAK802010101-04","summer",191
 "Summer hypo. DO","NHLAK802010303-04","spring",113
 "Summer hypo. DO","NHLAK802010303-04","summer",220
 "Summer hypo. DO","WI-043126","spring",74
 "Summer hypo. DO","WI-043126","summer",220
-"Summer hypo. DO","WI-153112","spring",132
+"Summer hypo. DO","WI-153112","spring",112
 "Summer hypo. DO","WI-153112","summer",238
-"Summer hypo. DO","WI-213123","spring",129
+"Summer hypo. DO","WI-213123","spring",69
 "Summer hypo. DO","WI-213123","summer",193
-"Summer hypo. DO","WI-213137","spring",134
-"Summer hypo. DO","WI-213137","summer",186
-"Summer hypo. DO","WI-443187","spring",135
+"Summer hypo. DO","WI-213137","spring",109
+"Summer hypo. DO","WI-213137","summer",187
+"Summer hypo. DO","WI-443187","spring",62
 "Summer hypo. DO","WI-443187","summer",212
-"Summer hypo. DO","WI-493122","spring",115
-"Summer hypo. DO","WI-493122","summer",204
-"Summer hypo. DO","WI-673206","spring",125
+"Summer hypo. DO","WI-493122","spring",60
+"Summer hypo. DO","WI-493122","summer",205
+"Summer hypo. DO","WI-673206","spring",121
 "Summer hypo. DO","WI-673206","summer",190
 "Summer hypo. DO","WI-703018","spring",93
 "Summer hypo. DO","WI-703018","summer",182
-"Summer hypo. DO","aba04","spring",74
+"Summer hypo. DO","aba04","spring",120
 "Summer hypo. DO","aba04","summer",199
-"Summer hypo. DO","aba06","spring",132
-"Summer hypo. DO","aba06","summer",197
-"Summer hypo. DO","aba08","spring",91
+"Summer hypo. DO","aba06","spring",66
+"Summer hypo. DO","aba06","summer",183
+"Summer hypo. DO","aba08","spring",77
 "Summer hypo. DO","aba08","summer",193
 "Summer hypo. DO","aba101","spring",81
 "Summer hypo. DO","aba101","summer",186
 "Summer hypo. DO","aba102","spring",106
 "Summer hypo. DO","aba102","summer",208
-"Summer hypo. DO","aba105","spring",127
+"Summer hypo. DO","aba105","spring",120
 "Summer hypo. DO","aba105","summer",203
 "Summer hypo. DO","aba106","spring",82
 "Summer hypo. DO","aba106","summer",239
@@ -1447,13 +1449,13 @@
 "Summer hypo. DO","aba107","summer",200
 "Summer hypo. DO","aba109","spring",103
 "Summer hypo. DO","aba109","summer",190
-"Summer hypo. DO","aba25","spring",128
+"Summer hypo. DO","aba25","spring",119
 "Summer hypo. DO","aba25","summer",182
-"Summer hypo. DO","aba27","spring",133
+"Summer hypo. DO","aba27","spring",113
 "Summer hypo. DO","aba27","summer",182
 "Summer hypo. DO","aba86","spring",108
 "Summer hypo. DO","aba86","summer",190
-"Summer hypo. DO","aba87","spring",122
+"Summer hypo. DO","aba87","spring",121
 "Summer hypo. DO","aba87","summer",219
 "Summer hypo. DO","aba89","spring",83
 "Summer hypo. DO","aba89","summer",240
@@ -1467,19 +1469,441 @@
 "Summer hypo. DO","aba95","summer",234
 "Summer hypo. DO","aba96","spring",116
 "Summer hypo. DO","aba96","summer",207
+"Summer hypo. DO sat","1","spring",71
+"Summer hypo. DO sat","1","summer",199
+"Summer hypo. DO sat","106","spring",114
+"Summer hypo. DO sat","106","summer",184
+"Summer hypo. DO sat","108","spring",64
+"Summer hypo. DO sat","108","summer",233
+"Summer hypo. DO sat","11","spring",101
+"Summer hypo. DO sat","11","summer",239
+"Summer hypo. DO sat","115","spring",104
+"Summer hypo. DO sat","115","summer",229
+"Summer hypo. DO sat","12","spring",93
+"Summer hypo. DO sat","12","summer",207
+"Summer hypo. DO sat","122","spring",60
+"Summer hypo. DO sat","122","summer",227
+"Summer hypo. DO sat","124","spring",74
+"Summer hypo. DO sat","124","summer",182
+"Summer hypo. DO sat","129","spring",93
+"Summer hypo. DO sat","129","summer",215
+"Summer hypo. DO sat","140","spring",114
+"Summer hypo. DO sat","140","summer",182
+"Summer hypo. DO sat","141","spring",100
+"Summer hypo. DO sat","141","summer",184
+"Summer hypo. DO sat","148","spring",76
+"Summer hypo. DO sat","148","summer",196
+"Summer hypo. DO sat","149","spring",117
+"Summer hypo. DO sat","149","summer",187
+"Summer hypo. DO sat","15","spring",77
+"Summer hypo. DO sat","15","summer",187
+"Summer hypo. DO sat","150","spring",102
+"Summer hypo. DO sat","150","summer",226
+"Summer hypo. DO sat","153","spring",91
+"Summer hypo. DO sat","153","summer",185
+"Summer hypo. DO sat","155","spring",117
+"Summer hypo. DO sat","155","summer",215
+"Summer hypo. DO sat","157","spring",110
+"Summer hypo. DO sat","157","summer",184
+"Summer hypo. DO sat","161","spring",74
+"Summer hypo. DO sat","161","summer",198
+"Summer hypo. DO sat","162","spring",63
+"Summer hypo. DO sat","162","summer",200
+"Summer hypo. DO sat","167","spring",119
+"Summer hypo. DO sat","167","summer",183
+"Summer hypo. DO sat","168","spring",93
+"Summer hypo. DO sat","168","summer",223
+"Summer hypo. DO sat","17","spring",121
+"Summer hypo. DO sat","17","summer",242
+"Summer hypo. DO sat","172","spring",113
+"Summer hypo. DO sat","172","summer",198
+"Summer hypo. DO sat","173","spring",72
+"Summer hypo. DO sat","173","summer",190
+"Summer hypo. DO sat","175","spring",81
+"Summer hypo. DO sat","175","summer",234
+"Summer hypo. DO sat","177","spring",71
+"Summer hypo. DO sat","177","summer",228
+"Summer hypo. DO sat","179","spring",63
+"Summer hypo. DO sat","179","summer",184
+"Summer hypo. DO sat","18","spring",66
+"Summer hypo. DO sat","18","summer",197
+"Summer hypo. DO sat","181","spring",121
+"Summer hypo. DO sat","181","summer",217
+"Summer hypo. DO sat","182","spring",65
+"Summer hypo. DO sat","182","summer",193
+"Summer hypo. DO sat","184","spring",60
+"Summer hypo. DO sat","184","summer",237
+"Summer hypo. DO sat","185","spring",106
+"Summer hypo. DO sat","185","summer",223
+"Summer hypo. DO sat","186","spring",121
+"Summer hypo. DO sat","186","summer",189
+"Summer hypo. DO sat","187","spring",70
+"Summer hypo. DO sat","187","summer",198
+"Summer hypo. DO sat","188","spring",79
+"Summer hypo. DO sat","188","summer",228
+"Summer hypo. DO sat","189","spring",82
+"Summer hypo. DO sat","189","summer",183
+"Summer hypo. DO sat","190","spring",117
+"Summer hypo. DO sat","190","summer",235
+"Summer hypo. DO sat","192","spring",63
+"Summer hypo. DO sat","192","summer",182
+"Summer hypo. DO sat","193","spring",64
+"Summer hypo. DO sat","193","summer",207
+"Summer hypo. DO sat","194","spring",81
+"Summer hypo. DO sat","194","summer",182
+"Summer hypo. DO sat","195","spring",92
+"Summer hypo. DO sat","195","summer",239
+"Summer hypo. DO sat","196","spring",115
+"Summer hypo. DO sat","196","summer",219
+"Summer hypo. DO sat","197","spring",80
+"Summer hypo. DO sat","197","summer",197
+"Summer hypo. DO sat","198","spring",100
+"Summer hypo. DO sat","198","summer",241
+"Summer hypo. DO sat","199","spring",62
+"Summer hypo. DO sat","199","summer",182
+"Summer hypo. DO sat","2","spring",100
+"Summer hypo. DO sat","2","summer",216
+"Summer hypo. DO sat","20","spring",96
+"Summer hypo. DO sat","20","summer",186
+"Summer hypo. DO sat","204","spring",121
+"Summer hypo. DO sat","204","summer",228
+"Summer hypo. DO sat","205","spring",72
+"Summer hypo. DO sat","205","summer",200
+"Summer hypo. DO sat","206","spring",87
+"Summer hypo. DO sat","206","summer",234
+"Summer hypo. DO sat","207","spring",85
+"Summer hypo. DO sat","207","summer",237
+"Summer hypo. DO sat","209","spring",85
+"Summer hypo. DO sat","209","summer",226
+"Summer hypo. DO sat","210","spring",93
+"Summer hypo. DO sat","210","summer",222
+"Summer hypo. DO sat","212","spring",95
+"Summer hypo. DO sat","212","summer",227
+"Summer hypo. DO sat","215","spring",77
+"Summer hypo. DO sat","215","summer",191
+"Summer hypo. DO sat","22","spring",97
+"Summer hypo. DO sat","22","summer",218
+"Summer hypo. DO sat","225","spring",60
+"Summer hypo. DO sat","225","summer",241
+"Summer hypo. DO sat","226","spring",70
+"Summer hypo. DO sat","226","summer",189
+"Summer hypo. DO sat","228","spring",121
+"Summer hypo. DO sat","228","summer",203
+"Summer hypo. DO sat","229","spring",62
+"Summer hypo. DO sat","229","summer",218
+"Summer hypo. DO sat","231","spring",86
+"Summer hypo. DO sat","231","summer",199
+"Summer hypo. DO sat","234","spring",118
+"Summer hypo. DO sat","234","summer",182
+"Summer hypo. DO sat","235","spring",115
+"Summer hypo. DO sat","235","summer",235
+"Summer hypo. DO sat","237","spring",95
+"Summer hypo. DO sat","237","summer",217
+"Summer hypo. DO sat","238","spring",90
+"Summer hypo. DO sat","238","summer",214
+"Summer hypo. DO sat","241","spring",118
+"Summer hypo. DO sat","241","summer",187
+"Summer hypo. DO sat","246","spring",61
+"Summer hypo. DO sat","246","summer",200
+"Summer hypo. DO sat","248","spring",113
+"Summer hypo. DO sat","248","summer",199
+"Summer hypo. DO sat","249","spring",116
+"Summer hypo. DO sat","249","summer",182
+"Summer hypo. DO sat","250","spring",115
+"Summer hypo. DO sat","250","summer",225
+"Summer hypo. DO sat","252","spring",63
+"Summer hypo. DO sat","252","summer",230
+"Summer hypo. DO sat","256","spring",82
+"Summer hypo. DO sat","256","summer",228
+"Summer hypo. DO sat","258","spring",71
+"Summer hypo. DO sat","258","summer",241
+"Summer hypo. DO sat","260","spring",104
+"Summer hypo. DO sat","260","summer",219
+"Summer hypo. DO sat","261","spring",114
+"Summer hypo. DO sat","261","summer",195
+"Summer hypo. DO sat","266","spring",105
+"Summer hypo. DO sat","266","summer",203
+"Summer hypo. DO sat","268","spring",99
+"Summer hypo. DO sat","268","summer",182
+"Summer hypo. DO sat","269","spring",76
+"Summer hypo. DO sat","269","summer",226
+"Summer hypo. DO sat","270","spring",104
+"Summer hypo. DO sat","270","summer",201
+"Summer hypo. DO sat","271","spring",65
+"Summer hypo. DO sat","271","summer",241
+"Summer hypo. DO sat","272","spring",116
+"Summer hypo. DO sat","272","summer",206
+"Summer hypo. DO sat","277","spring",88
+"Summer hypo. DO sat","277","summer",209
+"Summer hypo. DO sat","281","spring",83
+"Summer hypo. DO sat","281","summer",196
+"Summer hypo. DO sat","282","spring",81
+"Summer hypo. DO sat","282","summer",200
+"Summer hypo. DO sat","283","spring",89
+"Summer hypo. DO sat","283","summer",188
+"Summer hypo. DO sat","284","spring",114
+"Summer hypo. DO sat","284","summer",224
+"Summer hypo. DO sat","285","spring",61
+"Summer hypo. DO sat","285","summer",203
+"Summer hypo. DO sat","287","spring",73
+"Summer hypo. DO sat","287","summer",205
+"Summer hypo. DO sat","288","spring",63
+"Summer hypo. DO sat","288","summer",224
+"Summer hypo. DO sat","289","spring",91
+"Summer hypo. DO sat","289","summer",188
+"Summer hypo. DO sat","29","spring",117
+"Summer hypo. DO sat","29","summer",219
+"Summer hypo. DO sat","290","spring",83
+"Summer hypo. DO sat","290","summer",238
+"Summer hypo. DO sat","294","spring",108
+"Summer hypo. DO sat","294","summer",193
+"Summer hypo. DO sat","296","spring",97
+"Summer hypo. DO sat","296","summer",225
+"Summer hypo. DO sat","297","spring",66
+"Summer hypo. DO sat","297","summer",211
+"Summer hypo. DO sat","298","spring",80
+"Summer hypo. DO sat","298","summer",202
+"Summer hypo. DO sat","299","spring",120
+"Summer hypo. DO sat","299","summer",197
+"Summer hypo. DO sat","300","spring",116
+"Summer hypo. DO sat","300","summer",191
+"Summer hypo. DO sat","301","spring",115
+"Summer hypo. DO sat","301","summer",242
+"Summer hypo. DO sat","302","spring",111
+"Summer hypo. DO sat","302","summer",191
+"Summer hypo. DO sat","303","spring",85
+"Summer hypo. DO sat","303","summer",242
+"Summer hypo. DO sat","304","spring",116
+"Summer hypo. DO sat","304","summer",183
+"Summer hypo. DO sat","305","spring",80
+"Summer hypo. DO sat","305","summer",218
+"Summer hypo. DO sat","306","spring",74
+"Summer hypo. DO sat","306","summer",197
+"Summer hypo. DO sat","308","spring",95
+"Summer hypo. DO sat","308","summer",184
+"Summer hypo. DO sat","315","spring",82
+"Summer hypo. DO sat","315","summer",220
+"Summer hypo. DO sat","318","spring",72
+"Summer hypo. DO sat","318","summer",208
+"Summer hypo. DO sat","323","spring",81
+"Summer hypo. DO sat","323","summer",240
+"Summer hypo. DO sat","348","spring",121
+"Summer hypo. DO sat","348","summer",209
+"Summer hypo. DO sat","35","spring",121
+"Summer hypo. DO sat","35","summer",183
+"Summer hypo. DO sat","363","spring",69
+"Summer hypo. DO sat","363","summer",199
+"Summer hypo. DO sat","366","spring",62
+"Summer hypo. DO sat","366","summer",242
+"Summer hypo. DO sat","37","spring",121
+"Summer hypo. DO sat","37","summer",219
+"Summer hypo. DO sat","370","spring",121
+"Summer hypo. DO sat","370","summer",182
+"Summer hypo. DO sat","38","spring",107
+"Summer hypo. DO sat","38","summer",240
+"Summer hypo. DO sat","388","spring",60
+"Summer hypo. DO sat","388","summer",232
+"Summer hypo. DO sat","389","spring",62
+"Summer hypo. DO sat","389","summer",217
+"Summer hypo. DO sat","390","spring",66
+"Summer hypo. DO sat","390","summer",232
+"Summer hypo. DO sat","391","spring",69
+"Summer hypo. DO sat","391","summer",182
+"Summer hypo. DO sat","394","spring",69
+"Summer hypo. DO sat","394","summer",200
+"Summer hypo. DO sat","396","spring",114
+"Summer hypo. DO sat","396","summer",238
+"Summer hypo. DO sat","405","spring",118
+"Summer hypo. DO sat","405","summer",238
+"Summer hypo. DO sat","408","spring",87
+"Summer hypo. DO sat","408","summer",189
+"Summer hypo. DO sat","411","spring",95
+"Summer hypo. DO sat","411","summer",240
+"Summer hypo. DO sat","413","spring",92
+"Summer hypo. DO sat","413","summer",232
+"Summer hypo. DO sat","441","spring",118
+"Summer hypo. DO sat","441","summer",212
+"Summer hypo. DO sat","47","spring",73
+"Summer hypo. DO sat","47","summer",184
+"Summer hypo. DO sat","48","spring",121
+"Summer hypo. DO sat","48","summer",183
+"Summer hypo. DO sat","50","spring",64
+"Summer hypo. DO sat","50","summer",223
+"Summer hypo. DO sat","51","spring",97
+"Summer hypo. DO sat","51","summer",221
+"Summer hypo. DO sat","52","spring",119
+"Summer hypo. DO sat","52","summer",232
+"Summer hypo. DO sat","53","spring",118
+"Summer hypo. DO sat","53","summer",236
+"Summer hypo. DO sat","6","spring",72
+"Summer hypo. DO sat","6","summer",190
+"Summer hypo. DO sat","7","spring",82
+"Summer hypo. DO sat","7","summer",241
+"Summer hypo. DO sat","71","spring",69
+"Summer hypo. DO sat","71","summer",182
+"Summer hypo. DO sat","79","spring",87
+"Summer hypo. DO sat","79","summer",213
+"Summer hypo. DO sat","MIDAS-103","spring",120
+"Summer hypo. DO sat","MIDAS-103","summer",202
+"Summer hypo. DO sat","MIDAS-1674","spring",80
+"Summer hypo. DO sat","MIDAS-1674","summer",216
+"Summer hypo. DO sat","MIDAS-3130","spring",88
+"Summer hypo. DO sat","MIDAS-3130","summer",197
+"Summer hypo. DO sat","MIDAS-3132","spring",109
+"Summer hypo. DO sat","MIDAS-3132","summer",217
+"Summer hypo. DO sat","MIDAS-3134","spring",91
+"Summer hypo. DO sat","MIDAS-3134","summer",183
+"Summer hypo. DO sat","MIDAS-3234","spring",89
+"Summer hypo. DO sat","MIDAS-3234","summer",212
+"Summer hypo. DO sat","MIDAS-3374","spring",116
+"Summer hypo. DO sat","MIDAS-3374","summer",197
+"Summer hypo. DO sat","MIDAS-3382","spring",93
+"Summer hypo. DO sat","MIDAS-3382","summer",220
+"Summer hypo. DO sat","MIDAS-3416","spring",75
+"Summer hypo. DO sat","MIDAS-3416","summer",216
+"Summer hypo. DO sat","MIDAS-3418","spring",95
+"Summer hypo. DO sat","MIDAS-3418","summer",186
+"Summer hypo. DO sat","MIDAS-3420","spring",100
+"Summer hypo. DO sat","MIDAS-3420","summer",235
+"Summer hypo. DO sat","MIDAS-3424","spring",110
+"Summer hypo. DO sat","MIDAS-3424","summer",198
+"Summer hypo. DO sat","MIDAS-3448","spring",76
+"Summer hypo. DO sat","MIDAS-3448","summer",218
+"Summer hypo. DO sat","MIDAS-3452","spring",71
+"Summer hypo. DO sat","MIDAS-3452","summer",198
+"Summer hypo. DO sat","MIDAS-3454","spring",76
+"Summer hypo. DO sat","MIDAS-3454","summer",193
+"Summer hypo. DO sat","MIDAS-3734","spring",121
+"Summer hypo. DO sat","MIDAS-3734","summer",200
+"Summer hypo. DO sat","MIDAS-3838","spring",72
+"Summer hypo. DO sat","MIDAS-3838","summer",200
+"Summer hypo. DO sat","MIDAS-5222","spring",79
+"Summer hypo. DO sat","MIDAS-5222","summer",212
+"Summer hypo. DO sat","MIDAS-5312","spring",70
+"Summer hypo. DO sat","MIDAS-5312","summer",189
+"Summer hypo. DO sat","MIDAS-5448","spring",118
+"Summer hypo. DO sat","MIDAS-5448","summer",182
+"Summer hypo. DO sat","MIDAS-5780","spring",90
+"Summer hypo. DO sat","MIDAS-5780","summer",215
+"Summer hypo. DO sat","MIDAS-9685","spring",89
+"Summer hypo. DO sat","MIDAS-9685","summer",197
+"Summer hypo. DO sat","MIDAS-98","spring",121
+"Summer hypo. DO sat","MIDAS-98","summer",193
+"Summer hypo. DO sat","NHLAK600020804-01-02","spring",78
+"Summer hypo. DO sat","NHLAK600020804-01-02","summer",193
+"Summer hypo. DO sat","NHLAK600020804-01-03","spring",103
+"Summer hypo. DO sat","NHLAK600020804-01-03","summer",192
+"Summer hypo. DO sat","NHLAK600030403-03","spring",118
+"Summer hypo. DO sat","NHLAK600030403-03","summer",198
+"Summer hypo. DO sat","NHLAK600030601-05-01","spring",65
+"Summer hypo. DO sat","NHLAK600030601-05-01","summer",183
+"Summer hypo. DO sat","NHLAK700020108-02-01","spring",101
+"Summer hypo. DO sat","NHLAK700020108-02-01","summer",222
+"Summer hypo. DO sat","NHLAK700020201-05-01","spring",104
+"Summer hypo. DO sat","NHLAK700020201-05-01","summer",209
+"Summer hypo. DO sat","NHLAK700030101-05","spring",107
+"Summer hypo. DO sat","NHLAK700030101-05","summer",204
+"Summer hypo. DO sat","NHLAK700030101-12","spring",64
+"Summer hypo. DO sat","NHLAK700030101-12","summer",188
+"Summer hypo. DO sat","NHLAK700030102-01-01","spring",91
+"Summer hypo. DO sat","NHLAK700030102-01-01","summer",195
+"Summer hypo. DO sat","NHLAK700030103-08","spring",119
+"Summer hypo. DO sat","NHLAK700030103-08","summer",237
+"Summer hypo. DO sat","NHLAK700030304-05","spring",116
+"Summer hypo. DO sat","NHLAK700030304-05","summer",186
+"Summer hypo. DO sat","NHLAK700030304-07","spring",102
+"Summer hypo. DO sat","NHLAK700030304-07","summer",237
+"Summer hypo. DO sat","NHLAK700030304-08","spring",60
+"Summer hypo. DO sat","NHLAK700030304-08","summer",204
+"Summer hypo. DO sat","NHLAK700030403-03","spring",121
+"Summer hypo. DO sat","NHLAK700030403-03","summer",186
+"Summer hypo. DO sat","NHLAK700060201-03","spring",61
+"Summer hypo. DO sat","NHLAK700060201-03","summer",232
+"Summer hypo. DO sat","NHLAK700060402-10-01","spring",121
+"Summer hypo. DO sat","NHLAK700060402-10-01","summer",195
+"Summer hypo. DO sat","NHLAK700060502-08-01","spring",75
+"Summer hypo. DO sat","NHLAK700060502-08-01","summer",205
+"Summer hypo. DO sat","NHLAK700060601-01","spring",114
+"Summer hypo. DO sat","NHLAK700060601-01","summer",235
+"Summer hypo. DO sat","NHLAK801030505-04","spring",98
+"Summer hypo. DO sat","NHLAK801030505-04","summer",216
+"Summer hypo. DO sat","NHLAK801060105-04-01","spring",64
+"Summer hypo. DO sat","NHLAK801060105-04-01","summer",185
+"Summer hypo. DO sat","NHLAK801060402-03","spring",110
+"Summer hypo. DO sat","NHLAK801060402-03","summer",216
+"Summer hypo. DO sat","NHLAK801060402-05-01","spring",62
+"Summer hypo. DO sat","NHLAK801060402-05-01","summer",182
+"Summer hypo. DO sat","NHLAK801060402-11","spring",98
+"Summer hypo. DO sat","NHLAK801060402-11","summer",232
+"Summer hypo. DO sat","NHLAK802010101-04","spring",118
+"Summer hypo. DO sat","NHLAK802010101-04","summer",203
+"Summer hypo. DO sat","NHLAK802010303-04","spring",113
+"Summer hypo. DO sat","NHLAK802010303-04","summer",222
+"Summer hypo. DO sat","WI-043126","spring",77
+"Summer hypo. DO sat","WI-043126","summer",220
+"Summer hypo. DO sat","WI-153112","spring",112
+"Summer hypo. DO sat","WI-153112","summer",238
+"Summer hypo. DO sat","WI-213123","spring",65
+"Summer hypo. DO sat","WI-213123","summer",193
+"Summer hypo. DO sat","WI-213137","spring",109
+"Summer hypo. DO sat","WI-213137","summer",187
+"Summer hypo. DO sat","WI-443187","spring",62
+"Summer hypo. DO sat","WI-443187","summer",212
+"Summer hypo. DO sat","WI-673206","spring",60
+"Summer hypo. DO sat","WI-673206","summer",190
+"Summer hypo. DO sat","WI-703018","spring",93
+"Summer hypo. DO sat","WI-703018","summer",182
+"Summer hypo. DO sat","aba04","spring",120
+"Summer hypo. DO sat","aba04","summer",199
+"Summer hypo. DO sat","aba06","spring",66
+"Summer hypo. DO sat","aba06","summer",183
+"Summer hypo. DO sat","aba08","spring",77
+"Summer hypo. DO sat","aba08","summer",193
+"Summer hypo. DO sat","aba101","spring",81
+"Summer hypo. DO sat","aba101","summer",186
+"Summer hypo. DO sat","aba102","spring",106
+"Summer hypo. DO sat","aba102","summer",208
+"Summer hypo. DO sat","aba105","spring",119
+"Summer hypo. DO sat","aba105","summer",182
+"Summer hypo. DO sat","aba106","spring",82
+"Summer hypo. DO sat","aba106","summer",239
+"Summer hypo. DO sat","aba107","spring",83
+"Summer hypo. DO sat","aba107","summer",186
+"Summer hypo. DO sat","aba109","spring",103
+"Summer hypo. DO sat","aba109","summer",200
+"Summer hypo. DO sat","aba25","spring",119
+"Summer hypo. DO sat","aba25","summer",219
+"Summer hypo. DO sat","aba27","spring",113
+"Summer hypo. DO sat","aba27","summer",182
+"Summer hypo. DO sat","aba86","spring",108
+"Summer hypo. DO sat","aba86","summer",190
+"Summer hypo. DO sat","aba87","spring",121
+"Summer hypo. DO sat","aba87","summer",224
+"Summer hypo. DO sat","aba89","spring",83
+"Summer hypo. DO sat","aba89","summer",240
+"Summer hypo. DO sat","aba91","spring",119
+"Summer hypo. DO sat","aba91","summer",211
+"Summer hypo. DO sat","aba92","spring",94
+"Summer hypo. DO sat","aba92","summer",197
+"Summer hypo. DO sat","aba94","spring",119
+"Summer hypo. DO sat","aba94","summer",242
+"Summer hypo. DO sat","aba95","spring",104
+"Summer hypo. DO sat","aba95","summer",182
+"Summer hypo. DO sat","aba96","spring",119
+"Summer hypo. DO sat","aba96","summer",207
 "Summer hypo. temperature","1","spring",87
 "Summer hypo. temperature","1","summer",240
 "Summer hypo. temperature","10","spring",74
 "Summer hypo. temperature","10","summer",192
-"Summer hypo. temperature","106","spring",74
+"Summer hypo. temperature","106","spring",65
 "Summer hypo. temperature","106","summer",241
-"Summer hypo. temperature","108","spring",129
+"Summer hypo. temperature","108","spring",93
 "Summer hypo. temperature","108","summer",215
-"Summer hypo. temperature","11","spring",74
+"Summer hypo. temperature","11","spring",70
 "Summer hypo. temperature","11","summer",198
 "Summer hypo. temperature","110","spring",88
 "Summer hypo. temperature","110","summer",190
-"Summer hypo. temperature","114","spring",133
+"Summer hypo. temperature","114","spring",83
 "Summer hypo. temperature","114","summer",197
 "Summer hypo. temperature","115","spring",96
 "Summer hypo. temperature","115","summer",208
@@ -1487,9 +1911,9 @@
 "Summer hypo. temperature","116","summer",229
 "Summer hypo. temperature","118","spring",102
 "Summer hypo. temperature","118","summer",182
-"Summer hypo. temperature","119","spring",74
+"Summer hypo. temperature","119","spring",63
 "Summer hypo. temperature","119","summer",211
-"Summer hypo. temperature","12","spring",79
+"Summer hypo. temperature","12","spring",72
 "Summer hypo. temperature","12","summer",207
 "Summer hypo. temperature","120","spring",110
 "Summer hypo. temperature","120","summer",242
@@ -1497,11 +1921,11 @@
 "Summer hypo. temperature","122","summer",183
 "Summer hypo. temperature","124","spring",78
 "Summer hypo. temperature","124","summer",200
-"Summer hypo. temperature","126","spring",107
+"Summer hypo. temperature","126","spring",60
 "Summer hypo. temperature","126","summer",192
 "Summer hypo. temperature","129","spring",75
-"Summer hypo. temperature","129","summer",219
-"Summer hypo. temperature","134","spring",128
+"Summer hypo. temperature","129","summer",241
+"Summer hypo. temperature","134","spring",63
 "Summer hypo. temperature","134","summer",182
 "Summer hypo. temperature","135","spring",82
 "Summer hypo. temperature","135","summer",211
@@ -1509,8 +1933,8 @@
 "Summer hypo. temperature","136","summer",239
 "Summer hypo. temperature","140","spring",118
 "Summer hypo. temperature","140","summer",241
-"Summer hypo. temperature","141","spring",105
-"Summer hypo. temperature","141","summer",192
+"Summer hypo. temperature","141","spring",103
+"Summer hypo. temperature","141","summer",193
 "Summer hypo. temperature","144","spring",94
 "Summer hypo. temperature","144","summer",198
 "Summer hypo. temperature","146","spring",112
@@ -1519,8 +1943,8 @@
 "Summer hypo. temperature","147","summer",182
 "Summer hypo. temperature","148","spring",78
 "Summer hypo. temperature","148","summer",241
-"Summer hypo. temperature","149","spring",81
-"Summer hypo. temperature","149","summer",227
+"Summer hypo. temperature","149","spring",86
+"Summer hypo. temperature","149","summer",226
 "Summer hypo. temperature","15","spring",75
 "Summer hypo. temperature","15","summer",198
 "Summer hypo. temperature","150","spring",118
@@ -1529,15 +1953,15 @@
 "Summer hypo. temperature","153","summer",227
 "Summer hypo. temperature","154","spring",74
 "Summer hypo. temperature","154","summer",196
-"Summer hypo. temperature","155","spring",121
-"Summer hypo. temperature","155","summer",194
+"Summer hypo. temperature","155","spring",89
+"Summer hypo. temperature","155","summer",199
 "Summer hypo. temperature","157","spring",97
 "Summer hypo. temperature","157","summer",240
-"Summer hypo. temperature","158","spring",129
+"Summer hypo. temperature","158","spring",89
 "Summer hypo. temperature","158","summer",205
 "Summer hypo. temperature","161","spring",121
 "Summer hypo. temperature","161","summer",188
-"Summer hypo. temperature","162","spring",133
+"Summer hypo. temperature","162","spring",121
 "Summer hypo. temperature","162","summer",232
 "Summer hypo. temperature","167","spring",89
 "Summer hypo. temperature","167","summer",189
@@ -1551,27 +1975,27 @@
 "Summer hypo. temperature","172","summer",198
 "Summer hypo. temperature","173","spring",89
 "Summer hypo. temperature","173","summer",198
-"Summer hypo. temperature","174","spring",90
+"Summer hypo. temperature","174","spring",106
 "Summer hypo. temperature","174","summer",183
 "Summer hypo. temperature","175","spring",75
 "Summer hypo. temperature","175","summer",199
 "Summer hypo. temperature","177","spring",92
 "Summer hypo. temperature","177","summer",199
-"Summer hypo. temperature","178","spring",127
+"Summer hypo. temperature","178","spring",115
 "Summer hypo. temperature","178","summer",183
-"Summer hypo. temperature","179","spring",100
-"Summer hypo. temperature","179","summer",239
-"Summer hypo. temperature","18","spring",133
+"Summer hypo. temperature","179","spring",89
+"Summer hypo. temperature","179","summer",236
+"Summer hypo. temperature","18","spring",76
 "Summer hypo. temperature","18","summer",187
 "Summer hypo. temperature","180","spring",100
 "Summer hypo. temperature","180","summer",182
 "Summer hypo. temperature","181","spring",108
 "Summer hypo. temperature","181","summer",202
-"Summer hypo. temperature","182","spring",135
-"Summer hypo. temperature","182","summer",210
-"Summer hypo. temperature","184","spring",133
+"Summer hypo. temperature","182","spring",103
+"Summer hypo. temperature","182","summer",209
+"Summer hypo. temperature","184","spring",60
 "Summer hypo. temperature","184","summer",217
-"Summer hypo. temperature","185","spring",74
+"Summer hypo. temperature","185","spring",67
 "Summer hypo. temperature","185","summer",189
 "Summer hypo. temperature","186","spring",94
 "Summer hypo. temperature","186","summer",182
@@ -1584,7 +2008,7 @@
 "Summer hypo. temperature","190","spring",114
 "Summer hypo. temperature","190","summer",201
 "Summer hypo. temperature","191","spring",75
-"Summer hypo. temperature","191","summer",199
+"Summer hypo. temperature","191","summer",198
 "Summer hypo. temperature","192","spring",116
 "Summer hypo. temperature","192","summer",228
 "Summer hypo. temperature","193","spring",113
@@ -1599,8 +2023,8 @@
 "Summer hypo. temperature","197","summer",198
 "Summer hypo. temperature","198","spring",105
 "Summer hypo. temperature","198","summer",232
-"Summer hypo. temperature","199","spring",106
-"Summer hypo. temperature","199","summer",241
+"Summer hypo. temperature","199","spring",115
+"Summer hypo. temperature","199","summer",194
 "Summer hypo. temperature","2","spring",74
 "Summer hypo. temperature","2","summer",210
 "Summer hypo. temperature","20","spring",96
@@ -1609,21 +2033,21 @@
 "Summer hypo. temperature","200","summer",197
 "Summer hypo. temperature","201","spring",75
 "Summer hypo. temperature","201","summer",235
-"Summer hypo. temperature","202","spring",93
-"Summer hypo. temperature","202","summer",194
-"Summer hypo. temperature","204","spring",100
+"Summer hypo. temperature","202","spring",96
+"Summer hypo. temperature","202","summer",195
+"Summer hypo. temperature","204","spring",61
 "Summer hypo. temperature","204","summer",228
 "Summer hypo. temperature","205","spring",113
 "Summer hypo. temperature","205","summer",200
-"Summer hypo. temperature","206","spring",75
-"Summer hypo. temperature","206","summer",242
-"Summer hypo. temperature","207","spring",122
+"Summer hypo. temperature","206","spring",60
+"Summer hypo. temperature","206","summer",241
+"Summer hypo. temperature","207","spring",121
 "Summer hypo. temperature","207","summer",242
 "Summer hypo. temperature","208","spring",74
-"Summer hypo. temperature","208","summer",227
+"Summer hypo. temperature","208","summer",184
 "Summer hypo. temperature","209","spring",94
 "Summer hypo. temperature","209","summer",227
-"Summer hypo. temperature","210","spring",75
+"Summer hypo. temperature","210","spring",73
 "Summer hypo. temperature","210","summer",185
 "Summer hypo. temperature","211","spring",112
 "Summer hypo. temperature","211","summer",184
@@ -1645,7 +2069,7 @@
 "Summer hypo. temperature","22","summer",199
 "Summer hypo. temperature","220","spring",114
 "Summer hypo. temperature","220","summer",218
-"Summer hypo. temperature","221","spring",91
+"Summer hypo. temperature","221","spring",113
 "Summer hypo. temperature","221","summer",242
 "Summer hypo. temperature","224","spring",75
 "Summer hypo. temperature","224","summer",182
@@ -1655,33 +2079,33 @@
 "Summer hypo. temperature","226","summer",200
 "Summer hypo. temperature","228","spring",98
 "Summer hypo. temperature","228","summer",223
-"Summer hypo. temperature","229","spring",123
-"Summer hypo. temperature","229","summer",221
-"Summer hypo. temperature","23","spring",74
+"Summer hypo. temperature","229","spring",97
+"Summer hypo. temperature","229","summer",222
+"Summer hypo. temperature","23","spring",73
 "Summer hypo. temperature","23","summer",229
-"Summer hypo. temperature","230","spring",86
+"Summer hypo. temperature","230","spring",71
 "Summer hypo. temperature","230","summer",218
-"Summer hypo. temperature","231","spring",75
+"Summer hypo. temperature","231","spring",67
 "Summer hypo. temperature","231","summer",228
-"Summer hypo. temperature","234","spring",81
+"Summer hypo. temperature","234","spring",63
 "Summer hypo. temperature","234","summer",182
-"Summer hypo. temperature","235","spring",77
+"Summer hypo. temperature","235","spring",72
 "Summer hypo. temperature","235","summer",212
-"Summer hypo. temperature","237","spring",104
+"Summer hypo. temperature","237","spring",61
 "Summer hypo. temperature","237","summer",232
 "Summer hypo. temperature","238","spring",91
 "Summer hypo. temperature","238","summer",183
 "Summer hypo. temperature","24","spring",92
 "Summer hypo. temperature","24","summer",242
-"Summer hypo. temperature","241","spring",122
+"Summer hypo. temperature","241","spring",71
 "Summer hypo. temperature","241","summer",241
 "Summer hypo. temperature","242","spring",118
 "Summer hypo. temperature","242","summer",183
 "Summer hypo. temperature","244","spring",75
 "Summer hypo. temperature","244","summer",217
-"Summer hypo. temperature","246","spring",135
+"Summer hypo. temperature","246","spring",102
 "Summer hypo. temperature","246","summer",219
-"Summer hypo. temperature","247","spring",74
+"Summer hypo. temperature","247","spring",73
 "Summer hypo. temperature","247","summer",210
 "Summer hypo. temperature","248","spring",113
 "Summer hypo. temperature","248","summer",199
@@ -1689,27 +2113,27 @@
 "Summer hypo. temperature","249","summer",182
 "Summer hypo. temperature","250","spring",114
 "Summer hypo. temperature","250","summer",241
-"Summer hypo. temperature","252","spring",134
+"Summer hypo. temperature","252","spring",63
 "Summer hypo. temperature","252","summer",239
-"Summer hypo. temperature","253","spring",78
+"Summer hypo. temperature","253","spring",70
 "Summer hypo. temperature","253","summer",235
-"Summer hypo. temperature","254","spring",86
+"Summer hypo. temperature","254","spring",64
 "Summer hypo. temperature","254","summer",199
-"Summer hypo. temperature","255","spring",82
+"Summer hypo. temperature","255","spring",67
 "Summer hypo. temperature","255","summer",220
-"Summer hypo. temperature","256","spring",135
+"Summer hypo. temperature","256","spring",80
 "Summer hypo. temperature","256","summer",196
-"Summer hypo. temperature","257","spring",126
-"Summer hypo. temperature","257","summer",195
+"Summer hypo. temperature","257","spring",89
+"Summer hypo. temperature","257","summer",194
 "Summer hypo. temperature","258","spring",84
 "Summer hypo. temperature","258","summer",226
 "Summer hypo. temperature","259","spring",75
 "Summer hypo. temperature","259","summer",197
 "Summer hypo. temperature","26","spring",120
-"Summer hypo. temperature","26","summer",225
+"Summer hypo. temperature","26","summer",227
 "Summer hypo. temperature","260","spring",110
 "Summer hypo. temperature","260","summer",201
-"Summer hypo. temperature","261","spring",135
+"Summer hypo. temperature","261","spring",60
 "Summer hypo. temperature","261","summer",182
 "Summer hypo. temperature","263","spring",114
 "Summer hypo. temperature","263","summer",222
@@ -1717,19 +2141,19 @@
 "Summer hypo. temperature","264","summer",203
 "Summer hypo. temperature","266","spring",114
 "Summer hypo. temperature","266","summer",217
-"Summer hypo. temperature","267","spring",74
+"Summer hypo. temperature","267","spring",73
 "Summer hypo. temperature","267","summer",195
 "Summer hypo. temperature","268","spring",84
 "Summer hypo. temperature","268","summer",184
-"Summer hypo. temperature","269","spring",135
+"Summer hypo. temperature","269","spring",63
 "Summer hypo. temperature","269","summer",200
 "Summer hypo. temperature","27","spring",120
 "Summer hypo. temperature","27","summer",227
 "Summer hypo. temperature","270","spring",115
 "Summer hypo. temperature","270","summer",228
-"Summer hypo. temperature","271","spring",127
+"Summer hypo. temperature","271","spring",113
 "Summer hypo. temperature","271","summer",241
-"Summer hypo. temperature","272","spring",110
+"Summer hypo. temperature","272","spring",71
 "Summer hypo. temperature","272","summer",194
 "Summer hypo. temperature","274","spring",111
 "Summer hypo. temperature","274","summer",183
@@ -1739,17 +2163,17 @@
 "Summer hypo. temperature","277","summer",197
 "Summer hypo. temperature","278","spring",98
 "Summer hypo. temperature","278","summer",242
-"Summer hypo. temperature","281","spring",122
+"Summer hypo. temperature","281","spring",119
 "Summer hypo. temperature","281","summer",184
 "Summer hypo. temperature","282","spring",83
 "Summer hypo. temperature","282","summer",222
-"Summer hypo. temperature","283","spring",84
+"Summer hypo. temperature","283","spring",65
 "Summer hypo. temperature","283","summer",240
-"Summer hypo. temperature","284","spring",135
-"Summer hypo. temperature","284","summer",242
-"Summer hypo. temperature","285","spring",76
+"Summer hypo. temperature","284","spring",83
+"Summer hypo. temperature","284","summer",182
+"Summer hypo. temperature","285","spring",68
 "Summer hypo. temperature","285","summer",203
-"Summer hypo. temperature","287","spring",124
+"Summer hypo. temperature","287","spring",110
 "Summer hypo. temperature","287","summer",235
 "Summer hypo. temperature","288","spring",109
 "Summer hypo. temperature","288","summer",183
@@ -1757,14 +2181,14 @@
 "Summer hypo. temperature","289","summer",225
 "Summer hypo. temperature","29","spring",108
 "Summer hypo. temperature","29","summer",196
-"Summer hypo. temperature","290","spring",131
+"Summer hypo. temperature","290","spring",85
 "Summer hypo. temperature","290","summer",183
 "Summer hypo. temperature","294","spring",74
 "Summer hypo. temperature","294","summer",182
 "Summer hypo. temperature","295","spring",96
 "Summer hypo. temperature","295","summer",194
-"Summer hypo. temperature","296","spring",80
-"Summer hypo. temperature","296","summer",182
+"Summer hypo. temperature","296","spring",112
+"Summer hypo. temperature","296","summer",190
 "Summer hypo. temperature","297","spring",89
 "Summer hypo. temperature","297","summer",214
 "Summer hypo. temperature","298","spring",83
@@ -1774,36 +2198,36 @@
 "Summer hypo. temperature","30","spring",110
 "Summer hypo. temperature","30","summer",196
 "Summer hypo. temperature","300","spring",85
-"Summer hypo. temperature","300","summer",240
+"Summer hypo. temperature","300","summer",201
 "Summer hypo. temperature","301","spring",107
 "Summer hypo. temperature","301","summer",219
-"Summer hypo. temperature","302","spring",132
+"Summer hypo. temperature","302","spring",89
 "Summer hypo. temperature","302","summer",241
 "Summer hypo. temperature","303","spring",78
 "Summer hypo. temperature","303","summer",184
 "Summer hypo. temperature","304","spring",114
 "Summer hypo. temperature","304","summer",187
-"Summer hypo. temperature","305","spring",91
+"Summer hypo. temperature","305","spring",64
 "Summer hypo. temperature","305","summer",242
 "Summer hypo. temperature","306","spring",83
 "Summer hypo. temperature","306","summer",183
-"Summer hypo. temperature","308","spring",125
+"Summer hypo. temperature","308","spring",121
 "Summer hypo. temperature","308","summer",231
 "Summer hypo. temperature","31","spring",82
 "Summer hypo. temperature","31","summer",242
-"Summer hypo. temperature","312","spring",131
+"Summer hypo. temperature","312","spring",61
 "Summer hypo. temperature","312","summer",227
 "Summer hypo. temperature","313","spring",82
 "Summer hypo. temperature","313","summer",185
 "Summer hypo. temperature","314","spring",90
 "Summer hypo. temperature","314","summer",186
-"Summer hypo. temperature","315","spring",125
+"Summer hypo. temperature","315","spring",121
 "Summer hypo. temperature","315","summer",228
-"Summer hypo. temperature","316","spring",109
+"Summer hypo. temperature","316","spring",63
 "Summer hypo. temperature","316","summer",240
-"Summer hypo. temperature","317","spring",76
+"Summer hypo. temperature","317","spring",64
 "Summer hypo. temperature","317","summer",211
-"Summer hypo. temperature","318","spring",124
+"Summer hypo. temperature","318","spring",64
 "Summer hypo. temperature","318","summer",236
 "Summer hypo. temperature","319","spring",99
 "Summer hypo. temperature","319","summer",240
@@ -1813,35 +2237,35 @@
 "Summer hypo. temperature","320","summer",183
 "Summer hypo. temperature","321","spring",104
 "Summer hypo. temperature","321","summer",189
-"Summer hypo. temperature","322","spring",128
+"Summer hypo. temperature","322","spring",105
 "Summer hypo. temperature","322","summer",199
 "Summer hypo. temperature","323","spring",113
 "Summer hypo. temperature","323","summer",233
-"Summer hypo. temperature","324","spring",135
+"Summer hypo. temperature","324","spring",60
 "Summer hypo. temperature","324","summer",241
-"Summer hypo. temperature","325","spring",130
+"Summer hypo. temperature","325","spring",84
 "Summer hypo. temperature","325","summer",193
-"Summer hypo. temperature","326","spring",100
-"Summer hypo. temperature","326","summer",215
-"Summer hypo. temperature","327","spring",76
+"Summer hypo. temperature","326","spring",113
+"Summer hypo. temperature","326","summer",210
+"Summer hypo. temperature","327","spring",73
 "Summer hypo. temperature","327","summer",240
-"Summer hypo. temperature","328","spring",132
+"Summer hypo. temperature","328","spring",98
 "Summer hypo. temperature","328","summer",240
-"Summer hypo. temperature","329","spring",74
+"Summer hypo. temperature","329","spring",73
 "Summer hypo. temperature","329","summer",241
 "Summer hypo. temperature","33","spring",114
 "Summer hypo. temperature","33","summer",217
-"Summer hypo. temperature","330","spring",75
+"Summer hypo. temperature","330","spring",60
 "Summer hypo. temperature","330","summer",242
-"Summer hypo. temperature","332","spring",76
+"Summer hypo. temperature","332","spring",65
 "Summer hypo. temperature","332","summer",239
-"Summer hypo. temperature","333","spring",135
+"Summer hypo. temperature","333","spring",84
 "Summer hypo. temperature","333","summer",241
 "Summer hypo. temperature","334","spring",76
 "Summer hypo. temperature","334","summer",185
-"Summer hypo. temperature","336","spring",100
+"Summer hypo. temperature","336","spring",60
 "Summer hypo. temperature","336","summer",193
-"Summer hypo. temperature","337","spring",134
+"Summer hypo. temperature","337","spring",68
 "Summer hypo. temperature","337","summer",199
 "Summer hypo. temperature","339","spring",119
 "Summer hypo. temperature","339","summer",211
@@ -1849,29 +2273,29 @@
 "Summer hypo. temperature","34","summer",237
 "Summer hypo. temperature","342","spring",103
 "Summer hypo. temperature","342","summer",190
-"Summer hypo. temperature","343","spring",128
+"Summer hypo. temperature","343","spring",83
 "Summer hypo. temperature","343","summer",193
-"Summer hypo. temperature","344","spring",133
+"Summer hypo. temperature","344","spring",89
 "Summer hypo. temperature","344","summer",237
-"Summer hypo. temperature","345","spring",134
+"Summer hypo. temperature","345","spring",83
 "Summer hypo. temperature","345","summer",242
-"Summer hypo. temperature","346","spring",134
-"Summer hypo. temperature","346","summer",192
-"Summer hypo. temperature","348","spring",125
+"Summer hypo. temperature","346","spring",111
+"Summer hypo. temperature","346","summer",214
+"Summer hypo. temperature","348","spring",121
 "Summer hypo. temperature","348","summer",225
-"Summer hypo. temperature","349","spring",127
+"Summer hypo. temperature","349","spring",115
 "Summer hypo. temperature","349","summer",191
 "Summer hypo. temperature","35","spring",120
 "Summer hypo. temperature","35","summer",227
-"Summer hypo. temperature","350","spring",130
+"Summer hypo. temperature","350","spring",73
 "Summer hypo. temperature","350","summer",219
-"Summer hypo. temperature","351","spring",134
-"Summer hypo. temperature","351","summer",213
-"Summer hypo. temperature","353","spring",134
+"Summer hypo. temperature","351","spring",83
+"Summer hypo. temperature","351","summer",214
+"Summer hypo. temperature","353","spring",60
 "Summer hypo. temperature","353","summer",188
 "Summer hypo. temperature","357","spring",74
 "Summer hypo. temperature","357","summer",202
-"Summer hypo. temperature","359","spring",134
+"Summer hypo. temperature","359","spring",68
 "Summer hypo. temperature","359","summer",228
 "Summer hypo. temperature","360","spring",102
 "Summer hypo. temperature","360","summer",199
@@ -1879,27 +2303,27 @@
 "Summer hypo. temperature","362","summer",202
 "Summer hypo. temperature","363","spring",111
 "Summer hypo. temperature","363","summer",213
-"Summer hypo. temperature","364","spring",132
+"Summer hypo. temperature","364","spring",83
 "Summer hypo. temperature","364","summer",242
 "Summer hypo. temperature","365","spring",112
 "Summer hypo. temperature","365","summer",239
-"Summer hypo. temperature","366","spring",128
-"Summer hypo. temperature","366","summer",218
+"Summer hypo. temperature","366","spring",121
+"Summer hypo. temperature","366","summer",213
 "Summer hypo. temperature","37","spring",110
 "Summer hypo. temperature","37","summer",201
 "Summer hypo. temperature","370","spring",81
 "Summer hypo. temperature","370","summer",227
-"Summer hypo. temperature","371","spring",123
+"Summer hypo. temperature","371","spring",120
 "Summer hypo. temperature","371","summer",242
-"Summer hypo. temperature","374","spring",122
+"Summer hypo. temperature","374","spring",116
 "Summer hypo. temperature","374","summer",241
-"Summer hypo. temperature","375","spring",135
+"Summer hypo. temperature","375","spring",112
 "Summer hypo. temperature","375","summer",200
-"Summer hypo. temperature","376","spring",135
+"Summer hypo. temperature","376","spring",75
 "Summer hypo. temperature","376","summer",195
 "Summer hypo. temperature","379","spring",84
 "Summer hypo. temperature","379","summer",242
-"Summer hypo. temperature","38","spring",75
+"Summer hypo. temperature","38","spring",73
 "Summer hypo. temperature","38","summer",204
 "Summer hypo. temperature","380","spring",96
 "Summer hypo. temperature","380","summer",183
@@ -1911,69 +2335,67 @@
 "Summer hypo. temperature","384","summer",185
 "Summer hypo. temperature","386","spring",115
 "Summer hypo. temperature","386","summer",186
-"Summer hypo. temperature","388","spring",76
+"Summer hypo. temperature","388","spring",73
 "Summer hypo. temperature","388","summer",228
-"Summer hypo. temperature","389","spring",74
+"Summer hypo. temperature","389","spring",60
 "Summer hypo. temperature","389","summer",186
-"Summer hypo. temperature","390","spring",132
+"Summer hypo. temperature","390","spring",60
 "Summer hypo. temperature","390","summer",214
-"Summer hypo. temperature","391","spring",74
+"Summer hypo. temperature","391","spring",62
 "Summer hypo. temperature","391","summer",206
-"Summer hypo. temperature","394","spring",100
+"Summer hypo. temperature","394","spring",67
 "Summer hypo. temperature","394","summer",191
 "Summer hypo. temperature","396","spring",106
 "Summer hypo. temperature","396","summer",242
 "Summer hypo. temperature","400","spring",104
 "Summer hypo. temperature","400","summer",210
-"Summer hypo. temperature","405","spring",74
-"Summer hypo. temperature","405","summer",224
-"Summer hypo. temperature","408","spring",93
+"Summer hypo. temperature","405","spring",91
+"Summer hypo. temperature","405","summer",228
+"Summer hypo. temperature","408","spring",120
 "Summer hypo. temperature","408","summer",194
 "Summer hypo. temperature","41","spring",78
 "Summer hypo. temperature","41","summer",237
-"Summer hypo. temperature","410","spring",128
-"Summer hypo. temperature","410","summer",188
+"Summer hypo. temperature","410","spring",71
+"Summer hypo. temperature","410","summer",194
 "Summer hypo. temperature","411","spring",79
 "Summer hypo. temperature","411","summer",194
-"Summer hypo. temperature","412","spring",135
+"Summer hypo. temperature","412","spring",121
 "Summer hypo. temperature","412","summer",198
-"Summer hypo. temperature","413","spring",134
-"Summer hypo. temperature","413","summer",190
-"Summer hypo. temperature","414","spring",135
+"Summer hypo. temperature","413","spring",99
+"Summer hypo. temperature","413","summer",191
+"Summer hypo. temperature","414","spring",83
 "Summer hypo. temperature","414","summer",242
 "Summer hypo. temperature","415","spring",108
 "Summer hypo. temperature","415","summer",190
-"Summer hypo. temperature","441","spring",131
+"Summer hypo. temperature","441","spring",120
 "Summer hypo. temperature","441","summer",193
-"Summer hypo. temperature","442","spring",119
-"Summer hypo. temperature","442","summer",222
 "Summer hypo. temperature","46","spring",106
 "Summer hypo. temperature","46","summer",189
-"Summer hypo. temperature","47","spring",74
+"Summer hypo. temperature","47","spring",72
 "Summer hypo. temperature","47","summer",196
-"Summer hypo. temperature","48","spring",107
+"Summer hypo. temperature","48","spring",64
 "Summer hypo. temperature","48","summer",186
-"Summer hypo. temperature","49","spring",121
+"Summer hypo. temperature","49","spring",67
 "Summer hypo. temperature","49","summer",196
 "Summer hypo. temperature","5","spring",101
 "Summer hypo. temperature","5","summer",231
-"Summer hypo. temperature","50","spring",111
+"Summer hypo. temperature","50","spring",60
 "Summer hypo. temperature","50","summer",185
 "Summer hypo. temperature","51","spring",101
 "Summer hypo. temperature","51","summer",226
 "Summer hypo. temperature","52","spring",100
 "Summer hypo. temperature","52","summer",186
-"Summer hypo. temperature","53","spring",74
+"Summer hypo. temperature","53","spring",60
 "Summer hypo. temperature","53","summer",186
 "Summer hypo. temperature","54","spring",106
 "Summer hypo. temperature","54","summer",189
 "Summer hypo. temperature","55","spring",111
 "Summer hypo. temperature","55","summer",228
-"Summer hypo. temperature","6","spring",93
+"Summer hypo. temperature","6","spring",71
 "Summer hypo. temperature","6","summer",241
 "Summer hypo. temperature","7","spring",75
 "Summer hypo. temperature","7","summer",197
-"Summer hypo. temperature","71","spring",103
+"Summer hypo. temperature","71","spring",67
 "Summer hypo. temperature","71","summer",242
 "Summer hypo. temperature","75","spring",83
 "Summer hypo. temperature","75","summer",195
@@ -1983,23 +2405,23 @@
 "Summer hypo. temperature","80","summer",220
 "Summer hypo. temperature","83","spring",105
 "Summer hypo. temperature","83","summer",206
-"Summer hypo. temperature","84","spring",135
+"Summer hypo. temperature","84","spring",114
 "Summer hypo. temperature","84","summer",197
-"Summer hypo. temperature","88","spring",131
+"Summer hypo. temperature","88","spring",64
 "Summer hypo. temperature","88","summer",184
-"Summer hypo. temperature","89","spring",134
+"Summer hypo. temperature","89","spring",99
 "Summer hypo. temperature","89","summer",224
-"Summer hypo. temperature","92","spring",106
+"Summer hypo. temperature","92","spring",61
 "Summer hypo. temperature","92","summer",219
-"Summer hypo. temperature","93","spring",91
+"Summer hypo. temperature","93","spring",69
 "Summer hypo. temperature","93","summer",235
-"Summer hypo. temperature","96","spring",135
+"Summer hypo. temperature","96","spring",113
 "Summer hypo. temperature","96","summer",241
 "Summer hypo. temperature","MIDAS-103","spring",85
 "Summer hypo. temperature","MIDAS-103","summer",198
-"Summer hypo. temperature","MIDAS-1674","spring",80
+"Summer hypo. temperature","MIDAS-1674","spring",78
 "Summer hypo. temperature","MIDAS-1674","summer",209
-"Summer hypo. temperature","MIDAS-1802","spring",78
+"Summer hypo. temperature","MIDAS-1802","spring",68
 "Summer hypo. temperature","MIDAS-1802","summer",182
 "Summer hypo. temperature","MIDAS-3130","spring",113
 "Summer hypo. temperature","MIDAS-3130","summer",201
@@ -2025,7 +2447,7 @@
 "Summer hypo. temperature","MIDAS-3396","summer",200
 "Summer hypo. temperature","MIDAS-3416","spring",110
 "Summer hypo. temperature","MIDAS-3416","summer",199
-"Summer hypo. temperature","MIDAS-3418","spring",81
+"Summer hypo. temperature","MIDAS-3418","spring",62
 "Summer hypo. temperature","MIDAS-3418","summer",199
 "Summer hypo. temperature","MIDAS-3420","spring",112
 "Summer hypo. temperature","MIDAS-3420","summer",200
@@ -2057,7 +2479,7 @@
 "Summer hypo. temperature","MIDAS-5312","summer",200
 "Summer hypo. temperature","MIDAS-5408","spring",117
 "Summer hypo. temperature","MIDAS-5408","summer",183
-"Summer hypo. temperature","MIDAS-5416","spring",117
+"Summer hypo. temperature","MIDAS-5416","spring",114
 "Summer hypo. temperature","MIDAS-5416","summer",235
 "Summer hypo. temperature","MIDAS-5424","spring",101
 "Summer hypo. temperature","MIDAS-5424","summer",199
@@ -2079,11 +2501,11 @@
 "Summer hypo. temperature","MIDAS-9931","summer",220
 "Summer hypo. temperature","MIDAS-9961","spring",113
 "Summer hypo. temperature","MIDAS-9961","summer",183
-"Summer hypo. temperature","NHLAK600020804-01-03","spring",132
+"Summer hypo. temperature","NHLAK600020804-01-03","spring",102
 "Summer hypo. temperature","NHLAK600020804-01-03","summer",188
-"Summer hypo. temperature","NHLAK600030607-01","spring",126
+"Summer hypo. temperature","NHLAK600030607-01","spring",117
 "Summer hypo. temperature","NHLAK600030607-01","summer",196
-"Summer hypo. temperature","NHLAK700020108-02-01","spring",81
+"Summer hypo. temperature","NHLAK700020108-02-01","spring",63
 "Summer hypo. temperature","NHLAK700020108-02-01","summer",222
 "Summer hypo. temperature","NHLAK700020108-02-02","spring",78
 "Summer hypo. temperature","NHLAK700020108-02-02","summer",195
@@ -2093,47 +2515,47 @@
 "Summer hypo. temperature","NHLAK700030304-05","summer",183
 "Summer hypo. temperature","NHLAK700030304-07","spring",92
 "Summer hypo. temperature","NHLAK700030304-07","summer",200
-"Summer hypo. temperature","NHLAK700030403-03","spring",77
+"Summer hypo. temperature","NHLAK700030403-03","spring",70
 "Summer hypo. temperature","NHLAK700030403-03","summer",216
-"Summer hypo. temperature","NHLAK700060402-10-01","spring",129
+"Summer hypo. temperature","NHLAK700060402-10-01","spring",83
 "Summer hypo. temperature","NHLAK700060402-10-01","summer",211
-"Summer hypo. temperature","NHLAK801060402-03","spring",131
+"Summer hypo. temperature","NHLAK801060402-03","spring",75
 "Summer hypo. temperature","NHLAK801060402-03","summer",228
 "Summer hypo. temperature","NHLAK801060402-05-01","spring",74
 "Summer hypo. temperature","NHLAK801060402-05-01","summer",182
 "Summer hypo. temperature","NHLAK802010201-03","spring",111
 "Summer hypo. temperature","NHLAK802010201-03","summer",211
-"Summer hypo. temperature","NHLAK802020103-08","spring",78
+"Summer hypo. temperature","NHLAK802020103-08","spring",64
 "Summer hypo. temperature","NHLAK802020103-08","summer",199
 "Summer hypo. temperature","WI-013038","spring",81
 "Summer hypo. temperature","WI-013038","summer",212
 "Summer hypo. temperature","WI-033140","spring",116
 "Summer hypo. temperature","WI-033140","summer",214
-"Summer hypo. temperature","WI-043037","spring",133
+"Summer hypo. temperature","WI-043037","spring",94
 "Summer hypo. temperature","WI-043037","summer",218
 "Summer hypo. temperature","WI-043126","spring",107
 "Summer hypo. temperature","WI-043126","summer",184
 "Summer hypo. temperature","WI-043148","spring",116
 "Summer hypo. temperature","WI-043148","summer",220
-"Summer hypo. temperature","WI-043156","spring",127
+"Summer hypo. temperature","WI-043156","spring",118
 "Summer hypo. temperature","WI-043156","summer",232
 "Summer hypo. temperature","WI-043157","spring",103
-"Summer hypo. temperature","WI-043157","summer",185
+"Summer hypo. temperature","WI-043157","summer",219
 "Summer hypo. temperature","WI-153112","spring",84
-"Summer hypo. temperature","WI-153112","summer",238
+"Summer hypo. temperature","WI-153112","summer",239
 "Summer hypo. temperature","WI-163238","spring",120
 "Summer hypo. temperature","WI-163238","summer",216
 "Summer hypo. temperature","WI-213123","spring",97
 "Summer hypo. temperature","WI-213123","summer",183
-"Summer hypo. temperature","WI-213137","spring",89
+"Summer hypo. temperature","WI-213137","spring",92
 "Summer hypo. temperature","WI-213137","summer",219
 "Summer hypo. temperature","WI-443060","spring",81
-"Summer hypo. temperature","WI-443060","summer",240
+"Summer hypo. temperature","WI-443060","summer",237
 "Summer hypo. temperature","WI-443187","spring",96
 "Summer hypo. temperature","WI-443187","summer",222
-"Summer hypo. temperature","WI-493103","spring",127
+"Summer hypo. temperature","WI-493103","spring",69
 "Summer hypo. temperature","WI-493103","summer",187
-"Summer hypo. temperature","WI-523120","spring",126
+"Summer hypo. temperature","WI-523120","spring",121
 "Summer hypo. temperature","WI-523120","summer",195
 "Summer hypo. temperature","WI-663101","spring",98
 "Summer hypo. temperature","WI-663101","summer",221
@@ -2145,57 +2567,57 @@
 "Summer hypo. temperature","WI-673202","summer",212
 "Summer hypo. temperature","WI-673206","spring",106
 "Summer hypo. temperature","WI-673206","summer",201
-"Summer hypo. temperature","WI-683125","spring",75
-"Summer hypo. temperature","WI-683125","summer",192
-"Summer hypo. temperature","WI-683129","spring",105
+"Summer hypo. temperature","WI-683125","spring",68
+"Summer hypo. temperature","WI-683125","summer",191
+"Summer hypo. temperature","WI-683129","spring",106
 "Summer hypo. temperature","WI-683129","summer",211
-"Summer hypo. temperature","WI-683143","spring",128
+"Summer hypo. temperature","WI-683143","spring",121
 "Summer hypo. temperature","WI-683143","summer",221
 "Summer hypo. temperature","WI-703018","spring",98
 "Summer hypo. temperature","WI-703018","summer",204
-"Summer hypo. temperature","aba00","spring",133
+"Summer hypo. temperature","aba00","spring",82
 "Summer hypo. temperature","aba00","summer",182
-"Summer hypo. temperature","aba04","spring",92
+"Summer hypo. temperature","aba04","spring",91
 "Summer hypo. temperature","aba04","summer",187
-"Summer hypo. temperature","aba05","spring",93
-"Summer hypo. temperature","aba05","summer",182
-"Summer hypo. temperature","aba06","spring",93
+"Summer hypo. temperature","aba05","spring",106
+"Summer hypo. temperature","aba05","summer",194
+"Summer hypo. temperature","aba06","spring",77
 "Summer hypo. temperature","aba06","summer",194
-"Summer hypo. temperature","aba08","spring",104
-"Summer hypo. temperature","aba08","summer",185
+"Summer hypo. temperature","aba08","spring",60
+"Summer hypo. temperature","aba08","summer",192
 "Summer hypo. temperature","aba101","spring",108
 "Summer hypo. temperature","aba101","summer",197
-"Summer hypo. temperature","aba102","spring",134
+"Summer hypo. temperature","aba102","spring",121
 "Summer hypo. temperature","aba102","summer",216
-"Summer hypo. temperature","aba105","spring",120
-"Summer hypo. temperature","aba105","summer",216
-"Summer hypo. temperature","aba106","spring",74
+"Summer hypo. temperature","aba105","spring",60
+"Summer hypo. temperature","aba105","summer",215
+"Summer hypo. temperature","aba106","spring",72
 "Summer hypo. temperature","aba106","summer",182
 "Summer hypo. temperature","aba107","spring",119
 "Summer hypo. temperature","aba107","summer",217
 "Summer hypo. temperature","aba109","spring",77
 "Summer hypo. temperature","aba109","summer",209
-"Summer hypo. temperature","aba15","spring",105
+"Summer hypo. temperature","aba15","spring",60
 "Summer hypo. temperature","aba15","summer",242
-"Summer hypo. temperature","aba25","spring",76
+"Summer hypo. temperature","aba25","spring",60
 "Summer hypo. temperature","aba25","summer",221
-"Summer hypo. temperature","aba26","spring",81
-"Summer hypo. temperature","aba26","summer",214
-"Summer hypo. temperature","aba27","spring",101
+"Summer hypo. temperature","aba26","spring",88
+"Summer hypo. temperature","aba26","summer",213
+"Summer hypo. temperature","aba27","spring",119
 "Summer hypo. temperature","aba27","summer",204
-"Summer hypo. temperature","aba86","spring",135
+"Summer hypo. temperature","aba86","spring",120
 "Summer hypo. temperature","aba86","summer",210
-"Summer hypo. temperature","aba87","spring",135
+"Summer hypo. temperature","aba87","spring",74
 "Summer hypo. temperature","aba87","summer",210
-"Summer hypo. temperature","aba89","spring",134
+"Summer hypo. temperature","aba89","spring",121
 "Summer hypo. temperature","aba89","summer",199
-"Summer hypo. temperature","aba91","spring",77
+"Summer hypo. temperature","aba91","spring",65
 "Summer hypo. temperature","aba91","summer",182
 "Summer hypo. temperature","aba92","spring",112
 "Summer hypo. temperature","aba92","summer",200
-"Summer hypo. temperature","aba94","spring",134
+"Summer hypo. temperature","aba94","spring",112
 "Summer hypo. temperature","aba94","summer",217
 "Summer hypo. temperature","aba95","spring",97
 "Summer hypo. temperature","aba95","summer",240
-"Summer hypo. temperature","aba96","spring",135
+"Summer hypo. temperature","aba96","spring",89
 "Summer hypo. temperature","aba96","summer",196

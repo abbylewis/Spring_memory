@@ -24,7 +24,6 @@ Step 1: Load packages and data
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
-library(rMR)
 source("correlations_doy.R")
 
 # Load saved data
@@ -39,13 +38,15 @@ Step 2: Load and format air temperature data
 
 ```{r}
 daily_temp_raw <- read.csv("../Compiled data/historical_met_output_era5_daily.csv")
+
 daily_temp <- daily_temp_raw %>%
   mutate(Date = as.Date(Date),
-         Date = ifelse(Lat < 0, Date + months(6), Date),
-         Date = as.Date(Date, origin = "1970-01-01")) %>%
+         Date_unif = ifelse(Lat < 0, Date + months(6), Date),
+         Date_unif = as.Date(Date_unif, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
   mutate(Year = year(Date)) %>%
   filter(Year <= 2022)
+
 rm(daily_temp_raw)
 ```
 
@@ -54,10 +55,10 @@ Step 3: Calculate and export rolling means (30-day)
 ```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 
 # ---
@@ -68,7 +69,7 @@ hypo_do_roll <- many_lake_temp_sum %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
 
 hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
-                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "DO_demand_mgLd", "Temp_C", 
                                     "Summer VHOD ")
 
 epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
@@ -79,22 +80,25 @@ hypo_temp_roll <- correlations_doy(many_lake_temp_sum,
                                     "Temp_C_BOT", "Temp_C", 
                                     "Summer hypo. temperature ")
 
+hypo_do_sat_roll <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  filter(hypoxic=="no") %>%
+  correlations_doy("DO_sat_BOT", "Temp_C", "Summer hypo. DO sat ")
+
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
+  bind_rows(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
+  bind_rows(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
-  full_join(hypo_demand_roll %>% 
+  bind_rows(hypo_do_sat_roll %>%
+              mutate(var = "Summer hypo. DO sat")) %>%
+  bind_rows(hypo_demand_roll %>% 
               mutate(var = "Summer VHOD")) 
 
 write.csv(all, 
           "../Compiled data/Correlations - 30 day rolling mean - surf bot.csv", 
           row.names = F)
-
-hypo_do_sat_roll <- correlations_doy(many_lake_temp_sum, 
-                                 "DO_sat_BOT", "DO_sat_BOT", 
-                                 "Summer hypo. DO sat ")
 
 all %>%
   group_by(LakeID, var) %>%
@@ -109,12 +113,12 @@ Step 4: Try using Spearman's correlation, rather than partial Spearman's correla
 
 ```{r}
 hypo_do_roll <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO", partial = F)
 
 hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
-                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "DO_demand_mgLd", "Temp_C", 
                                     "Summer VHOD ", partial = F)
 
 epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
@@ -127,11 +131,11 @@ hypo_temp_roll <- correlations_doy(many_lake_temp_sum,
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
+  bind_rows(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
+  bind_rows(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
-  full_join(hypo_demand_roll %>% 
+  bind_rows(hypo_demand_roll %>% 
               mutate(var = "Summer VHOD")) 
 
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - not partial surf bot.csv", row.names = F)
@@ -142,21 +146,21 @@ Step 5: Re-run with 10-day window
 ```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 10, align = "right", fill = NA))
 
 # ---
 
 hypo_do_roll <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
 
 hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
-                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "DO_demand_mgLd", "Temp_C", 
                                     "Summer VHOD ")
 
 epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
@@ -169,11 +173,11 @@ hypo_temp_roll <- correlations_doy(many_lake_temp_sum,
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
+  bind_rows(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
+  bind_rows(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
-  full_join(hypo_demand_roll %>% 
+  bind_rows(hypo_demand_roll %>% 
               mutate(var = "Summer VHOD")) 
 
 write.csv(all, "../Compiled data/Correlations - 10 day rolling mean surf bot.csv", row.names = F)
@@ -184,21 +188,21 @@ Step 6: Re-run with 50-day window
 ```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 50, align = "right", fill = NA))
 
 # ---
 
 hypo_do_roll <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
 
 hypo_demand_roll <- correlations_doy(many_lake_temp_sum, 
-                                    "DO_demand_mgLd_HYPO", "Temp_C", 
+                                    "DO_demand_mgLd", "Temp_C", 
                                     "Summer VHOD ")
 
 epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
@@ -211,12 +215,12 @@ hypo_temp_roll <- correlations_doy(many_lake_temp_sum,
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
+  bind_rows(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
+  bind_rows(hypo_temp_roll %>%
               mutate(var = "Summer hypo. temperature")) %>%
-  full_join(hypo_demand_roll %>% 
-              mutate(var = "Summer VHOD"))
+  bind_rows(hypo_demand_roll %>% 
+              mutate(var = "Summer VHOD")) 
 
 write.csv(all, "../Compiled data/Correlations - 50 day rolling mean surf bot.csv", row.names = F)
 ```
@@ -228,16 +232,16 @@ with_temp <- read.csv("../Compiled data/All_data_annual_15th_to_31st.csv")
 
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 
 # ---
 
 hypo_do_roll <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
 
@@ -251,10 +255,10 @@ hypo_temp_roll <- correlations_doy(many_lake_temp_sum,
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
+  bind_rows(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
-              mutate(var = "Summer hypo. temperature")) 
+  bind_rows(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature"))
 
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - 15th to 31st surf bot.csv", row.names = F)
 ```
@@ -266,16 +270,16 @@ with_temp <- read.csv("../Compiled data/All_data_annual_JJA.csv")
 
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 
 # ---
 
 hypo_do_roll <- many_lake_temp_sum %>%
-  mutate(hypoxic = ifelse(max(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
   filter(hypoxic=="no") %>%
   correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
 
@@ -289,10 +293,10 @@ hypo_temp_roll <- correlations_doy(many_lake_temp_sum,
 
 all <- hypo_do_roll %>%
   mutate(var = "Summer hypo. DO") %>%
-  full_join(epi_temp_roll %>%
+  bind_rows(epi_temp_roll %>%
               mutate(var = "Summer epi. temperature")) %>%
-  full_join(hypo_temp_roll %>%
-              mutate(var = "Summer hypo. temperature")) 
+  bind_rows(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature"))
 
 write.csv(all, "../Compiled data/Correlations - 30 day rolling mean - JJA surf bot.csv", row.names = F)
 ```

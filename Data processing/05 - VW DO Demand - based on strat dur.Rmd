@@ -10,11 +10,10 @@ This file calculates volume-weighted hypolimnetic oxygen demand during the strat
 Table of contents:
 Step 1: Load data and packages
 Step 2: Calculate the rate of change in volume-weighted oxygen concentrations during the stratified period at each lake (VHOD)
-Step 3: Calculate temperature-corrected oxygen demand values
-Step 4: Calculate trends in oxygen demand over time
 
 
 Step 1: Load data and packages
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
@@ -29,8 +28,8 @@ full_with_thermo <- read.csv("../Compiled data/Stratified_period_data_with_therm
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 ```
 
-
 Step 2: Calculate the rate of change in volume-weighted oxygen concentrations during the stratified period at each lake (VHOD)
+
 ```{r}
 # Prepare bathymetry
 lake_bats <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/ba733454c29a5f026efed05a6e6ef75b") %>%

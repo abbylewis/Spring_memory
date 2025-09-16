@@ -35,17 +35,22 @@ lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd
 #Load interpolated DO data file and memory calculations to  identify which lakes were included in the analysis
 mem <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
 do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
+
 #Combine
 full <- do %>%
   full_join(lat_long, by = c("LakeID")) %>%
-  mutate(Date = as.Date(Date)) %>%
+  mutate(Date = as.Date(Date),
+         Date_unif = ifelse(Latitude_DD > 0,
+                            Date,
+                            Date + months(6)),
+         Date_unif = as.Date(Date_unif)) %>%
   filter(LakeID %in% mem$LakeID)
 #filter to rows with 15 years of data
 not_na <- full %>%
   filter(if_any(.cols = c(Temp_C, DO_mgL),
                 .fns = ~ !is.na(.x))) %>%
-  filter(length(unique(year(Date[!is.na(Temp_C)]))) >= 15 |
-           length(unique(year(Date[!is.na(DO_mgL)]))) >= 15)
+  filter(length(unique(year(Date_unif[!is.na(Temp_C)]))) >= 15 |
+           length(unique(year(Date_unif[!is.na(DO_mgL)]))) >= 15)
 
 lat_long_for_sum <- lat_long %>%
   filter(LakeID %in% not_na$LakeID) %>%
@@ -57,7 +62,7 @@ not_na%>%
 
 not_na%>%
   group_by(LakeID) %>%
-  dplyr::summarize(duration = as.numeric(max(Date)-min(Date))/365+1) %>%
+  dplyr::summarize(duration = as.numeric(max(Date_unif)-min(Date_unif))/365+1) %>%
   ungroup() %>%
   dplyr::summarize(min_duration = min(duration, na.rm = T),
                    max_duration = max(duration, na.rm = T),
@@ -65,12 +70,12 @@ not_na%>%
                    mean_duration = mean(duration, na.rm =T),
                    median_duration = median(duration, na.rm = T))
 
-min(not_na$Date)
-max(not_na$Date)
+min(not_na$Date_unif)
+max(not_na$Date_unif)
 
 # Total number of profiles
 not_na %>%
-  select(LakeID, Date) %>%
+  select(LakeID, Date_unif) %>%
   unique()
 
 lat_long%>%
@@ -127,10 +132,10 @@ Step 4: Generate data summary plots
 depth <- lat_long_for_sum %>%
   ggplot(aes(x = MaximumDepth_m))+
   geom_density(color = "#3087D9")+
-  scale_x_log10(breaks = c(2, 20, 200))+
+  scale_x_log10(breaks = c(3, 30, 300))+
   theme_bw(base_size = 9)+
   xlab(expression("Maximum depth (m)"))+
-  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
+  theme(plot.margin = ggplot2::margin(5.5, 8, 5.5, 8, "pt"))
 
 area <- lat_long_for_sum %>%
   ggplot(aes(x = SurfaceArea_ha/100))+
@@ -139,11 +144,11 @@ area <- lat_long_for_sum %>%
                 labels = c(0.1, 10, 1000))+
   theme_bw(base_size = 9)+
   xlab(expression("Surface area (km"^{2}*")"))+
-  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"),
+  theme(plot.margin = ggplot2::margin(5.5, 8, 5.5, 8, "pt"),
         axis.title.x=element_text(vjust=2))
 
 years <- not_na %>%
-  mutate(Year = year(Date)) %>%
+  mutate(Year = year(Date_unif)) %>%
   group_by(Year) %>%
   summarize(lakes = length(unique(LakeID))) %>% 
   ggplot(aes(x = Year, y = lakes))+
@@ -152,15 +157,13 @@ years <- not_na %>%
   xlab(expression("Year"))+
   theme_bw(base_size = 9)+
   scale_x_continuous(n.breaks = 3.5)+
-  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
+  theme(plot.margin = ggplot2::margin(5.5, 8, 5.5, 8, "pt"))
 
 doys <- not_na %>%
   left_join(lat_long %>%
               select(LakeID, Latitude_DD)) %>%
-  mutate(Date = as.Date(Date),
-         Date = ifelse(Latitude_DD < 0, Date + months(6), Date),
-         Date = as.Date(Date)) %>%
-  mutate(yday = lubridate::yday(Date)) %>%
+  mutate(Date_unif = as.Date(Date_unif)) %>%
+  mutate(yday = lubridate::yday(Date_unif)) %>%
   group_by(LakeID, yday) %>%
   summarize() %>%
   ggplot(aes(x = yday))+
@@ -170,7 +173,7 @@ doys <- not_na %>%
   scale_x_continuous(n.breaks = 3,
                      breaks = c(yday("2024-06-20"), yday("2024-12-21")),
                      labels = c("Summer\nsolstice", "Winter\nsolstice"))+
-  theme(plot.margin = margin(5.5, 8, 5.5, 8, "pt"))
+  theme(plot.margin = ggplot2::margin(5.5, 8, 5.5, 8, "pt"))
 
 jpeg("../Figures/Data summary.jpeg", width = 6, height = 4, units = "in", res = 300)
 ggpubr::ggarrange(world_map, 

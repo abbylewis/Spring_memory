@@ -18,6 +18,10 @@ Table of contents:
 -   Step 4: Plot rolling means (hypolimnetic variables)
 -   Step 5: Export dates
 -   Step 6: Map
+-   Step 7: Plot multiple rolling-mean windows (SI)
+-   Step 8: Plot multiple summer definitions (SI)
+-   Step 9: Plot partial and not-partial correlations
+-   Step 10: Try mean instead of max
 
 Step 1: Load packages and data
 
@@ -34,9 +38,7 @@ alpha <- 0.05
 #Load saved data
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
-  mutate(sig = ifelse(p < alpha, T, F))
-hypo_do_sat <- read.csv("../Compiled data/Correlations - 30 day rolling mean - DO sat.csv") %>%
-  mutate(sig = ifelse(p < alpha, T, F))
+  mutate(sig = ifelse(p < alpha, T, F)) #note that doy is unif (NH and SH)
 onset <- read.csv("../Compiled data/stratification_onset.csv")
 
 # Make a directory for Figures if there isn't one
@@ -60,8 +62,8 @@ Step 2: Calculate seasonal ecological memory
 
 ```{r}
 memory <- all %>% 
-  filter(nyear >= 15) %>%
-  filter(var %in% levels_no_n) %>%
+  filter(nyear >= 15,
+         var %in% levels_no_n) %>%
   mutate(var = factor(var, 
                       levels = levels_no_n,
                       labels = labels_no_n),
@@ -79,17 +81,6 @@ memory <- all %>%
   mutate(M = (spring - summer)) %>%
   group_by(var) %>%
   mutate(p = wilcox.test(M)$p.value)
-
-memory_sat <- hypo_do_sat %>%
-  mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
-                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
-  filter(!is.na(season)) %>%
-  group_by(LakeID, var, season) %>%
-  summarize(max = max(abs(monthly_correlation))) %>%
-  pivot_wider(names_from = season, values_from = max) %>%
-  mutate(M = (summer - spring)) %>%
-  group_by(var) %>%
-  mutate(p = wilcox.test(M)$p.value)
 ```
 
 Step 3: Generate Figure 1 (summary boxplot)
@@ -102,13 +93,13 @@ memory %>%
   mutate(n = length(unique(LakeID)),
          var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
-                      levels = c("Surface-water\ntemperature (n = 366)",
-                                 "Bottom-water\ntemperature (n = 366)",
-                                 "Bottom-water\noxygen demand (n = 155)",
+                      levels = c("Surface-water\ntemperature (n = 365)",
+                                 "Bottom-water\ntemperature (n = 365)",
+                                 "Bottom-water\noxygen demand (n = 157)",
                                  "Bottom-water\ndissolved oxygen (n = 213)"),
-                      labels = c("Surface-water\ntemperature (n = 366)",
-                                 "Bottom-water\ntemperature (n = 366)",
-                                 "Bottom-water\noxygen demand (n = 155)",
+                      labels = c("Surface-water\ntemperature (n = 365)",
+                                 "Bottom-water\ntemperature (n = 365)",
+                                 "Bottom-water\noxygen demand (n = 157)",
                                  "Bottom-water\ndissolved oxygen (n = 213)")))%>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
@@ -123,7 +114,7 @@ memory %>%
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
   annotate("text", x = min(memory$M) - 0.1, y = 5, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
-  coord_cartesian(xlim = c(max(memory$M),min(memory$M)),
+  coord_cartesian(xlim = c(max(memory$M), min(memory$M)),
                   ylim = c(1,4), clip = "off")+
   theme_bw() +
   ggtitle("\n")+
@@ -142,27 +133,45 @@ dev.off()
 Step 3b: Compare hypo DO concentration (mg/L) to hypo DO saturation (%)
 
 ```{r}
-jpeg("../Figures/Monthly correlations - DO sat comp surf bot.jpg", width = 3.5, height = 2, res = 600, units = "in")
-memory_sat %>%
-  mutate(var = "Summer hypo. DO\nsaturation") %>%
-  full_join(memory %>% 
-              filter(var == "Bottom-water\ndissolved oxygen") %>%
-              mutate(var = "Summer hypo. DO\nconcentration")) %>%
+memory_do <- all %>% 
+  filter(nyear >= 15) %>%
+  filter(var %in% c("Summer hypo. DO",
+                    "Summer hypo. DO sat")) %>%
+  mutate(var = factor(var, 
+                      levels = c("Summer hypo. DO",
+                                 "Summer hypo. DO sat"),
+                      labels = c("Bottom-water\nDO (mg/L)",
+                                 "Bottom-water\nDO (% saturation)")),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = min) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
+  mutate(M = (spring - summer)) %>%
   group_by(var) %>%
-  mutate(n = length(unique(LakeID)),
-         var = paste0(var, " (n = ",n,")")) %>%
+  mutate(p = wilcox.test(M)$p.value,
+         n = length(unique(LakeID)),
+         var = paste0(var, "\nn = ",n)) %>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
          color = factor(color, levels = c("median < 0", 
                                           "Insignificant", 
-                                          "median > 0"))) %>%
+                                          "median > 0"))) 
+
+jpeg("../Figures/Monthly correlations - DO sat comp surf bot.jpg", width = 3.5, height = 2.5, res = 600, units = "in")
+memory_do %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = -0.7, y = 3, label = "More correlated\nwith spring", 
+  annotate("text", x = max(memory_do$M), y = 3, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = 0.7, y = 3, label = "More correlated\nwith summer", 
+  annotate("text", x = min(memory_do$M), y = 3, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
@@ -181,7 +190,9 @@ memory_sat %>%
         )+
   scale_color_manual(values = c("#25469a","#c16586"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(-0.65,0.65), ylim = c(1,2), clip = "off")
+  coord_cartesian(xlim = c(max(memory_do$M),min(memory_do$M)), 
+                  ylim = c(1,2), clip = "off") +
+  scale_x_reverse()
 dev.off()
 ```
 
@@ -254,9 +265,9 @@ dates_to_plot_strat <- dates_to_plot %>%
                                  "Summer VHOD",
                                  "Summer hypo. DO"
                                  ),
-                      labels = c("Summer bottom-water\ntemperature (n = 317)",
+                      labels = c("Summer bottom-water\ntemperature (n = 336)",
                                  "Summer bottom-water\noxygen demand (n = 155)",
-                                 "Summer bottom-water\nDO (n = 162)")),
+                                 "Summer bottom-water\nDO (n = 178)")),
          x_val = as.Date("2022-01-01")+days(max_doy)) %>%
   filter(!is.na(var))
 
@@ -266,8 +277,8 @@ dates_to_plot_unstrat <- dates_to_plot %>%
                       levels = c("Summer hypo. temperature",
                                  "Summer hypo. DO"
                                  ),
-                      labels = c("Summer bottom-water\ntemperature (n = 49)",
-                                 "Summer bottom-water\nDO (n = 51)")),
+                      labels = c("Summer bottom-water\ntemperature (n = 29)",
+                                 "Summer bottom-water\nDO (n = 35)")),
          x_val = as.Date("2022-01-01")+days(max_doy)) %>%
   filter(!is.na(var))
 
@@ -278,18 +289,18 @@ hypo_vars_strat <-all_plot1 %>%
   filter(strat == T) %>%
   filter(var %in% c("Summer VHOD (n = 155)",
                     #"Summer epi. temperature (n = 317)",
-                    "Summer hypo. DO (n = 162)",
-                    "Summer hypo. temperature (n = 317)")) %>%
+                    "Summer hypo. DO (n = 178)",
+                    "Summer hypo. temperature (n = 336)")) %>%
   mutate(var = factor(var, 
                       levels = c(#"Summer epi. temperature (n = 469)",
-                                 "Summer hypo. temperature (n = 317)",
+                                 "Summer hypo. temperature (n = 336)",
                                  "Summer VHOD (n = 155)",
-                                 "Summer hypo. DO (n = 162)"
+                                 "Summer hypo. DO (n = 178)"
                                  ),
                       labels = c(#"Summer surface-water\ntemperature (n = 469)",
-                                 "Summer bottom-water\ntemperature (n = 317)",
+                                 "Summer bottom-water\ntemperature (n = 336)",
                                  "Summer bottom-water\noxygen demand (n = 155)",
-                                 "Summer bottom-water\nDO (n = 162)")),
+                                 "Summer bottom-water\nDO (n = 178)")),
          layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
   ggplot() + 
   geom_hline(yintercept=0, color = "grey60", linewidth = 0.3)+
@@ -300,11 +311,11 @@ hypo_vars_strat <-all_plot1 %>%
                   ymin = mean - sd, ymax = mean + sd,
                   fill = sig, group = group),
               alpha = 0.5) +
-  geom_jitter(aes(x = as_datetime(x_val), 
-                 y = 0.6,
-                 color = season), 
-             shape = 21, size = 0.5, width = 0, height = 0.1,
-             data = dates_to_plot_strat)+
+  #geom_jitter(aes(x = as_datetime(x_val), 
+  #               y = 0.6,
+  #               color = season), 
+  #           shape = 21, size = 0.5, width = 0, height = 0.1,
+  #           data = dates_to_plot_strat)+
   geom_line(aes(x = DateTime, y = mean)) +
   xlab("Air temperature date (right-aligned 30-day rolling mean)")+
   ylab("Correlation")+
@@ -321,18 +332,18 @@ hypo_vars_unstrat <- all_plot1 %>%
   bind_rows(all_plot2) %>%
   filter(doy>=30) %>% #remove first 29 days (these include previous year)
   filter(var %in% c(#"Summer epi. temperature (n = 92)",
-                    "Summer hypo. DO (n = 51)",
-                    "Summer hypo. temperature (n = 49)")) %>%
+                    "Summer hypo. DO (n = 35)",
+                    "Summer hypo. temperature (n = 29)")) %>%
   mutate(var = factor(var, 
                       levels = c(#"Summer epi. temperature (n = 92)",
-                                 "Summer hypo. temperature (n = 49)",
+                                 "Summer hypo. temperature (n = 29)",
                                  "Summer VHOD (n = 2)",
-                                 "Summer hypo. DO (n = 51)"
+                                 "Summer hypo. DO (n = 35)"
                                  ),
                       labels = c(#"Summer surface-water\ntemperature (n = 92)",
-                                 "Summer bottom-water\ntemperature (n = 49)",
+                                 "Summer bottom-water\ntemperature (n = 29)",
                                  "Summer bottom-water\noxygen demand",
-                                 "Summer bottom-water\nDO (n = 51)")),
+                                 "Summer bottom-water\nDO (n = 35)")),
          layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
   filter(!var == "Summer bottom-water\noxygen demand") %>%
   ggplot() + 
@@ -341,11 +352,11 @@ hypo_vars_unstrat <- all_plot1 %>%
                   ymin = mean - sd, ymax = mean + sd,
                   fill = sig, group = group),
               alpha = 0.5) +
-  geom_jitter(aes(x = as_datetime(x_val), 
-                 y = 0.6,
-                 color = season), 
-             shape = 21, size = 0.5, width = 0, height = 0.1,
-             data = dates_to_plot_unstrat)+
+  #geom_jitter(aes(x = as_datetime(x_val), 
+  #               y = 0.6,
+  #               color = season), 
+  #           shape = 21, size = 0.5, width = 0, height = 0.1,
+  #           data = dates_to_plot_unstrat)+
   geom_line(aes(x = DateTime, y = mean)) +
   xlab("Air temperature date (right-aligned 30-day rolling mean)")+
   ylab("Correlation")+
@@ -528,6 +539,7 @@ all <- all_30 %>%
   full_join(all_10)
 
 memory_windows <- all %>% 
+  filter(nyear >= 15) %>%
   filter(var %in% c("Summer epi. temperature",
                     "Summer epi. DO sat",
                     "Summer hypo. temperature",
@@ -539,8 +551,13 @@ memory_windows <- all %>%
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, window) %>%
-  summarize(max = max(abs(monthly_correlation))) %>%
-  pivot_wider(names_from = season, values_from = max) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min, max)) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
   mutate(M = (spring - summer)) %>%
   group_by(var, window) %>%
   mutate(p = wilcox.test(M)$p.value)
@@ -562,9 +579,9 @@ memory_windows %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith spring", 
+  annotate("text", x = max(memory_windows$M), y = 5.8, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith summer", 
+  annotate("text", x = min(memory_windows$M), y = 5.8, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
@@ -581,9 +598,10 @@ memory_windows %>%
         legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#c16586","#25469a"), 
+  scale_color_manual(values = c("#c16586","grey50", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1,4), clip = "off")+
+  coord_cartesian(xlim = c(max(memory_windows$M),min(memory_windows$M)), 
+                  ylim = c(1,4), clip = "off")+
   facet_wrap(~window)+
   scale_x_reverse()
 dev.off()
@@ -592,13 +610,13 @@ dev.off()
 Step 8: Plot multiple summer definitions (SI)
 
 ```{r}
-all_ja <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+all_ja <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F),
          window = "July 1 - August 31")
-all_jja <- read.csv("../Compiled data/Correlations - 30 day rolling mean - JJA.csv") %>%
+all_jja <- read.csv("../Compiled data/Correlations - 30 day rolling mean - JJA surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F),
          window = "June 1 - August 31")
-all_15 <- read.csv("../Compiled data/Correlations - 30 day rolling mean - 15th to 31st.csv") %>%
+all_15 <- read.csv("../Compiled data/Correlations - 30 day rolling mean - 15th to 31st surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F),
          window = "July 15 - August 31")
 
@@ -620,8 +638,13 @@ memory_mult <- all %>%
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, window) %>%
-  summarize(max = max(abs(monthly_correlation))) %>%
-  pivot_wider(names_from = season, values_from = max) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min, max)) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
   mutate(M = (spring - summer)) %>%
   group_by(var, window) %>%
   mutate(p = wilcox.test(M)$p.value)
@@ -638,9 +661,9 @@ memory_mult %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = 0.7, y = 4.4, label = "More correlated\nwith spring", 
+  annotate("text", x = max(memory_mult$M), y = 4.4, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = -0.7, y = 4.4, label = "More correlated\nwith summer", 
+  annotate("text", x = min(memory_mult$M), y = 4.4, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
@@ -659,7 +682,8 @@ memory_mult %>%
         )+
   scale_color_manual(values = c("#c16586", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1, 3), clip = "off")+
+  coord_cartesian(xlim = c(max(memory_mult$M), min(memory_mult$M)), 
+                  ylim = c(1, 3), clip = "off")+
   facet_wrap(~window)+
   scale_x_reverse()
 dev.off()
@@ -668,10 +692,10 @@ dev.off()
 Step 9: Plot partial and not-partial correlations
 
 ```{r}
-all_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+all_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F),
          window = "Partial")
-all_not_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean - not partial.csv") %>%
+all_not_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean - not partial surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F),
          window = "Not-partial")
 
@@ -686,8 +710,13 @@ memory_partial <- all %>%
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, window) %>%
-  summarize(max = max(abs(monthly_correlation))) %>%
-  pivot_wider(names_from = season, values_from = max) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min, max)) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
   mutate(M = (spring - summer)) %>%
   group_by(var, window) %>%
   mutate(p = wilcox.test(M)$p.value)
@@ -704,9 +733,9 @@ memory_partial %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith spring", 
+  annotate("text", x = max(memory_partial$M), y = 5.8, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith summer", 
+  annotate("text", x = min(memory_partial$M), y = 5.8, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
@@ -723,22 +752,16 @@ memory_partial %>%
         legend.box.margin=ggplot2::margin(t = -2, l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#c16586", "#25469a"), 
+  scale_color_manual(values = c("#c16586", "grey50", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1, 4), clip = "off")+
+  coord_cartesian(xlim = c(max(memory_partial$M), min(memory_partial$M)), 
+                  ylim = c(1, 4), clip = "off")+
   facet_wrap(~window)+
   scale_x_reverse()
 dev.off()
-
-view <- all %>%
-  filter(var == "Summer hypo. DO",
-         LakeID == "1",
-         doy == 1)
-
-view
 ```
 
-Try mean instead of max
+Step 10: Try mean instead of max
 
 ```{r}
 memory_mean <- all %>% 
@@ -749,11 +772,16 @@ memory_mean <- all %>%
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
   group_by(LakeID, var, season, window) %>%
-  summarize(mean = mean(abs(monthly_correlation), na.rm = T),
-            maximum = max(abs(monthly_correlation), na.rm = T)) %>%
+  summarize(min_val = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max_val = abs(monthly_correlation[which.max(monthly_correlation)]),
+            mean = abs(mean(monthly_correlation))) %>%
+  ungroup() %>%
+  mutate(maximum = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min_val, max_val)) %>%
+  select(-min_val, -max_val) %>%
   pivot_longer(cols = c(mean, maximum), names_to = "metric", values_to = "value") %>%
   pivot_wider(names_from = season, values_from = value) %>%
-  mutate(M = (spring- summer)) %>%
+  mutate(M = (spring - summer)) %>%
   group_by(var, window) %>%
   mutate(p = wilcox.test(M)$p.value)
 
@@ -770,9 +798,9 @@ memory_mean %>%
   ggplot(aes(y = var, x = M, color = color))+
   geom_vline(xintercept = 0, color = "grey70")+
   geom_boxplot()+
-  annotate("text", x = 0.7, y = 5.8, label = "More correlated\nwith spring", 
+  annotate("text", x = max(memory_mean$M), y = 5.8, label = "More correlated\nwith spring", 
            lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
-  annotate("text", x = -0.7, y = 5.8, label = "More correlated\nwith summer", 
+  annotate("text", x = min(memory_mean$M), y = 5.8, label = "More correlated\nwith summer", 
            lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
   theme_bw() +
   ggtitle("\n")+
@@ -791,7 +819,7 @@ memory_mean %>%
         )+
   scale_color_manual(values = c("#c16586", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
-  coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1,4), clip = "off") +
+  coord_cartesian(xlim = c(max(memory_mean$M),min(memory_mean$M)), ylim = c(1,4), clip = "off") +
   facet_wrap(~metric)+
   scale_x_reverse()
 dev.off()

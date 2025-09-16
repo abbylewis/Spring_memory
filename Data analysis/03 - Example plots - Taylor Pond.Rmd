@@ -21,24 +21,25 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 
 #Set global options
-sp <- yday(c("2022-03-01", "2022-05-31"))
+sp <- yday(c("2022-03-01", "2022-05-01"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 alpha <- 0.001
 
 #Load saved data
-with_temp = read.csv("../Compiled data/All_data_annual.csv")
+with_temp = read.csv("../Compiled data/All_data_annual_3m.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
-daily_temp_raw <- read.csv("../Compiled data/historical_temp_output_era5_daily.csv")
-all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv") %>%
+daily_temp_raw <- read.csv("../Compiled data/historical_met_output_era5_daily.csv")
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
 #Format air temperature
 daily_temp <- daily_temp_raw %>%
   mutate(Date = as.Date(Date),
-         Date = ifelse(Lat < 0, Date + months(6), Date),
-         Date = as.Date(Date, origin = "1970-01-01")) %>%
+         Date_unif = ifelse(Lat < 0, Date + months(6), Date),
+         Date_unif = as.Date(Date_unif, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
-  mutate(Year = year(Date))
+  mutate(Year = year(Date)) %>%
+  filter(Year <= 2022)
 rm(daily_temp_raw) #Large file, no need to keep in memory
 
 # Make a directory for Figures if there isn't one
@@ -50,21 +51,21 @@ Step 2: Generate figures
 ```{r}
 many_lake_temp_sum <- with_temp %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 
 jpeg("../Figures/Summer Taylor Pond.jpg", res = 300, width = 4, height = 4, units = "in")
 many_lake_temp_sum %>%
   filter(LakeID == "124",
          doy == 225) %>%
-  ggplot(aes(x = Temp_C, y = Temp_C_EPI))+
+  ggplot(aes(x = Temp_C, y = Temp_C_SURF))+
   geom_point()+
   xlab("Mean air temperature July 15 - August 14")+
   ggtitle("Taylor Pond")+
-  ylab("Summer epilimnetic temperature")+
+  ylab("Summer surface temperature")+
   theme_bw()
 dev.off()
 
@@ -72,11 +73,11 @@ jpeg("../Figures/Winter Taylor Pond.jpg", res = 300, width = 4, height = 4, unit
 many_lake_temp_sum %>%
   filter(LakeID == "124",
          doy == 59) %>%
-  ggplot(aes(x = Temp_C, y = Temp_C_EPI))+
+  ggplot(aes(x = Temp_C, y = Temp_C_BOT))+
   geom_point()+
   xlab("Mean air temperature March 1 - March 30")+
   ggtitle("Taylor Pond")+
-  ylab("Summer epilimnetic temperature")+
+  ylab("Summer surface temperature")+
   theme_bw()
 dev.off()
 

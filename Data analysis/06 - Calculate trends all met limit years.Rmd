@@ -67,7 +67,9 @@ Step 3: Calculate daily met trends
 
 ```{r}
 #Load data
-climate_era5 = read.csv("../Compiled data/historical_met_output_era5_daily.csv")
+climate_era5 = read.csv("../Compiled data/historical_met_output_era5_daily.csv") %>%
+  mutate(Date_unif = ifelse(Lat > 0, Date, Date + months(6)),
+         Date_unif = as.Date(Date_unif))
 
 run_year_set <- function(climate_era5, water_trend, name){
   climate_era5_roll <- climate_era5 %>%

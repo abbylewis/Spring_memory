@@ -31,6 +31,7 @@ library(tidyverse)
 library(ggpubr)
 library(furrr)
 library(rMR)
+library(TrenchR)
 
 plan(multisession) #Set up parallel processing to speed up interpolation
 ```
@@ -77,9 +78,33 @@ range <- test_depth_removal%>%
   filter(range > 5 & range_frac > .3)
 
 #Saving this as our current workflow
-to_profiles_depth_checked <- test_depth_removal%>%
+to_profiles_depth_checked_ele <- test_depth_removal%>%
   dplyr::select(LakeID, Date, Depth_m, Temp_C, 
-                DO_sat, DO_mgL, Flag_Temp_C, Flag_DO_mgL)
+                DO_sat, DO_mgL, Flag_Temp_C, Flag_DO_mgL, Elevation_m)
+
+# Fill in missing oxygen saturation and concentration data
+to_profiles_oxy_units <- to_profiles_depth_checked_ele %>%
+  mutate(Elevation_m = ifelse(is.na(Elevation_m) | Elevation_m < 0, 0, Elevation_m),
+         DO_sat = ifelse(is.na(DO_sat),
+                         DO.unit.convert(DO_mgL, 
+                                         DO.units.in = "mg/L", 
+                                         DO.units.out = "pct", 
+                                         bar.units.in = "kpa",
+                                         bar.press = airpressure_from_elev(Elevation_m), 
+                                         temp.C = Temp_C),
+                         DO_sat),
+         DO_mgL = ifelse(is.na(DO_mgL),
+                         DO.unit.convert(DO_sat, 
+                                         DO.units.in = "pct", 
+                                         DO.units.out = "mg/L", 
+                                         bar.units.in = "kpa",
+                                         bar.press = airpressure_from_elev(Elevation_m), 
+                                         temp.C = Temp_C),
+                         DO_mgL)) %>%
+  select(-Elevation_m)
+
+to_profiles_depth_checked <- to_profiles_depth_checked_ele %>%
+  select(-Elevation_m)
 
 nrow(to_profiles)
 nrow(to_profiles_depth_checked)
@@ -90,25 +115,6 @@ unique(to_profiles$LakeID[is.na(to_profiles$reported_max_depth)])
 length(unique(to_profiles_depth_checked$LakeID)) #~50 lakes lost entirely. 
 # NOTE I looked into this and it is almost entirely from removing lakes without 
 # surface measurements
-
-# Fill in missing oxygen saturation and concentration data
-to_profiles_oxy_units <- to_profiles_depth_checked %>%
-  mutate(DO_sat = ifelse(is.na(DO_sat),
-                         DO.unit.convert(DO_mgL, 
-                                         DO.units.in = "mg/L", 
-                                         DO.units.out = "pct", 
-                                         bar.units.in = "atm",
-                                         bar.press = 1, 
-                                         temp.C = Temp_C),
-                         DO_sat),
-         DO_mgL = ifelse(is.na(DO_mgL),
-                         DO.unit.convert(DO_sat, 
-                                         DO.units.in = "pct", 
-                                         DO.units.out = "mg/L", 
-                                         bar.units.in = "atm",
-                                         bar.press = 1, 
-                                         temp.C = Temp_C),
-                         DO_mgL))
 
 sum(!is.na(to_profiles_depth_checked$DO_mgL))
 sum(!is.na(to_profiles_oxy_units$DO_mgL)) #Added a few DO concs
