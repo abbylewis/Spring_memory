@@ -102,6 +102,7 @@ nozeros_case2_zeros <- nozeros %>%
   ungroup() %>%
   filter(Depth_m == crit)%>%#only take the lowest value
   mutate(Depth_m=0) %>% unique()
+
 nozeros_case2 = nozeros %>% 
   filter(crit > 0.5) %>% 
   filter(crit <= 3) %>%
@@ -164,8 +165,10 @@ run_all_dates_t <- function(alldates, lake_data, lake){
 }
 
 plan(multisession)
+
 laken <- to_profiles_cleaning2$hylak_id %>% 
   unique()
+
 interpolatedvalues.t <- furrr::future_map(laken,interp_t,to_profiles_cleaning2) |> list_rbind()
 ```
 
@@ -201,10 +204,10 @@ thermo_depths <- isimip_summer %>%
             n = n())
 
 #Remove years with unstratified profiles and lakes where 10% of years have unstratified profiles
-thermo_depths_sum <- thermo_depths%>%
+thermo_depths_sum <- thermo_depths %>%
   group_by(LakeID) %>%
   dplyr::mutate(count_unstrat_tot = sum(count_unstrat),
-                n = sum(n))%>%
+                n = sum(n)) %>%
   filter((count_unstrat_tot/n) < 0.1,
          count_unstrat == 0) 
 
@@ -266,7 +269,8 @@ buoyancy <- interpolatedvalues.t %>%
   mutate(hylak_id = as.numeric(hylak_id)) %>%
   left_join(lat_long) %>%
   group_by(Date, LakeID) %>%
-  dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C,Depth_m),na.rm=T))
+  dplyr::summarize(buoyancy_freq = max(buoyancy.freq(Temp_C, Depth_m), na.rm=T))
+
 write.csv(buoyancy, "../Compiled data/ISIMIP_bf_daily.csv", row.names = F)
 ```
 

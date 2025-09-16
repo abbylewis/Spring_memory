@@ -45,7 +45,8 @@ full <- do %>%
                             Date,
                             Date + months(6)),
          Date_unif = as.Date(Date_unif)) %>%
-  filter(is.na(MaximumDepth_m) | !MaximumDepth_m < 3)
+  filter(is.na(MaximumDepth_m) | !MaximumDepth_m < 3,
+         abs(Latitude_DD) >= 23.5)
 
 full$Date_22 <- full$Date_unif
 year(full$Date_22) <- 2022
@@ -171,6 +172,8 @@ Step 6: Plot
 ```{r}
 jpeg("../Figures/Data_hist.jpg", width = 3, height = 3, units = "in", res = 300)
 all <- full %>%
+  group_by(LakeID) %>%
+  filter(length(unique(year(Date_unif))) >= 15) %>%
   filter(Depth_m == 1) %>%
   group_by(Date_22, LakeID) %>%
   summarize(n = length(!is.na(Temp_C))) %>%
@@ -193,6 +196,9 @@ all
 dev.off()
 
 for_summer_plot <- full %>%
+  group_by(LakeID) %>%
+  filter(length(unique(year(Date_unif))) >= 15) %>%
+  ungroup() %>%
   mutate(Date_unif = as.Date(Date_unif)) %>%
   filter(!is.na(Temp_C),
          Depth_m ==1,
@@ -249,6 +255,8 @@ surf_bot_table <- surf_bot_daily %>%
   pivot_longer(c(DO_mgL_SURF, DO_mgL_BOT, DO_sat_SURF, DO_sat_BOT, Temp_C_SURF, 
                  Temp_C_BOT, DOC_mgL_SURF, Chla_ugL_SURF, TP_ugL_SURF)) %>%
   mutate(Year = year(Date_unif)) %>%
+  group_by(LakeID) %>%
+  filter(length(unique(Year)) >= 15) %>%
   group_by(LakeID, name, Year) %>%
   filter(!is.na(value)) %>%
   summarize(n = n()) %>%
