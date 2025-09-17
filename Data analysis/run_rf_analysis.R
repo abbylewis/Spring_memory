@@ -1,4 +1,7 @@
-run_rf_analysis <- function(potential_drivers, mem_rf){
+run_rf_analysis <- function(potential_drivers, mem_rf, 
+                            color_limits = c(-0.45, 0.45),
+                            color_vals = c("#c16586", "#735690", "#25469a"),
+                            ylab_text = "Partial dependence of CSEM"){
   responses <- c("epi_temp")
   mem_rf_df_surf_temp <- mem_rf %>%
     select(all_of(c(responses, potential_drivers))) %>%
@@ -227,8 +230,8 @@ run_rf_analysis <- function(potential_drivers, mem_rf){
     facet_grid(target~var, scales = "free_x", switch = "both") +
     labs(x=NULL) +
     theme_bw() +
-    scale_color_gradientn(colors = c("#c16586", "#735690", "#25469a"), 
-                          limits = c(-0.45, 0.45)) +
+    scale_color_gradientn(colors = color_vals, 
+                          limits = color_limits) +
     theme(
       strip.placement = "outside",   # format to look like title
       strip.background = element_blank(),
@@ -239,7 +242,7 @@ run_rf_analysis <- function(potential_drivers, mem_rf){
       axis.title.y = element_text(size = 9),
       legend.position = "none"
     ) +
-    ylab("Partial dependence of CSEM")
+    ylab(ylab_text)
   
   return(ggarrange(imp_mem, part, widths = c(0.8, 1)))
 }

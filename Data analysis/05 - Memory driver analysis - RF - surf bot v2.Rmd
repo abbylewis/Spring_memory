@@ -179,7 +179,7 @@ GGally::ggpairs(mem_rf %>%
   theme(text = element_text(size = 9))
 dev.off()
 
-potential_drivers <- c("buoyancy_freq", "abs_lat", "log_max_depth", "log_SA")
+potential_drivers <- c("buoyancy_freq", "abs_lat", "log_max_depth")
 #Figure 4
 jpeg("../Figures/partials.jpg", width = 7, height = 4.5, 
        units = "in", res = 400)
@@ -198,7 +198,7 @@ jpeg("../Figures/partials_25year.jpg", width = 7, height = 4.5,
 run_rf_analysis(potential_drivers, mem_rf %>% filter(nyear >= 25))
 dev.off()
 
-#25 years
+#Spring
 jpeg("../Figures/partials_spring.jpg", width = 7, height = 4.5, 
        units = "in", res = 400)
 run_rf_analysis(potential_drivers, 
@@ -221,9 +221,13 @@ run_rf_analysis(potential_drivers,
                          hypo_temp = `Bottom-water temperature`,
                          hypo_do = `Bottom-water dissolved oxygen`,
                          vhod = `Bottom-water oxygen demand`) %>%
-                  ungroup())
+                  ungroup(),
+                color_vals = "black",
+                color_limits = c(-1, 1),
+                ylab_text = "Partial dependence of correlation\nwith spring air temperature")
 dev.off()
 
+#Summer
 jpeg("../Figures/partials_summer.jpg", width = 7, height = 4.5, 
        units = "in", res = 400)
 run_rf_analysis(potential_drivers, 
@@ -246,7 +250,10 @@ run_rf_analysis(potential_drivers,
                          hypo_temp = `Bottom-water temperature`,
                          hypo_do = `Bottom-water dissolved oxygen`,
                          vhod = `Bottom-water oxygen demand`) %>%
-                  ungroup())
+                  ungroup(),
+                color_vals = "black",
+                color_limits = c(-1, 1),
+                ylab_text = "Partial dependence of correlation\nwith summer air temperature")
 dev.off()
 ```
 
