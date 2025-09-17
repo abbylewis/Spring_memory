@@ -1,0 +1,251 @@
+---
+title: "Sensitivity analysis"
+author: "Abby Lewis"
+date: "2025-09-16"
+output: html_document
+---
+
+Step 1: Load data and packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(rLakeAnalyzer)
+source("../Data processing/thermo.depth.density.R")
+
+## Load data and metadata from EDI
+lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
+#Load interpolated DO data file, created by "02 - Temp and DO interpolation.Rmd"
+do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
+p <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/0ece9d7b67cd49741ed7ee60192832e4")
+```
+
+Step 2: QAQC
+
+```{r}
+#Merge P, DO, and lake info (from lat long file)
+full <- do %>%
+  full_join(p) %>%
+  left_join(lat_long, by = c("LakeID")) %>%
+  mutate(Date = as.Date(Date),
+         Date_unif = ifelse(Latitude_DD > 0,
+                            Date,
+                            Date + months(6)),
+         Date_unif = as.Date(Date_unif)) %>%
+  filter(is.na(MaximumDepth_m) | !MaximumDepth_m < 3,
+         abs(Latitude_DD) >= 23.5)
+
+full$Date_22 <- full$Date_unif
+year(full$Date_22) <- 2022
+```
+
+Step 3: Filter to summer period
+
+```{r}
+full_trimmed <- full %>%
+  filter(Date_22 >= as.Date("2022-07-01") & Date_22 <= as.Date("2022-08-31")) %>%
+  dplyr::select(-Date_22)
+```
+
+Step 4: Calculate surface and bottom means
+
+```{r}
+surf_bot_daily <- full_trimmed %>%
+  group_by(Date_unif, LakeID, Depth_m) %>%
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
+                   DO_mgL = mean(DO_mgL, na.rm = T)) %>%
+  filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
+  group_by(LakeID, Date_unif) %>%
+  dplyr::summarize(DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
+                   Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T)) 
+
+#Pick focal lakes that have more data
+threshold <- 4
+focal_lakes <- surf_bot_daily %>%
+  mutate(Year = year(Date_unif)) %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(#Bot_DO_n = sum(!is.na(DO_mgL_BOT)),
+                   Surf_temp_n = sum(!is.na(Temp_C_SURF)),
+                   Bot_temp_n = sum(!is.na(Temp_C_BOT))) %>%
+  group_by(LakeID) %>%
+  summarize(#Bot_DO_years = sum(Bot_DO_n > threshold, na.rm = T),
+            Surf_temp_years = sum(Surf_temp_n > threshold, na.rm = T),
+            Bot_temp_years = sum(Bot_temp_n > threshold, na.rm = T)
+            ) %>%
+  filter(#Bot_DO_years > 15, #Still need 15 years of data
+         Surf_temp_years > 15,
+         Bot_temp_years > 15)
+```
+
+Step 5: Load and format air temperature data
+
+```{r}
+daily_temp_raw <- read.csv("../Compiled data/historical_met_output_era5_daily.csv")
+
+daily_temp <- daily_temp_raw %>%
+  filter(LakeID %in% focal_lakes$LakeID) %>%
+  mutate(Date = as.Date(Date),
+         Date_unif = ifelse(Lat < 0, Date + months(6), Date),
+         Date_unif = as.Date(Date_unif, origin = "1970-01-01")) %>%
+  dplyr::select(-Lat, -Lon) %>%
+  mutate(Year = year(Date)) %>%
+  filter(Year <= 2022)
+
+rm(daily_temp_raw)
+```
+
+Now we want to repeat a process for decreasing data availability
+
+```{r}
+set.seed(50)
+out <- data.frame(LakeID = character(0),
+                  var = character(0),
+                  spring = numeric(0),
+                  summer = numeric(0),
+                  M = numeric(0),
+                  p = numeric(0))
+
+n_per_year <- 4
+for(n_per_year in 1:4){
+  # Randomly select 4/3/2/1 data points and calculate annual mean
+  surf_bot_daily_limited <- surf_bot_daily %>%
+    filter(LakeID %in% focal_lakes$LakeID) %>%
+    mutate(Year = year(Date_unif)) %>%
+    group_by(LakeID, Year) %>%
+    select(LakeID, Year, DO_mgL_BOT, Temp_C_SURF, Temp_C_BOT) %>%
+    pivot_longer(DO_mgL_BOT:Temp_C_BOT) %>%
+    filter(!is.na(value)) %>%
+    group_by(LakeID, Year, name) %>%
+    filter(n()>threshold) %>%
+    mutate(row = row_number()) %>%
+    filter(row %in% sample(row, n_per_year)) %>%
+    select(-row) %>%
+    summarize(value = mean(value)) %>%
+    pivot_wider()
+  
+  # Calculate rolling mean correlations
+  many_lake_temp_sum <- surf_bot_daily_limited %>%
+    left_join(daily_temp) %>%
+    mutate(doy = yday(Date_unif),
+           Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
+    group_by(LakeID) %>%
+    arrange(Date_unif) %>%
+    mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
+  
+  # Calculate memory
+  #hypo_do_roll <- many_lake_temp_sum %>%
+  #  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  #  filter(hypoxic=="no") %>%
+  #  correlations_doy("DO_mgL_BOT", "Temp_C", "hypolimnetic DO")
+  
+  epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                    "Temp_C_SURF", "Temp_C", 
+                                    "Summer epi. temperature ")
+  
+  hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
+                                     "Temp_C_BOT", "Temp_C", 
+                                     "Summer hypo. temperature ")
+  
+  all <- epi_temp_roll %>%
+    mutate(var = "Summer epi. temperature") %>%
+    bind_rows(hypo_temp_roll %>%
+                mutate(var = "Summer hypo. temperature")) #%>%
+    bind_rows(hypo_do_roll %>%
+                mutate(var = "Summer hypo. DO"))
+  
+  memory <- all %>% 
+    filter(nyear >= 15,
+           var %in% levels_no_n) %>%
+    mutate(var = factor(var, 
+                        levels = levels_no_n,
+                        labels = labels_no_n),
+           season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                           ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+    filter(!is.na(season)) %>%
+    group_by(LakeID, var, season) %>%
+    summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+              max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+    ungroup() %>%
+    mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                        min, max)) %>%
+    select(-min, -max) %>%
+    pivot_wider(names_from = season, values_from = val) %>%
+    mutate(M = (spring - summer)) %>%
+    group_by(var) %>%
+    mutate(p = wilcox.test(M)$p.value,
+           n_per_year = n_per_year)
+  
+  out = out %>%
+    bind_rows(memory)
+}
+
+jpeg("../Figures/Simulating decreased data availability.png", 
+     res = 300, width = 5, height = 4, units = "in")
+out %>%
+  ggplot(aes(x = n_per_year, y = M, color = LakeID))+
+  geom_line()+
+  facet_wrap(~var)+
+  theme_bw()+
+  scale_x_reverse()+
+  xlab("Number of measurements per year")+
+  ylab("CSEM")+
+  theme(legend.position = "bottom")
+dev.off()
+```
+
+
+
+
+
+Step 6: Calculate and export rolling means (30-day)
+
+```{r}
+hypo_do_sat_roll <- many_lake_temp_sum %>%
+  mutate(hypoxic = ifelse(median(DO_mgL_BOT, na.rm = T) < 1,"yes","no")) %>%
+  filter(hypoxic=="no") %>%
+  correlations_doy("DO_sat_BOT", "Temp_C", "Summer hypo. DO sat ")
+
+all <- hypo_do_roll %>%
+  mutate(var = "Summer hypo. DO") %>%
+  bind_rows(epi_temp_roll %>%
+              mutate(var = "Summer epi. temperature")) %>%
+  bind_rows(hypo_temp_roll %>%
+              mutate(var = "Summer hypo. temperature")) %>%
+  bind_rows(hypo_do_sat_roll %>%
+              mutate(var = "Summer hypo. DO sat")) %>%
+  bind_rows(hypo_demand_roll %>% 
+              mutate(var = "Summer VHOD")) 
+
+write.csv(all, 
+          "../Compiled data/Correlations - 30 day rolling mean - surf bot.csv", 
+          row.names = F)
+
+all %>%
+  group_by(LakeID, var) %>%
+  summarize(nyear = unique(nyear)) %>%
+  group_by(var) %>%
+  summarize(min = min(nyear),
+            max = max(nyear),
+            median = median(nyear))
+```
+
+```{r}
+surf_bot <- surf_bot_daily %>%
+  mutate(Year = year(Date_unif)) %>%
+  group_by(Year, LakeID) %>%
+  dplyr::summarize(Bot_DO_n = sum(!is.na(DO_mgL_BOT)),
+                   Surf_temp_n = sum(!is.na(Temp_C_SURF)),
+                   Bot_temp_n = sum(!is.na(Temp_C_BOT)),
+                   DO_mgL_SURF = mean(DO_mgL_SURF, na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL_BOT, na.rm=T),
+                   DO_sat_SURF = mean(DO_sat_SURF, na.rm=T),
+                   DO_sat_BOT = mean(DO_sat_BOT, na.rm=T),
+                   Temp_C_SURF = mean(Temp_C_SURF, na.rm=T),
+                   Temp_C_BOT = mean(Temp_C_BOT, na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL_SURF, na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL_SURF, na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL_SURF, na.rm=T))
+```
+
