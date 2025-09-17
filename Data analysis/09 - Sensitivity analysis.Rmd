@@ -19,6 +19,8 @@ lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd
 #Load interpolated DO data file, created by "02 - Temp and DO interpolation.Rmd"
 do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
 p <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/0ece9d7b67cd49741ed7ee60192832e4")
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
 ```
 
 Step 2: QAQC
@@ -152,8 +154,8 @@ for(n_per_year in 1:4){
     mutate(var = "Summer epi. temperature") %>%
     bind_rows(hypo_temp_roll %>%
                 mutate(var = "Summer hypo. temperature")) #%>%
-    bind_rows(hypo_do_roll %>%
-                mutate(var = "Summer hypo. DO"))
+    #bind_rows(hypo_do_roll %>%
+    #            mutate(var = "Summer hypo. DO"))
   
   memory <- all %>% 
     filter(nyear >= 15,
@@ -184,14 +186,22 @@ for(n_per_year in 1:4){
 jpeg("../Figures/Simulating decreased data availability.png", 
      res = 300, width = 5, height = 4, units = "in")
 out %>%
-  ggplot(aes(x = n_per_year, y = M, color = LakeID))+
+  left_join(lat_long) %>%
+  ggplot(aes(x = n_per_year, y = M, color = LakeName))+
   geom_line()+
   facet_wrap(~var)+
   theme_bw()+
   scale_x_reverse()+
   xlab("Number of measurements per year")+
   ylab("CSEM")+
-  theme(legend.position = "bottom")
+  guides(color = guide_legend(title.position = "top",
+                              title = "Lake name",
+                              ncol = 3,
+                              byrow = T))+
+  theme(legend.position = "bottom",
+        legend.spacing.y = unit(0, "cm"),
+        legend.key.height = unit(0, "cm"),
+        legend.text = element_text(margin = ggplot2::margin(b = 0, t = 0)))
 dev.off()
 ```
 

@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 
 #Set global options
-sp <- yday(c("2022-03-01", "2022-05-01"))
+sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 alpha <- 0.001
 
@@ -112,7 +112,7 @@ all %>%
   mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(season, var, LakeID) %>%
-  mutate(max = max(abs(monthly_correlation), na.rm = T),
+  mutate(max = abs(max(monthly_correlation, na.rm = T)),
          is.max = ifelse(abs(monthly_correlation)==max, "y", "n"),
          is.max = ifelse(is.na(season), "n", is.max),
          ymin = ifelse(monthly_correlation < 0, monthly_correlation, 0),
@@ -147,7 +147,7 @@ all %>%
   mutate(season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   group_by(season, var, LakeID) %>%
-  mutate(max = max(abs(monthly_correlation), na.rm = T),
+  mutate(max = abs(max(monthly_correlation, na.rm = T)),
          is.max = ifelse(abs(monthly_correlation)==max, "y", "n"),
          is.max = ifelse(is.na(season), "n", is.max),
          ymin = ifelse(monthly_correlation < 0, monthly_correlation, 0),

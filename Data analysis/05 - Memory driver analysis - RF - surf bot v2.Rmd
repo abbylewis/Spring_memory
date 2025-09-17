@@ -11,7 +11,6 @@ Table of contents:
 - Step 1: Load packages and data 
 - Step 2: Calculate seasonal ecological memory
 - Step 3: Run driver analysis
-- Step 4: Plot identified drivers
 
 Step 1: Load packages and data
 
@@ -26,7 +25,7 @@ source("lmer_functions.R")
 source("run_rf_analysis.R")
 
 #Set global options
-sp <- yday(c("2022-03-01", "2022-05-01"))
+sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 
 #Load saved data
@@ -54,7 +53,7 @@ other_drivers <- with_temp %>%
   group_by(LakeID) %>%
   mutate(range_DO = max(DO_mgL_BOT, na.rm = T) - min(DO_mgL_BOT, na.rm = T)) %>%
   select(TP_ugL_SURF, DOC_mgL_SURF, Chla_ugL_SURF, DO_mgL_BOT, range_DO, LakeID) %>%
-  summarize(across(everything(), \(x) median(x, na.rm = TRUE)))
+  summarize(across(everything(), \(x) max(x, na.rm = TRUE)))
 
 # Make a directory for Figures if there isn't one
 if (!dir.exists("../Figures")){dir.create("../Figures")}

@@ -15,13 +15,15 @@ Table of contents:
 -   Step 1: Load packages and data
 -   Step 2: Calculate seasonal ecological memory
 -   Step 3: Generate Figure 1 (summary boxplot)
--   Step 4: Plot rolling means (hypolimnetic variables)
--   Step 5: Export dates
--   Step 6: Map
--   Step 7: Plot multiple rolling-mean windows (SI)
--   Step 8: Plot multiple summer definitions (SI)
--   Step 9: Plot partial and not-partial correlations
--   Step 10: Try mean instead of max
+-   Step 4: Compare hypo DO concentration (mg/L) to hypo DO saturation (%)
+-   Step 5: Plot rolling means (hypolimnetic variables)
+-   Step 6: Export dates
+-   Step 7: Map
+-   Step 8: Plot multiple rolling-mean windows (SI)
+-   Step 9: Plot multiple summer definitions (SI)
+-   Step 10: Plot partial and not-partial correlations
+-   Step 11: Try median instead of max
+-   Step 12: Try different definitions of spring
 
 Step 1: Load packages and data
 
@@ -31,7 +33,7 @@ library(tidyverse)
 library(lubridate)
 
 #Set global options
-sp <- yday(c("2022-03-01", "2022-05-01"))
+sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 alpha <- 0.05
 
@@ -130,7 +132,7 @@ memory %>%
 dev.off()
 ```
 
-Step 3b: Compare hypo DO concentration (mg/L) to hypo DO saturation (%)
+Step 4: Compare hypo DO concentration (mg/L) to hypo DO saturation (%)
 
 ```{r}
 memory_do <- all %>% 
@@ -196,7 +198,7 @@ memory_do %>%
 dev.off()
 ```
 
-Step 4: Export dates
+Step 5: Export dates
 
 ```{r}
 dates_to_plot <- all %>%
@@ -212,7 +214,7 @@ write.csv(dates_to_plot,
           row.names = F)
 ```
 
-Step 5: Plot rolling means (hypolimnetic variables)
+Step 6: Plot rolling means (hypolimnetic variables)
 
 ```{r}
 #Function to deliniate periods of significant vs insignificant correlations
@@ -377,7 +379,7 @@ ggpubr::ggarrange(hypo_vars_strat, hypo_vars_unstrat,
 dev.off()
 ```
 
-Step 6: Map
+Step 7: Map
 
 ```{r}
 library(ggthemes)
@@ -521,7 +523,7 @@ ggarrange(world_map + theme(legend.position = "none"),
 dev.off()
 ```
 
-Step 7: Plot multiple rolling-mean windows (SI)
+Step 8: Plot multiple rolling-mean windows (SI)
 
 ```{r}
 all_30 <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
@@ -598,7 +600,7 @@ memory_windows %>%
         legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#c16586","grey50", "#25469a"), 
+  scale_color_manual(values = c("#c16586","#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(max(memory_windows$M),min(memory_windows$M)), 
                   ylim = c(1,4), clip = "off")+
@@ -607,7 +609,7 @@ memory_windows %>%
 dev.off()
 ```
 
-Step 8: Plot multiple summer definitions (SI)
+Step 9: Plot multiple summer definitions (SI)
 
 ```{r}
 all_ja <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
@@ -689,7 +691,7 @@ memory_mult %>%
 dev.off()
 ```
 
-Step 9: Plot partial and not-partial correlations
+Step 10: Plot partial and not-partial correlations
 
 ```{r}
 all_partial <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
@@ -752,7 +754,7 @@ memory_partial %>%
         legend.box.margin=ggplot2::margin(t = -2, l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#c16586", "grey50", "#25469a"), 
+  scale_color_manual(values = c("#c16586", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(max(memory_partial$M), min(memory_partial$M)), 
                   ylim = c(1, 4), clip = "off")+
@@ -761,9 +763,12 @@ memory_partial %>%
 dev.off()
 ```
 
-Step 10: Try mean instead of max
+Step 11: Try median instead of max
 
 ```{r}
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F)) #note that doy is unif (NH and SH)
+
 memory_mean <- all %>% 
   filter(var %in% levels_no_n) %>%
   mutate(var = factor(var, levels = levels_no_n,
@@ -771,25 +776,123 @@ memory_mean <- all %>%
          season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
                          ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
   filter(!is.na(season)) %>%
-  group_by(LakeID, var, season, window) %>%
+  group_by(LakeID, var, season) %>%
   summarize(min_val = abs(monthly_correlation[which.min(monthly_correlation)]),
             max_val = abs(monthly_correlation[which.max(monthly_correlation)]),
-            mean = abs(mean(monthly_correlation))) %>%
+            median = abs(median(monthly_correlation))) %>%
   ungroup() %>%
   mutate(maximum = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
                          min_val, max_val)) %>%
   select(-min_val, -max_val) %>%
-  pivot_longer(cols = c(mean, maximum), names_to = "metric", values_to = "value") %>%
+  pivot_longer(cols = c(median, maximum), names_to = "metric", values_to = "value") %>%
   pivot_wider(names_from = season, values_from = value) %>%
   mutate(M = (spring - summer)) %>%
-  group_by(var, window) %>%
+  group_by(var, metric) %>%
   mutate(p = wilcox.test(M)$p.value)
 
 jpeg("../Figures/Monthly correlations (mean) - sum long concept v2.jpg", 
      width = 5, height = 3, res = 600, units = "in")
 memory_mean %>%
   filter(!var == "Summer\nepi. DO sat") %>%
+  group_by(var, metric) %>%
+  mutate(color = ifelse(p > alpha, "Insignificant", 
+                        ifelse(median(M) > 0, "median > 0", "median < 0")),
+         color = factor(color, levels = c("median < 0", 
+                                          "Insignificant", 
+                                          "median > 0"))) %>%
+  ggplot(aes(y = var, x = M, color = color))+
+  geom_vline(xintercept = 0, color = "grey70")+
+  geom_boxplot()+
+  annotate("text", x = max(memory_mean$M), y = 5.8, label = "More correlated\nwith spring", 
+           lineheight = .9, size = 3, hjust = 0, color = "#25469a")+
+  annotate("text", x = min(memory_mean$M), y = 5.8, label = "More correlated\nwith summer", 
+           lineheight = .9, size = 3, hjust = 1, color = "#c16586")+
+  theme_bw() +
+  ggtitle("\n")+
+  scale_y_discrete(limits=rev, position = "right") +
+  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  guides(color = guide_legend(nrow = 2))+
+  theme(axis.title.y = element_blank(),
+        axis.title.x = element_text(size= 8),
+        legend.position = "none",
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(1, "line"),
+        legend.title = element_text(size = 8),
+        legend.margin=ggplot2::margin(c(0,0,0,0)),
+        legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
+        #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
+        )+
+  scale_color_manual(values = c("#c16586", "grey50", "#25469a"), 
+                     name = paste0("Boxplot color\n(p < ", alpha, ")"))+
+  coord_cartesian(xlim = c(max(memory_mean$M), min(memory_mean$M)), 
+                  ylim = c(1,4), clip = "off") +
+  facet_wrap(~metric)+
+  scale_x_reverse()
+dev.off()
+```
+
+Step 12: Try different definitions of spring
+
+```{r}
+sp <- yday(c("2022-03-01", "2022-05-01"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
+  mutate(sig = ifelse(p < alpha, T, F)) #note that doy is unif (NH and SH)
+
+memory_short_spring <- all %>% 
+  filter(nyear >= 15,
+         var %in% levels_no_n) %>%
+  mutate(var = factor(var, 
+                      levels = levels_no_n,
+                      labels = labels_no_n),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min, max)) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
+  mutate(M = (spring - summer)) %>%
   group_by(var) %>%
+  mutate(p = wilcox.test(M)$p.value,
+         duration = "Spring = March 1 - May 1")
+
+sp <- yday(c("2022-03-01", "2022-05-31"))
+su <- yday(c("2022-07-01", "2022-08-31"))
+
+memory_long_spring <- all %>% 
+  filter(nyear >= 15,
+         var %in% levels_no_n) %>%
+  mutate(var = factor(var, 
+                      levels = levels_no_n,
+                      labels = labels_no_n),
+         season = ifelse(doy >= sp[1] & doy <= sp[2], "spring", 
+                         ifelse(doy >= su[1] & doy <= su[2], "summer", NA))) %>%
+  filter(!is.na(season)) %>%
+  group_by(LakeID, var, season) %>%
+  summarize(min = abs(monthly_correlation[which.min(monthly_correlation)]),
+            max = abs(monthly_correlation[which.max(monthly_correlation)])) %>%
+  ungroup() %>%
+  mutate(val = ifelse(var %in% c("Bottom-water\ndissolved oxygen"),
+                         min, max)) %>%
+  select(-min, -max) %>%
+  pivot_wider(names_from = season, values_from = val) %>%
+  mutate(M = (spring - summer)) %>%
+  group_by(var) %>%
+  mutate(p = wilcox.test(M)$p.value,
+         duration = "Spring = March 1 - May 31")
+
+jpeg("../Figures/Monthly correlations - changing spring duration.jpg", 
+     width = 6, height = 3, res = 600, units = "in")
+memory_short_spring %>%
+  bind_rows(memory_long_spring) %>%
+  filter(!var == "Summer\nepi. DO sat") %>%
+  group_by(var, duration) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
          color = factor(color, levels = c("median < 0", 
@@ -820,7 +923,7 @@ memory_mean %>%
   scale_color_manual(values = c("#c16586", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(max(memory_mean$M),min(memory_mean$M)), ylim = c(1,4), clip = "off") +
-  facet_wrap(~metric)+
+  facet_wrap(~duration)+
   scale_x_reverse()
 dev.off()
 ```
