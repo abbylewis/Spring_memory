@@ -181,20 +181,25 @@ dates <- all %>%
             max = abs(max(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = c(max, max_day)) 
 
-strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset_v3.csv")
+strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset_v3_yearly.csv")
 
 dates_cor <- dates %>%
   filter(var == "Summer\nhypo. temperature") %>%
   left_join(lat_long %>% select(LakeID, hylak_id)) %>%
-  left_join(strat_onset) 
+  left_join(strat_onset %>%
+              mutate(strat_onset = yday(as.Date(Date_unif)))) %>%
+  group_by(LakeID, hylak_id, max_spring, max_summer, max_day_spring) %>%
+  summarize(mean = mean(strat_onset),
+            sd = sd(strat_onset))
 
 jpeg("../Figures/Correlation between stratification onset and hypo. temp.jpg", width = 5.5, height = 4, res = 300, units = "in")
 dates_cor %>%
   mutate(Memory = max_spring - max_summer) %>%
-  ggplot(aes(x = strat_onset, y = max_day_spring)) +
+  ggplot(aes(x = mean, y = max_day_spring)) +
   geom_abline(slope = 1) +
   geom_smooth(method = "lm", color = "grey50", lty = "11")+
-  geom_point(aes(fill = Memory), color = "black", shape = 21, size = 2) +
+  geom_errorbar(aes(xmin = mean-sd, xmax = mean+sd))+
+  geom_point(aes(fill = Memory, group = LakeID), size = 2, shape = 21, color = "black") +
   scale_fill_gradient2(low = "#c16586", mid = "white", high = "#25469a", 
                        midpoint = 0, limits = c(-0.7, 0.7), 
                        breaks = c(-0.6, -0.3, 0, 0.3, 0.6),
@@ -205,7 +210,7 @@ dates_cor %>%
                                   "More correlated\nwith spring"),
                        name = "")+
   ylab("Day of year most correlated with\nsummer bottom-water temperature") +
-  xlab("Median stratification onset (day of year)")+
+  xlab("Stratification onset (day of year)")+
   theme_bw()
 dev.off()
 
