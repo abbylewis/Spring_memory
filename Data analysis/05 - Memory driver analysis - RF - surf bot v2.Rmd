@@ -46,14 +46,11 @@ all %>%
             median = median(nyear))
 
 #Buoyancy frequency
-bf = read.csv("../Compiled data/summer_averages_wi.csv")%>%
-  group_by(LakeID) %>%
-  summarize(buoyancy_freq = median(buoyancy_freq, na.rm = T))
 other_drivers <- with_temp %>%
   group_by(LakeID) %>%
   mutate(range_DO = max(DO_mgL_BOT, na.rm = T) - min(DO_mgL_BOT, na.rm = T)) %>%
-  select(TP_ugL_SURF, DOC_mgL_SURF, Chla_ugL_SURF, DO_mgL_BOT, range_DO, LakeID) %>%
-  summarize(across(everything(), \(x) max(x, na.rm = TRUE)))
+  select(TP_ugL_SURF, DOC_mgL_SURF, Chla_ugL_SURF, DO_mgL_BOT, range_DO, LakeID, buoyancy_freq) %>%
+  summarize(across(everything(), \(x) median(x, na.rm = TRUE)))
 
 # Make a directory for Figures if there isn't one
 if (!dir.exists("../Figures")){dir.create("../Figures")}
@@ -148,7 +145,7 @@ Step 3: Run driver analysis
 ```{r}
 mem_rf <- memory %>%
   select(LakeID, var, M, nyear) %>%
-  left_join(bf) %>%
+  #left_join(bf) %>%
   left_join(lat_long) %>%
   left_join(other_drivers) %>%
   mutate(log_SA = log(SurfaceArea_ha),

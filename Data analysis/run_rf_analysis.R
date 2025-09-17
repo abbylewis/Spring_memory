@@ -1,3 +1,5 @@
+library(hydroGOF)
+
 run_rf_analysis <- function(potential_drivers, mem_rf, 
                             color_limits = c(-0.45, 0.45),
                             color_vals = c("#c16586", "#735690", "#25469a"),
@@ -13,6 +15,8 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
     ntree = 1000, 
     importance = T)
   rf1_r2 = rf1$rsq[length(rf1$rsq)]
+  oob_pred <- rf1$predicted
+  kge_epi_temp <- KGE(oob_pred, mem_rf_df_surf_temp$epi_temp)
   ImpData_rf1 <- as.data.frame(importance(rf1)) %>%
     mutate(Var.Names = row.names(.)) %>%
     mutate(target = "Surface-water\ntemperature")
@@ -39,6 +43,8 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
     ntree = 1000, 
     importance = T)
   rf2_r2 = rf2$rsq[length(rf2$rsq)]
+  oob_pred <- rf2$predicted
+  kge_hypo_temp <- KGE(oob_pred, mem_rf_df_hypo_temp$hypo_temp)
   ImpData_rf2 <- as.data.frame(importance(rf2)) %>%
     mutate(Var.Names = row.names(.)) %>%
     mutate(target = "Bottom-water\ntemperature")
@@ -66,6 +72,8 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
     ntree = 1000, 
     importance = T)
   rf3_r2 = rf3$rsq[length(rf3$rsq)]
+  oob_pred <- rf3$predicted
+  kge_hypo_do <- KGE(oob_pred, mem_rf_df_hypo_do$hypo_do)
   ImpData_rf3 <- as.data.frame(importance(rf3)) %>%
     mutate(Var.Names = row.names(.)) %>%
     mutate(target = "Bottom-water\ndissolved oxygen")
@@ -92,6 +100,8 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
     ntree = 1000, 
     importance = T)
   rf4_r2 = rf4$rsq[length(rf4$rsq)]
+  oob_pred <- rf4$predicted
+  kge_vhod <- KGE(oob_pred, mem_rf_df_vhod$vhod)
   ImpData_rf4 <- as.data.frame(importance(rf4)) %>%
     mutate(Var.Names = row.names(.)) %>%
     mutate(target = "Bottom-water\noxygen demand")
@@ -133,11 +143,13 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
                                "Bottom-water\noxygen demand",
                                "Bottom-water\ndissolved oxygen"),
                     r2 = c(rf1_r2, rf2_r2, rf4_r2, rf3_r2),
+                    kges = c(kge_epi_temp, kge_hypo_temp, kge_vhod, kge_hypo_do),
                     ns = c(nrow(mem_rf_df_surf_temp),
                            nrow(mem_rf_df_hypo_temp),
                            nrow(mem_rf_df_vhod),
                            nrow(mem_rf_df_hypo_do))) %>%
-    mutate(lab = paste0("paste('n = ", ns, " lakes;'~R^2~'= ",round(r2, 2), "')"))
+    mutate(lab = paste0("paste('n = ", ns, " lakes;'~R^2~'= ",round(r2, 2), 
+                        "; KGE = ", round(kges, 2), "')"))
   
   ImpData <- ImpData_rf1 %>%
     bind_rows(ImpData_rf2) %>%

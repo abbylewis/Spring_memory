@@ -407,7 +407,7 @@ world_map <- ggplot(data = world) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
+  scale_fill_gradient2(name = "CSEM", high = "#25469a", low = "#c16586")+
   theme(plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
         legend.box.background = element_rect(fill = "white", color = "white"),
         axis.title.x = element_blank(),
@@ -430,7 +430,7 @@ us_map <- ggplot(data = states) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
+  scale_fill_gradient2(name = "CSEM", high = "#25469a", low = "#c16586")+
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
                          style = north_arrow_fancy_orienteering) +
@@ -450,7 +450,7 @@ euro_map <- ggplot(data = world) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
+  scale_fill_gradient2(name = "CSEM", high = "#25469a", low = "#c16586")+
   annotation_north_arrow(location = "bl", which_north = "true", 
       pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
       style = north_arrow_fancy_orienteering) +
@@ -476,7 +476,7 @@ wi_map <- ggplot(data = states) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
+  scale_fill_gradient2(name = "CSEM", high = "#25469a", low = "#c16586")+
   #annotation_north_arrow(location = "bl", which_north = "true", 
   #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
   #    style = north_arrow_fancy_orienteering) +
@@ -499,7 +499,7 @@ ne_map <- ggplot(data = states) +
   geom_point(data = for_map, aes(Longitude_DD, Latitude_DD, fill = M), 
              shape = 21, color = "grey50", size = 2, alpha  =.7, stroke = .4)+
   theme_bw()+
-  scale_fill_gradient2(name = "SEM", high = "#25469a", low = "#c16586")+
+  scale_fill_gradient2(name = "CSEM", high = "#25469a", low = "#c16586")+
   #annotation_north_arrow(location = "bl", which_north = "true", 
   #    pad_x = unit(0.2, "in"), pad_y = unit(0.2, "in"),
   #    style = north_arrow_fancy_orienteering) +

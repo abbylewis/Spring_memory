@@ -544,3 +544,26 @@ ggpubr::ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1),
 dev.off()
 ```
 
+```{r}
+p <- dif_rf %>%
+  left_join(lat_long)
+
+with_temp = read.csv("../Compiled data/All_data_annual_3m.csv")
+other_drivers <- with_temp %>%
+  group_by(LakeID) %>%
+  select(DO_mgL_BOT, Temp_C_BOT, buoyancy_freq,LakeID) %>%
+  summarize(across(everything(), \(x) median(x, na.rm = TRUE)))
+
+jpeg("../Figures/Thermal difference by bottom temp.jpg", res = 300, width = 4, height = 4, units = "in")
+p %>%
+  left_join(other_drivers) %>%
+  ggplot(aes(x = Temp_C_BOT, y = summer_dif*10))+
+  geom_point()+
+  geom_smooth()+
+  scale_color_viridis_c()+
+  theme_bw()+
+  xlab("Median bottom-water temperature")+
+  ylab("Trend in thermal difference between\nsurface and bottom waters (ºC/decade)")
+dev.off()
+```
+
