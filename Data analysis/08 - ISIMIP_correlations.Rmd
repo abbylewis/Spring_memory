@@ -26,7 +26,7 @@ library(rLakeAnalyzer)
 source("../Data processing/thermo.depth.density.R")
 source("correlations_doy.R")
 
-all <- read.csv("../Compiled data/Correlations - 30 day rolling mean.csv")
+all <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
 
 all_export <- all %>%
@@ -54,9 +54,7 @@ lakes <- all_export2
 climate <- read.csv("../Compiled data/ISIMIP_ERA5_temp_1981_2005.csv")%>%
   left_join(lat_long)
 
-summer <- read.csv("../Compiled data/ISIMIP_summer_avgs_v3.csv") %>%
-  pivot_wider(names_from = "Layer", values_from = "Temp_C", names_prefix = "Temp_C_") %>%
-  rename(hylak_id = LakeID)
+summer <- read.csv("../Compiled data/ISIMIP_summer_avgs_v3 - surf bot.csv")
 ```
 
 Step 2: Calculate rolling correlations
@@ -64,26 +62,26 @@ Step 2: Calculate rolling correlations
 ```{r}
 daily_temp <- climate %>%
   mutate(Date = as.Date(Date),
-         Date = ifelse(Lat < 0, Date + months(6), Date),
-         Date = as.Date(Date, origin = "1970-01-01")) %>%
+         Date_unif = ifelse(Lat < 0, Date + months(6), Date),
+         Date_unif = as.Date(Date_unif, origin = "1970-01-01")) %>%
   dplyr::select(-Lat, -Lon) %>%
-  mutate(Year = year(Date))
+  mutate(Year = year(Date_unif))
 
 many_lake_temp_sum <- summer %>%
   left_join(daily_temp) %>%
-  mutate(doy = yday(Date),
-         Year = ifelse(month(Date) >= 9, Year + 1, Year)) %>%
+  mutate(doy = yday(Date_unif),
+         Year = ifelse(month(Date_unif) >= 9, Year + 1, Year)) %>%
   group_by(LakeID) %>%
-  arrange(Date) %>%
+  arrange(Date_unif) %>%
   mutate(Temp_C = zoo::rollmean(Temp_C, 30, align = "right", fill = NA))
 # ---
 
 epi_temp_roll <- correlations_doy(many_lake_temp_sum, 
-                                    "Temp_C_EPI", "Temp_C", 
+                                    "Temp_C_SURF", "Temp_C", 
                                     "Summer epi. temperature ")
 
 hypo_temp_roll <- correlations_doy(many_lake_temp_sum, 
-                                    "Temp_C_HYPO", "Temp_C", 
+                                    "Temp_C_BOT", "Temp_C", 
                                     "Summer hypo. temperature ")
 
 all <- epi_temp_roll %>%
@@ -101,7 +99,7 @@ alpha <- 0.05
 all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean v3.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F))
 
-sp <- yday(c("2022-03-01", "2022-04-30"))
+sp <- yday(c("2022-03-01", "2022-05-01"))
 su <- yday(c("2022-07-01", "2022-08-31"))
 
 memory <- all %>% 
@@ -127,10 +125,10 @@ memory %>%
   mutate(n = length(unique(LakeID)),
          var = paste0(var, " (n = ",n,")")) %>%
   mutate(var = factor(var, 
-                      levels = c("Summer epi.\ntemperature (n = 42)",
-                                 "Summer hypo.\ntemperature (n = 42)"),
-                      labels = c("Surface-water\ntemperature (n = 42)",
-                                 "Bottom-water\ntemperature (n = 42)")))%>%
+                      levels = c("Summer epi.\ntemperature (n = 43)",
+                                 "Summer hypo.\ntemperature (n = 43)"),
+                      labels = c("Surface-water\ntemperature (n = 43)",
+                                 "Bottom-water\ntemperature (n = 43)")))%>%
   group_by(var) %>%
   mutate(color = ifelse(p > alpha, "Insignificant", 
                         ifelse(median(M) > 0, "median > 0", "median < 0")),
@@ -146,7 +144,7 @@ memory %>%
   ggtitle("\n")+
   scale_y_discrete(limits=rev, position = "right") +
   scale_x_reverse()+
-  xlab("Relative correlation with summer\nvs. spring air temperature")+
+  xlab("Relative correlation with spring\nvs. summer air temperature")+
   guides(color = guide_legend(nrow = 2))+
   theme(axis.title.y = element_blank(),
         axis.title.x = element_text(size= 8),
@@ -161,79 +159,6 @@ memory %>%
   scale_color_manual(values = c("#c16586", "#25469a"), name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(0.65,-0.65), ylim = c(1,2), clip = "off")
 dev.off()
-```
-
-Step 4: Plot rolling means
-
-```{r}
-alpha <- 0.001
-all <- read.csv("../Compiled data/ISIMIP correlations - 30 day rolling mean v3.csv") %>%
-  mutate(sig = ifelse(p < alpha, T, F))
-
-group_fun <- function(sig) {
-  group <- rep(1, length(sig))
-  for (i in 2:length(sig)) {
-    if(sig[i] == sig[i - 1]) {
-      group[i] <- group[i - 1]
-    } else {
-      group[i] <- group[i - 1] + 1
-    }
-  }
-  return(group)
-}
-
-all_plot <- all %>%
-  group_by(var) %>%
-  group_by(var, doy, sig) %>%
-  summarise(mean = mean(monthly_correlation, na.rm = T),
-            sd = sd(monthly_correlation, na.rm = T)) 
-
-all_plot$group <- 1
-for(i in 1:length(unique(all_plot$var))){
-  all_plot$group[all_plot$var == unique(all_plot$var)[i]] <- group_fun(all_plot$sig[all_plot$var == unique(all_plot$var)[i]])
-}
-
-all_plot1 <- all_plot %>%
-  mutate(DateTime = as.Date("2022-01-01") + days(doy))
-
-all_plot2 <- all_plot %>%
-  ungroup() %>%
-  mutate(DateTime = as.Date("2022-01-01") + days(doy) + hours(23) + minutes(59),
-         mean = ifelse(!is.na(lead(var)) & lead(var) == var, lead(mean), mean), #to get smooth lines
-         sd = ifelse(lead(var) == var, lead(sd), sd))
-
-colored_sd <- all_plot1 %>%
-  full_join(all_plot2) %>%
-  filter(var %in% c("Summer epi. temperature",
-                    "Summer hypo. temperature")) %>%
-  mutate(var = factor(var, 
-                      levels = c("Summer epi. temperature",
-                                 "Summer hypo. temperature"),
-                      labels = c("Summer epi. temperature",
-                                 "Summer hypo. temperature")),
-         layer = ifelse(grepl("epi", var), "epi", "hypo")) %>%
-  ggplot() + 
-  geom_hline(yintercept=0)+
-  geom_vline(xintercept = as_datetime("2022-04-21"), color = "grey50", lty = "dashed")+
-  geom_ribbon(aes(x = DateTime, 
-                  ymin = mean - sd, ymax = mean + sd,
-                  fill = sig, group = group),
-              alpha = 0.5) +
-  geom_line(aes(x = DateTime, y = mean)) +
-  xlab("Air temperature date \n(right-aligned 30-day rolling mean)")+
-  ylab("Correlation")+
-  theme_bw()+
-  scale_fill_manual(values = c("grey40","#0FA9E6"))+
-  labs(fill = paste0("p < ",alpha)) +
-  facet_wrap(~var) +
-  theme(legend.position = "bottom",
-        strip.background = element_blank())
-
-jpeg("../Figures/Monthly correlations - all daily roll mean sd ISIMIP v3.jpg", width = 8, height = 5, res = 300, units = "in")
-colored_sd
-dev.off()
-
-length(unique(all$LakeID[!is.na(all$monthly_correlation)]))
 ```
 
 Step 5: Plot dates vs. stratification
@@ -256,8 +181,7 @@ dates <- all %>%
             max = abs(max(monthly_correlation))) %>%
   pivot_wider(names_from = season, values_from = c(max, max_day)) 
 
-strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset_v3.csv") %>%
-  rename(hylak_id = LakeID)
+strat_onset <- read.csv("../Compiled data/ISIMIP_strat_onset_v3.csv")
 
 dates_cor <- dates %>%
   filter(var == "Summer\nhypo. temperature") %>%
