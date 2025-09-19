@@ -107,6 +107,8 @@ daily %>%
   filter(length(unique(Year)) >= 15) %>%
   group_by(name, LakeID, Year) %>%
   dplyr::summarize(days = length(unique(Date_unif))) %>%
+  group_by(name, LakeID) %>%
+  dplyr::summarize(days = median(days)) %>%
   group_by(name) %>%
   dplyr::summarize(min = min(days, na.rm = T),
                    max = max(days, na.rm = T),

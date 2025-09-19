@@ -35,7 +35,7 @@ library(lubridate)
 #Set global options
 sp <- yday(c("2022-03-01", "2022-05-31"))
 su <- yday(c("2022-07-01", "2022-08-31"))
-alpha <- 0.05
+alpha <- 0.001
 
 #Load saved data
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579")
@@ -526,6 +526,7 @@ dev.off()
 Step 8: Plot multiple rolling-mean windows (SI)
 
 ```{r}
+alpha <- 1
 all_30 <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv") %>%
   mutate(sig = ifelse(p < alpha, T, F),
          window = "30-day rolling mean")
@@ -822,7 +823,7 @@ memory_mean %>%
         legend.box.margin=ggplot2::margin(t = -2,l = 0, r = 0, b = -5),
         #axis.text.y=element_text(colour=c("#25469a","#25469a","#25469a","#c16586"))
         )+
-  scale_color_manual(values = c("#c16586", "grey50", "#25469a"), 
+  scale_color_manual(values = c("#c16586", "#25469a"), 
                      name = paste0("Boxplot color\n(p < ", alpha, ")"))+
   coord_cartesian(xlim = c(max(memory_mean$M), min(memory_mean$M)), 
                   ylim = c(1,4), clip = "off") +
