@@ -211,7 +211,7 @@ unstrat <- interpolatedvalues.t %>%
                             Date + months(6),
                             Date),
          Date_unif = as.Date(Date_unif)) %>%
-  filter(month(Date_unif) <= 7) %>%
+  filter(month(Date_unif) < 7) %>%
   group_by(Date_unif, LakeID, hylak_id) %>%
   dplyr::summarize(max_depth = max(Depth_m),
             thermo = thermo.depth.density(Temp_C, Depth_m, mixed.cutoff = 0.1, seasonal = F))%>% 

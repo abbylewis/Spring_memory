@@ -177,7 +177,7 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
            xlab = "") %>%
     ggplot(aes(y = `%IncMSE`, x = Var.Names)) +
     geom_col() +
-    geom_text(aes(x = 0.7, y = 83, label = lab), 
+    geom_text(aes(x = 0.6, y = 83, label = lab), 
               hjust = 0, size = 3, parse = T,
               data = . %>% select(target, lab) %>% distinct())+
     coord_cartesian(clip = "off") +
@@ -226,8 +226,9 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
                                          length.out = 10000))$y) %>%
     mutate(var = factor(var),
            var = fct_relevel(var, "Buoyancy\nfrequency (1/s)", 
-                             "Log surface\narea (km^2)", 
-                             "Absolute latitude\n(DD)")) %>%
+                                   "Log maximum\ndepth (m)",
+                                   "Log surface\narea (km^2)", 
+                                   "Absolute latitude\n(DD)")) %>%
     ggplot(aes(x = x_interp)) +
     geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
     geom_point(aes(y = y_interp, color = y_interp), size = 0.1) +
@@ -235,6 +236,7 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
              data = rug_data %>%
                mutate(var = factor(var),
                       var = fct_relevel(var, "Buoyancy\nfrequency (1/s)", 
+                                        "Log maximum\ndepth (m)",
                                         "Log surface\narea (km^2)", 
                                         "Absolute latitude\n(DD)")), 
              alpha = 0.4, outside = TRUE, length = unit(0.08, "npc")) +
@@ -252,6 +254,7 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
       panel.spacing.y = unit(0.8, "lines"),
       axis.text.x = element_text(vjust=-0.5),
       axis.title.y = element_text(size = 9),
+      axis.ticks.x = element_blank(),
       legend.position = "none"
     ) +
     ylab(ylab_text)

@@ -145,7 +145,6 @@ Step 3: Run driver analysis
 ```{r}
 mem_rf <- memory %>%
   select(LakeID, var, M, nyear) %>%
-  #left_join(bf) %>%
   left_join(lat_long) %>%
   left_join(other_drivers) %>%
   mutate(log_SA = log(SurfaceArea_ha),
@@ -154,9 +153,6 @@ mem_rf <- memory %>%
          log_DOC = log(DOC_mgL_SURF),
          log_chla = log(Chla_ugL_SURF),
          abs_lat = abs(Latitude_DD)) %>%
-  filter(abs_lat >= 23.5,
-         #abs_lat <= 60
-         ) %>% #From Jane et al
   pivot_wider(names_from = var, values_from = M) %>%
   rename(epi_temp = `Surface-water temperature`,
          hypo_temp = `Bottom-water temperature`,
@@ -200,7 +196,6 @@ jpeg("../Figures/partials_spring.jpg", width = 7, height = 4.5,
 run_rf_analysis(potential_drivers, 
                 memory %>%
                   select(LakeID, var, spring, nyear) %>%
-                  left_join(bf) %>%
                   left_join(lat_long) %>%
                   left_join(other_drivers) %>%
                   mutate(log_SA = log(SurfaceArea_ha),
@@ -209,9 +204,6 @@ run_rf_analysis(potential_drivers,
                          log_DOC = log(DOC_mgL_SURF),
                          log_chla = log(Chla_ugL_SURF),
                          abs_lat = abs(Latitude_DD)) %>%
-                  filter(abs_lat >= 23.5,
-                         #abs_lat <= 60
-                  ) %>% #From Jane et al
                   pivot_wider(names_from = var, values_from = spring) %>%
                   rename(epi_temp = `Surface-water temperature`,
                          hypo_temp = `Bottom-water temperature`,
@@ -229,7 +221,6 @@ jpeg("../Figures/partials_summer.jpg", width = 7, height = 4.5,
 run_rf_analysis(potential_drivers, 
                 memory %>%
                   select(LakeID, var, summer, nyear) %>%
-                  left_join(bf) %>%
                   left_join(lat_long) %>%
                   left_join(other_drivers) %>%
                   mutate(log_SA = log(SurfaceArea_ha),
@@ -238,9 +229,6 @@ run_rf_analysis(potential_drivers,
                          log_DOC = log(DOC_mgL_SURF),
                          log_chla = log(Chla_ugL_SURF),
                          abs_lat = abs(Latitude_DD)) %>%
-                  filter(abs_lat >= 23.5,
-                         #abs_lat <= 60
-                  ) %>% #From Jane et al
                   pivot_wider(names_from = var, values_from = summer) %>%
                   rename(epi_temp = `Surface-water temperature`,
                          hypo_temp = `Bottom-water temperature`,
