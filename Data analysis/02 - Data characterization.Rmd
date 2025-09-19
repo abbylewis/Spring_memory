@@ -32,55 +32,21 @@ Step 2: Summary statistics
 ```{r}
 #Load data from EDI
 lat_long <- read.csv("https://pasta.lternet.edu/package/data/eml/edi/1530/1/fadd3eaa25b5fdd1fc4efba70e660579") 
-#Load interpolated DO data file and memory calculations to  identify which lakes were included in the analysis
+#Load memory calculations to  identify which lakes were included in the analysis
 mem <- read.csv("../Compiled data/Correlations - 30 day rolling mean - surf bot.csv")
-do <- read.csv("../Compiled data/temp_o2_interpolated.csv")
 
-#Combine
-full <- do %>%
-  full_join(lat_long, by = c("LakeID")) %>%
-  mutate(Date = as.Date(Date),
-         Date_unif = ifelse(Latitude_DD > 0,
-                            Date,
-                            Date + months(6)),
-         Date_unif = as.Date(Date_unif)) %>%
-  filter(LakeID %in% mem$LakeID)
-#filter to rows with 15 years of data
-not_na <- full %>%
-  filter(if_any(.cols = c(Temp_C, DO_mgL),
-                .fns = ~ !is.na(.x))) %>%
-  filter(length(unique(year(Date_unif[!is.na(Temp_C)]))) >= 15 |
-           length(unique(year(Date_unif[!is.na(DO_mgL)]))) >= 15)
+for_summary <- mem %>%
+  left_join(lat_long)
 
-lat_long_for_sum <- lat_long %>%
-  filter(LakeID %in% not_na$LakeID) %>%
-  filter(abs(Latitude_DD) >= 23.5)
+#Number of lakes
+length(unique(for_summary$LakeID))
 
-not_na%>%
-  dplyr::summarise(profiles = length(unique(paste0(Date,LakeID))),
-                   lakes = length(unique(LakeID)))
+#Distribution
+length(unique(for_summary$Country))
+unique(for_summary$Country)
 
-not_na%>%
-  group_by(LakeID) %>%
-  dplyr::summarize(duration = as.numeric(max(Date_unif)-min(Date_unif))/365+1) %>%
-  ungroup() %>%
-  dplyr::summarize(min_duration = min(duration, na.rm = T),
-                   max_duration = max(duration, na.rm = T),
-                   sd_duration = sd(duration, na.rm = T),
-                   mean_duration = mean(duration, na.rm =T),
-                   median_duration = median(duration, na.rm = T))
-
-min(not_na$Date_unif)
-max(not_na$Date_unif)
-
-# Total number of profiles
-not_na %>%
-  select(LakeID, Date_unif) %>%
-  unique()
-
-lat_long%>%
-  ungroup() %>%
-  filter(LakeID %in% not_na$LakeID) %>%
+#Lake size
+for_summary %>%
   dplyr::reframe(across(.cols = c(MaximumDepth_m, 
                                   SurfaceArea_ha, 
                                   Elevation_m, 
@@ -89,7 +55,73 @@ lat_long%>%
                                      min(.x,na.rm=T), 
                                      max(.x,na.rm=T))))
 
-unique(lat_long$Country[lat_long$LakeID %in% not_na$LakeID])
+#Duration
+annual <- read_csv("../Compiled data/All_data_annual_3m.csv") %>%
+  filter(LakeID %in% for_summary$LakeID) 
+
+annual %>%
+  group_by(LakeID) %>%
+  dplyr::summarize(duration = as.numeric(max(Year)-min(Year))+1) %>%
+  ungroup() %>%
+  dplyr::summarize(min_duration = min(duration, na.rm = T),
+                   max_duration = max(duration, na.rm = T),
+                   sd_duration = sd(duration, na.rm = T),
+                   mean_duration = mean(duration, na.rm =T),
+                   median_duration = median(duration, na.rm = T))
+
+#Years per variable
+annual %>%
+  filter(LakeID %in% for_summary$LakeID) %>%
+  group_by(LakeID) %>%
+  mutate(medianDO = median(DO_mgL_BOT, na.rm = T),
+         DO_mgL_BOT = ifelse(medianDO < 1, NA, DO_mgL_BOT)) %>% #Only when median DO > 1
+  select(DO_mgL_BOT, Temp_C_SURF, Temp_C_BOT, DO_demand_mgLd, LakeID, Year) %>%
+  pivot_longer(DO_mgL_BOT:DO_demand_mgLd) %>%
+  filter(!is.na(value)) %>%
+  group_by(name, LakeID) %>%
+  dplyr::summarize(years = length(unique(Year))) %>%
+  filter(years >= 15) %>%
+  group_by(name) %>%
+  dplyr::summarize(min = min(years, na.rm = T),
+                   max = max(years, na.rm = T),
+                   median = median(years, na.rm = T))
+
+
+lat_long_for_sum <- lat_long %>%
+  filter(LakeID %in% mem$LakeID) %>%
+  filter(abs(Latitude_DD) >= 23.5)
+
+#Daily
+all_daily <- read_csv("../Compiled data/surf_bot_daily_all.csv")
+daily <- read_csv("../Compiled data/surf_bot_daily.csv")
+daily %>%
+  filter(LakeID %in% mem$LakeID) %>%
+  group_by(LakeID) %>%
+  mutate(medianDO = median(DO_mgL_BOT, na.rm = T),
+         DO_mgL_BOT = ifelse(medianDO < 1, NA, DO_mgL_BOT)) %>% #Only when median DO > 1
+  select(DO_mgL_BOT, Temp_C_SURF, Temp_C_BOT, LakeID, Date_unif) %>%
+  pivot_longer(DO_mgL_BOT:Temp_C_BOT) %>%
+  filter(!is.na(value)) %>%
+  mutate(Year = year(Date_unif)) %>%
+  group_by(name, LakeID) %>%
+  filter(length(unique(Year)) >= 15) %>%
+  group_by(name, LakeID, Year) %>%
+  dplyr::summarize(days = length(unique(Date_unif))) %>%
+  group_by(name) %>%
+  dplyr::summarize(min = min(days, na.rm = T),
+                   max = max(days, na.rm = T),
+                   median = median(days, na.rm = T))
+
+#Demand
+demand <- read_csv("../Compiled data/VW oxygen demand points.csv")
+demand %>%
+  filter(LakeID %in% mem$LakeID) %>%
+  group_by(LakeID) %>%
+  filter(length(unique(Year))>= 15) %>%
+  ungroup() %>%
+  summarize(median = median(n),
+            max = max(n),
+            min = min(n))
 ```
 
 Step 3: Map distribution of lakes
@@ -147,8 +179,7 @@ area <- lat_long_for_sum %>%
   theme(plot.margin = ggplot2::margin(5.5, 8, 5.5, 8, "pt"),
         axis.title.x=element_text(vjust=2))
 
-years <- not_na %>%
-  mutate(Year = year(Date_unif)) %>%
+years <- annual %>%
   group_by(Year) %>%
   summarize(lakes = length(unique(LakeID))) %>% 
   ggplot(aes(x = Year, y = lakes))+
@@ -159,7 +190,7 @@ years <- not_na %>%
   scale_x_continuous(n.breaks = 3.5)+
   theme(plot.margin = ggplot2::margin(5.5, 8, 5.5, 8, "pt"))
 
-doys <- not_na %>%
+doys <- all_daily %>%
   left_join(lat_long %>%
               select(LakeID, Latitude_DD)) %>%
   mutate(Date_unif = as.Date(Date_unif)) %>%

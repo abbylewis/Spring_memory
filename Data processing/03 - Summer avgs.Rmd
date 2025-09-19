@@ -130,6 +130,30 @@ surf_bot_daily <- full_trimmed %>%
                    Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
                    TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T)) 
 
+#For summary stats
+surf_bot_daily_all <- full %>%
+  group_by(Date_unif, LakeID, Depth_m) %>%
+  dplyr::summarize(Temp_C = mean(Temp_C, na.rm = T),
+                   DO_mgL = mean(DO_mgL, na.rm = T),
+                   DO_sat = mean(DO_sat, na.rm = T),
+                   TP_ugL = mean(TP_ugL, na.rm = T),
+                   DOC_mgL = mean(DOC_mgL, na.rm = T),
+                   Chla_ugL = mean(Chla_ugL, na.rm = T)) %>%
+  filter(!is.na(Temp_C) | !is.na(DO_mgL)) %>%
+  group_by(LakeID, Date_unif) %>%
+  dplyr::summarize(DO_mgL_SURF = mean(DO_mgL[Depth_m == 1], na.rm=T),
+                   DO_mgL_BOT = mean(DO_mgL[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DO_sat_SURF = mean(DO_sat[Depth_m == 1], na.rm=T),
+                   DO_sat_BOT = mean(DO_sat[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   Temp_C_SURF = mean(Temp_C[Depth_m == 1], na.rm=T),
+                   Temp_C_BOT = mean(Temp_C[Depth_m >= max(Depth_m)-1], na.rm=T),
+                   DOC_mgL_SURF = mean(DOC_mgL[Depth_m <= 1], na.rm=T),
+                   Chla_ugL_SURF = mean(Chla_ugL[Depth_m <= 1], na.rm=T),
+                   TP_ugL_SURF = mean(TP_ugL[Depth_m <= 1], na.rm=T)) 
+
+write.csv(surf_bot_daily_all, "../Compiled data/surf_bot_daily_all.csv")
+write.csv(surf_bot_daily, "../Compiled data/surf_bot_daily.csv")
+
 #Summarize within each year
 surf_bot <- surf_bot_daily %>%
   mutate(Year = year(Date_unif)) %>%

@@ -111,7 +111,7 @@ run_rf_analysis <- function(potential_drivers, mem_rf,
     rename(y = yhat)
   for(i in 2:length(potential_drivers)){
     new <- pdp::partial(rf4, pred.var = potential_drivers[i], 
-                        train = as.data.frame(mem_rf_df_hypo_do)) %>%
+                        train = as.data.frame(mem_rf_df_vhod)) %>%
       pivot_longer(-yhat, names_to = "var", values_to = "x") %>%
       rename(y = yhat)
     partials_vhod = rbind(partials_vhod, new)

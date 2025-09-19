@@ -140,7 +140,7 @@ a <- data %>%
   theme(axis.title = element_text(size = 9))
 
 u <- mean(summer_dif$summer_dif, na.rm = T)
-median(summer_dif$summer_dif, na.rm = T)
+median(summer_dif$summer_dif*10, na.rm = T)
 sd <- sd(summer_dif$summer_dif, na.rm = T)
 p_05 <- quantile(summer_dif$summer_dif*10, 0.05, na.rm = T)
 p_95 <- quantile(summer_dif$summer_dif*10, 0.95, na.rm = T)
@@ -320,13 +320,20 @@ cor_plot <- mem_rf_df_bot_temp %>%
   xlab("Air temperature trend (ºC/decade)")+
   ylab("Bottom-water temperature trend\n(ºC/decade)")
 
-air_trends_wide_blank <- mem_rf_df_bot_temp %>%
+air_trends_wide_data <- mem_rf_df_bot_temp %>%
   pivot_longer(cols = all_of(potential_drivers),
                names_to = "var", values_to = "x") %>%
   filter(!is.na(x)) %>%
   mutate(var = factor(var, levels = c("Air_temp_C_spring",
                                                   "Air_temp_C_summer"),
-                            labels = c("Spring", "Summer"))) %>%
+                            labels = c("Spring", "Summer"))) 
+
+air_trends_wide_data %>%
+  group_by(var) %>%
+  summarize(mean = mean(x),
+            sd = sd(x))
+
+air_trends_wide_blank <- air_trends_wide_data %>%
   mutate(spacer = "") %>%
   ggplot(aes(x = x*10))+
   geom_vline(aes(xintercept = 0), color = "grey70")+
