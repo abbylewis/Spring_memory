@@ -22,9 +22,9 @@ An analysis of how spring air temperatures influence summer bottom-water tempera
 
 Data loading/processing scripts:
 
--   `01 - Load climate - ERA5 daily.Rmd`: Load netcdf of global climate data and output a csv with air temperature records at each lake
+-   `01 - Load climate - ERA5 open meteo`: Load global climate data and output a csv with meteorological records at each lake
 -   `02 - Temp and DO interpolation.Rmd`: Interpolate temperature and oxygen profiles to a 1 m depth resolution
--   `04 - Summer avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the late-summer period of each year
+-   `04 - Summer avgs.Rmd`: Calculate surface and bottom water means during the late-summer period of each year
 -   `03 - Stratified avgs.Rmd`: Calculate epilimnetic and hypolimnetic means during the entire stratified period of each year
 -   `05 - VW DO Demand - based on strat dur.Rmd`: Calculate volume-weighted hypolimnetic oxygen demand for each lake-year
 -   `06 - Compile data.Rmd`: Combine summer means with oxygen demand. Output a file for following analyses
@@ -34,17 +34,17 @@ Data loading/processing scripts:
 
 All data analysis scripts:
 
--   `01 - Data characterization.Rmd`: Characterize the full, synthesized dataset. Output map of all sites
--   `02 - Calculate rolling mean correlations.Rmd`: Calculate the correlation between focal variables and rolling mean air temperature across all lakes
+-   `01 - Calculate rolling mean correlations surf bot.Rmd`: Calculate the correlation between focal variables and rolling mean air temperature across all lakes
+-   `02 - Data characterization.Rmd`: Characterize the full, synthesized dataset. Output map of all sites
 -   `03 - Example plots - Taylor Pond.Rmd`: Create plots to describe the process of calculating seasonal ecological memory using Taylor Pond as an example lake
 -   `04 - Calculate memory and plot rolling means.Rmd`: Calculate and plot seasonal ecological memory. Plot rolling correlations for hypolimnetic variables
--   `05 - Memory driver analysis.Rmd`: Analyze the drivers of seasonal ecological memory. Output figure for paper
--   `06 - Calculate trends.Rmd`: Calculate trends in air and water temperature
--   `07 - Plot trends.Rmd`: Plot association between air temperature trend and water temperature trend
--   `08 - ISIMIP_correlations`: Calculate seasonal ecological memory using modeled water temeprature
--   `lmer_functions.R`: Helper functions for driver analysis
--   `monthly_correlations.R`: Helper function for calculating correlations by day of year
+-   `05 - Memory driver analysis - RF.Rmd`: Analyze the drivers of seasonal ecological memory. Output figure for paper
+-   `06 - Calculate trends all met limit years.Rmd`: Calculate trends in air temperature and water quality
+-   `07 - Plot trends all met.Rmd`: Plot association between air temperature trends and water temperature trends
+-   `08 - ISIMIP_correlations`: Calculate seasonal ecological memory using ISIMIP-modeled water temperature
+-   `correlations_doy.R`: Helper function for calculating correlations by day of year
 -   `sen_slope_custom.R`: Helper functions to calculate trends over time
+-   `run_rf_analysis.R`: Helper functions to run and plot random forest regressions
 
 ### `./External data`
 

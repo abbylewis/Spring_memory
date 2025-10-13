@@ -7,7 +7,7 @@ output: html_document
 
 This script loads climate data from the ERA5 re-analysis data product through ROpenMeteo. It saves lake-specifc meteorology in "./Compiled data/met_downloads/", then combines these files in "./Compiled data/historical_met_output_era5_daily.csv"
 
-The combined meteorology for all lakes is too large to store on GitHub, so would need to be re-processed (Step 3) for replication. 
+The combined meteorology for all lakes is too large to store on GitHub, so would need to be re-processed for replication. 
 
 Table of Contents:
 - Step 1: Load packages

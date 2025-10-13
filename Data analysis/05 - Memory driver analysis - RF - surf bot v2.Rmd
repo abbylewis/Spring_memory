@@ -21,7 +21,6 @@ library(lubridate)
 library(ggpubr)
 library(ggtext)
 library(randomForest)
-source("lmer_functions.R")
 source("run_rf_analysis.R")
 
 #Set global options
