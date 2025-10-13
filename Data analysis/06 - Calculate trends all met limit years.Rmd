@@ -37,6 +37,7 @@ summer_bot_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_BOT)), "Tem
 summer_surf_sen <- sen_slope_custom(all_data %>% filter(!is.na(Temp_C_SURF)), "Temp_C_SURF")
 summer_surf_tp <- sen_slope_custom(all_data %>% filter(!is.na(TP_ugL_SURF)), "TP_ugL_SURF")
 summer_surf_do <- sen_slope_custom(all_data %>% filter(!is.na(DO_mgL_SURF)), "DO_mgL_SURF")
+summer_vhod <- sen_slope_custom(all_data %>% filter(!is.na(DO_demand_mgLd)), "DO_demand_mgLd")
 summer_dif_sen <- sen_slope_custom(all_data %>% 
                                      filter(!is.na(Temp_C_BOT) & 
                                               !is.na(Temp_C_SURF)) %>%
@@ -61,6 +62,7 @@ write.csv(summer_do_sen, "../Compiled data/summer_bot_DO_trends_3m.csv", row.nam
 write.csv(summer_surf_tp, "../Compiled data/summer_surf_TP_trends_3m.csv", row.names = F)
 write.csv(summer_dif_sen, "../Compiled data/summer_dif_trends_3m.csv", row.names = F)
 write.csv(summer_dif_do, "../Compiled data/summer_dif_DO_trends_3m.csv", row.names = F)
+write.csv(summer_vhod, "../Compiled data/summer_vhod_trends_3m.csv", row.names = F)
 ```
 
 Step 3: Calculate daily met trends

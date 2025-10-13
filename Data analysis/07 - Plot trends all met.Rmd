@@ -11,7 +11,10 @@ Table of Contents:
 - Step 1: Load packages and calculated trends
 - Step 2: Compare surface- vs bottom-water trends
 - Step 3: Random forest for bottom-water temperature trend drivers (spring vs summer)
-- Step 4: Generate plot of bottom water temperature trend drivers (spring vs summer temp)
+- Step 4: Repeat for bottom-water DO
+- Step 5: Repeat for surface temperature
+- Step 6: Repeat for VHOD
+- Step 7: Generate plot of bottom water temperature trend drivers (spring vs summer temp)
 
 
 Step 1: Load packages and calculated trends
@@ -62,6 +65,9 @@ summer_dif <- read.csv("../Compiled data/summer_dif_trends_3m.csv") %>%
 summer_dif_do <- read.csv("../Compiled data/summer_dif_DO_trends_3m.csv") %>%
   rename(summer_dif = trend) %>%
   dplyr::select(summer_dif, LakeID)
+summer_vhod <- read.csv("../Compiled data/summer_vhod_trends_3m.csv") %>%
+  rename(summer_vhod = trend) %>%
+  dplyr::select(summer_vhod, LakeID)
 ```
 
 
@@ -195,7 +201,7 @@ c <- bot %>%
   left_join(surf) %>%
   left_join(dif_rf) %>%
   filter(!is.na(M)) %>%
-  mutate(M_binary = ifelse(M>0, "SEM > 0", "SEM ≤ 0"),
+  mutate(M_binary = ifelse(M>0, "CSEM > 0", "CSEM ≤ 0"),
          air_binary = ifelse(spring > summer, 
                              "Spring warming\nfaster than summer",
                              "Summer warming\nfaster than spring"),
@@ -219,7 +225,7 @@ c <- bot %>%
                     values = c("black", "#876BDB"))+
   theme_bw(base_size = 10)+
   theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(size = 9))
+        axis.text.x = element_text(size = 8))
 
 jpeg("../Figures/temp_mismatch2.jpg", width = 6, height = 4, units = "in", res = 300)
 ggarrange(ggarrange(a, b, 
@@ -234,7 +240,7 @@ dev.off()
 d <- bot %>%
   left_join(surf) %>%
   left_join(dif_rf) %>%
-  mutate(M_binary = ifelse(M>0, "SEM > 0", "SEM ≤ 0"),
+  mutate(M_binary = ifelse(M>0, "CSEM > 0", "CSEM ≤ 0"),
          air_binary = ifelse(spring > summer, 
                              "Spring warming\nfaster than summer",
                              "Summer warming\nfaster than spring"),
@@ -309,16 +315,16 @@ cor_plot <- mem_rf_df_bot_temp %>%
                         p_lab)) %>%
   ggplot(aes(x = value*10, y = summer_bot_mean*10))+
   geom_vline(aes(xintercept = 0), color = "grey70")+
-  geom_point()+
+  geom_point(shape = 21, stroke = 0.3)+
   #geom_abline()+
   #geom_smooth(method = "lm")+
   geom_label(aes(label = paste0("Spearman's \u03C1 = ", round(rho, 2),
-                                "\np ", p_lab), x = -1.7, y = 5, hjust= 0), 
+                                "\np ", p_lab), x = -2.2, y = 5, hjust= 0), 
              data = . %>% select(name, rho, p_lab) %>% distinct(), alpha = 0.5)+
   facet_grid(~name)+
   theme_bw()+
   xlab("Air temperature trend (ºC/decade)")+
-  ylab("Bottom-water temperature trend\n(ºC/decade)")
+  ylab("Bottom-water temperature\ntrend (ºC/decade)")
 
 air_trends_wide_data <- mem_rf_df_bot_temp %>%
   pivot_longer(cols = all_of(potential_drivers),
@@ -364,6 +370,299 @@ ggpubr::ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1),
 dev.off()
 ```
 
+Step 4: Repeat for bottom-water DO
+
+```{r}
+met_trends_matched <- max_cor_dates %>%
+  filter(var == "Summer hypo. DO") %>%
+  left_join(met_by_bot_do, 
+            by = c("LakeID", "max_doy" = "doy"), 
+            relationship = "many-to-many") %>%
+  group_by(season, var) %>%
+  rename(cor_date_var = var)
+
+df_for_rf <- summer_bot_do %>%
+  left_join(met_trends_matched %>% 
+              select(LakeID, trend, season, Variable) %>%
+              arrange(LakeID) %>%
+              pivot_wider(names_from = Variable,
+                          values_from = trend))  %>%
+  pivot_wider(names_from = season,
+              values_from = Air_temp_C:Shortwave_mJm2)
+
+responses <- c("summer_bot_do")
+potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
+mem_rf_df_bot_do <- df_for_rf %>%
+  select(all_of(c(responses, potential_drivers))) %>%
+  na.omit() %>%
+  mutate(target = "Bottom-water\ndissolved oxygen")
+
+cor_plot <- mem_rf_df_bot_do %>%
+  pivot_longer(c(Air_temp_C_spring, Air_temp_C_summer)) %>%
+  mutate(name = case_match(name,
+                          "Air_temp_C_spring"~"Spring",
+                          "Air_temp_C_summer"~"Summer")) %>%
+  group_by(name) %>%
+  mutate(rho = cor.test(value, summer_bot_do*10, method = "spearman")$estimate,
+         p = cor.test(value, summer_bot_do*10, method = "spearman")$p.value,
+         p_lab = ifelse(p > 0.001, round(p, 2), p),
+         p_lab = paste0("= ", round(p_lab, 3)),
+         p_lab = ifelse(p_lab == "= 0",
+                        "< 0.001",
+                        p_lab)) %>%
+  ggplot(aes(x = value*10, y = summer_bot_do*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  geom_point(shape = 21, stroke = 0.3)+
+  #geom_abline()+
+  #geom_smooth(method = "lm")+
+  geom_label(aes(label = paste0("Spearman's \u03C1 = ", round(rho, 2),
+                                "\np ", p_lab), x = -1.7, y = 3.5, hjust= 0), 
+             data = . %>% select(name, rho, p_lab) %>% distinct(), alpha = 0.5)+
+  facet_grid(~name)+
+  theme_bw()+
+  xlab("Air temperature trend (ºC/decade)")+
+  ylab("Bottom-water dissolved\noxygen trend (ºC/decade)")
+
+air_trends_wide_data <- mem_rf_df_bot_do %>%
+  pivot_longer(cols = all_of(potential_drivers),
+               names_to = "var", values_to = "x") %>%
+  filter(!is.na(x)) %>%
+  mutate(var = factor(var, levels = c("Air_temp_C_spring",
+                                                  "Air_temp_C_summer"),
+                            labels = c("Spring", "Summer"))) 
+
+air_trends_wide_data %>%
+  group_by(var) %>%
+  summarize(mean = mean(x),
+            sd = sd(x))
+
+air_trends_wide_blank <- air_trends_wide_data %>%
+  mutate(spacer = "") %>%
+  ggplot(aes(x = x*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  scale_color_manual(values = c("Spring" = "#25469a",
+                               "Summer" = "#c16586"))+
+  geom_density(aes(color = var))+
+  facet_grid(~var) +
+  theme_bw() +
+  ylab("\n")+
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.clip = "off",
+        strip.text.x = element_blank(),
+        panel.spacing.y = unit(0.8, "lines"),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.title.y = element_text(size = 9),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(color = "white"),
+        axis.ticks = element_line(color = "white"),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
+jpeg("../Figures/simple_Fig5_DO.jpg", res = 300, units = "in", width = 5, height = 3)
+ggpubr::ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1), 'lines')), 
+                    cor_plot + theme(plot.margin = unit(c(0,.2,.2,1), 'lines')), 
+                    heights = c(0.2, 1), nrow = 2)
+dev.off()
+```
+
+Step 5: Repeat for surface temperature
+
+```{r}
+met_trends_matched <- max_cor_dates %>%
+  filter(var == "Summer epi. temperature") %>%
+  left_join(met_by_bot_do, 
+            by = c("LakeID", "max_doy" = "doy"), 
+            relationship = "many-to-many") %>%
+  group_by(season, var) %>%
+  rename(cor_date_var = var)
+
+df_for_rf <- summer_surf_mean %>%
+  left_join(met_trends_matched %>% 
+              select(LakeID, trend, season, Variable) %>%
+              arrange(LakeID) %>%
+              pivot_wider(names_from = Variable,
+                          values_from = trend))  %>%
+  pivot_wider(names_from = season,
+              values_from = Air_temp_C:Shortwave_mJm2)
+
+responses <- c("summer_surf_mean")
+potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
+mem_rf_df_surf_temp <- df_for_rf %>%
+  select(all_of(c(responses, potential_drivers))) %>%
+  na.omit() %>%
+  mutate(target = "Surface-water\ntemperature")
+
+cor_plot <- mem_rf_df_surf_temp %>%
+  pivot_longer(c(Air_temp_C_spring, Air_temp_C_summer)) %>%
+  mutate(name = case_match(name,
+                          "Air_temp_C_spring"~"Spring",
+                          "Air_temp_C_summer"~"Summer")) %>%
+  group_by(name) %>%
+  mutate(rho = cor.test(value, summer_surf_mean*10, method = "spearman")$estimate,
+         p = cor.test(value, summer_surf_mean*10, method = "spearman")$p.value,
+         p_lab = ifelse(p > 0.001, round(p, 2), p),
+         p_lab = paste0("= ", round(p_lab, 3)),
+         p_lab = ifelse(p_lab == "= 0",
+                        "< 0.001",
+                        p_lab)) %>%
+  ggplot(aes(x = value*10, y = summer_surf_mean*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  geom_point(shape = 21, stroke = 0.3)+
+  #geom_abline()+
+  #geom_smooth(method = "lm")+
+  geom_label(aes(label = paste0("Spearman's \u03C1 = ", round(rho, 2),
+                                "\np ", p_lab), x = -3, y = -2.8, hjust= 0), 
+             data = . %>% select(name, rho, p_lab) %>% distinct(), alpha = 0.5)+
+  facet_grid(~name)+
+  theme_bw()+
+  xlab("Air temperature trend (ºC/decade)")+
+  ylab("Surface-water temperature\ntrend (ºC/decade)")
+
+air_trends_wide_data <- mem_rf_df_surf_temp %>%
+  pivot_longer(cols = all_of(potential_drivers),
+               names_to = "var", values_to = "x") %>%
+  filter(!is.na(x)) %>%
+  mutate(var = factor(var, levels = c("Air_temp_C_spring",
+                                                  "Air_temp_C_summer"),
+                            labels = c("Spring", "Summer"))) 
+
+air_trends_wide_data %>%
+  group_by(var) %>%
+  summarize(mean = mean(x),
+            sd = sd(x))
+
+air_trends_wide_blank <- air_trends_wide_data %>%
+  mutate(spacer = "") %>%
+  ggplot(aes(x = x*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  scale_color_manual(values = c("Spring" = "#25469a",
+                               "Summer" = "#c16586"))+
+  geom_density(aes(color = var))+
+  facet_grid(~var) +
+  theme_bw() +
+  ylab("\n")+
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.clip = "off",
+        strip.text.x = element_blank(),
+        panel.spacing.y = unit(0.8, "lines"),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.title.y = element_text(size = 9),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(color = "white"),
+        axis.ticks = element_line(color = "white"),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
+jpeg("../Figures/simple_Fig5_surf.jpg", res = 300, units = "in", width = 5, height = 3)
+ggpubr::ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1), 'lines')), 
+                    cor_plot + theme(plot.margin = unit(c(0,.2,.2,1), 'lines')), 
+                    heights = c(0.2, 1), nrow = 2)
+dev.off()
+```
+
+Step 6: Repeat for VHOD
+
+```{r}
+met_trends_matched <- max_cor_dates %>%
+  filter(var == "Summer VHOD") %>%
+  left_join(met_by_bot_do, 
+            by = c("LakeID", "max_doy" = "doy"), 
+            relationship = "many-to-many") %>%
+  group_by(season, var) %>%
+  rename(cor_date_var = var)
+
+df_for_rf <- summer_vhod %>%
+  left_join(met_trends_matched %>% 
+              select(LakeID, trend, season, Variable) %>%
+              arrange(LakeID) %>%
+              pivot_wider(names_from = Variable,
+                          values_from = trend))  %>%
+  pivot_wider(names_from = season,
+              values_from = Air_temp_C:Shortwave_mJm2)
+
+responses <- c("summer_vhod")
+potential_drivers <- c("Air_temp_C_spring", "Air_temp_C_summer")
+mem_rf_df_vhod <- df_for_rf %>%
+  select(all_of(c(responses, potential_drivers))) %>%
+  na.omit() %>%
+  mutate(target = "Bottom-water\noxygen demand")
+
+cor_plot <- mem_rf_df_vhod %>%
+  pivot_longer(c(Air_temp_C_spring, Air_temp_C_summer)) %>%
+  mutate(name = case_match(name,
+                          "Air_temp_C_spring"~"Spring",
+                          "Air_temp_C_summer"~"Summer")) %>%
+  group_by(name) %>%
+  mutate(rho = cor.test(value, summer_vhod*10, method = "spearman")$estimate,
+         p = cor.test(value, summer_vhod*10, method = "spearman")$p.value,
+         p_lab = ifelse(p > 0.001, round(p, 2), p),
+         p_lab = paste0("= ", round(p_lab, 3)),
+         p_lab = ifelse(p_lab == "= 0",
+                        "< 0.001",
+                        p_lab)) %>%
+  ggplot(aes(x = value*10, y = summer_vhod*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  geom_point(shape = 21, stroke = 0.3)+
+  #geom_abline()+
+  #geom_smooth(method = "lm")+
+  geom_label(aes(label = paste0("Spearman's \u03C1 = ", round(rho, 2),
+                                "\np ", p_lab), x = -3, y = 0.15, hjust= 0), 
+             data = . %>% select(name, rho, p_lab) %>% distinct(), alpha = 0.5)+
+  facet_grid(~name)+
+  theme_bw()+
+  xlab("Air temperature trend (ºC/decade)")+
+  ylab("Bottom-water oxygen\ndemand trend (ºC/decade)")
+
+air_trends_wide_data <- mem_rf_df_vhod %>%
+  pivot_longer(cols = all_of(potential_drivers),
+               names_to = "var", values_to = "x") %>%
+  filter(!is.na(x)) %>%
+  mutate(var = factor(var, levels = c("Air_temp_C_spring",
+                                                  "Air_temp_C_summer"),
+                            labels = c("Spring", "Summer"))) 
+
+air_trends_wide_data %>%
+  group_by(var) %>%
+  summarize(mean = mean(x),
+            sd = sd(x))
+
+air_trends_wide_blank <- air_trends_wide_data %>%
+  mutate(spacer = "") %>%
+  ggplot(aes(x = x*10))+
+  geom_vline(aes(xintercept = 0), color = "grey70")+
+  scale_color_manual(values = c("Spring" = "#25469a",
+                               "Summer" = "#c16586"))+
+  geom_density(aes(color = var))+
+  facet_grid(~var) +
+  theme_bw() +
+  ylab("\n")+
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.clip = "off",
+        strip.text.x = element_blank(),
+        panel.spacing.y = unit(0.8, "lines"),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.title.y = element_text(size = 9),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(color = "white"),
+        axis.ticks = element_line(color = "white"),
+        panel.grid = element_blank(),
+        panel.border = element_blank())
+
+jpeg("../Figures/simple_Fig5_vhod.jpg", res = 300, units = "in", width = 5, height = 3)
+ggpubr::ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1), 'lines')), 
+                    cor_plot + theme(plot.margin = unit(c(0,.2,.2,1), 'lines')), 
+                    heights = c(0.2, 1), nrow = 2)
+dev.off()
+```
+
+Step 7: Generate plot of bottom water temperature trend drivers (spring vs summer temp)
+
 ```{r}
 p <- dif_rf %>%
   left_join(lat_long)
@@ -402,4 +701,3 @@ p %>%
   facet_grid(M_binary~air_dif)
 dev.off()
 ```
-
