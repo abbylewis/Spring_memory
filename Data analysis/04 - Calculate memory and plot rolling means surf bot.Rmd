@@ -519,7 +519,7 @@ ggarrange(world_map + theme(legend.position = "none"),
                     ne_map, 
                     plot_spacer()+theme_void(), 
                     labels = c("b", "c", NA), widths = c(4,7,1), nrow = 1), 
-          nrow = 2, heights = c(2,1), labels = c("a",NA))
+          nrow = 2, heights = c(2,1), labels = c("a",NA), vjust = 1)
 dev.off()
 ```
 
