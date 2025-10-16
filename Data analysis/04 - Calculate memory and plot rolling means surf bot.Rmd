@@ -85,10 +85,10 @@ memory <- all %>%
   mutate(p = wilcox.test(M)$p.value)
 ```
 
-Step 3: Generate Figure 1 (summary boxplot)
+Step 3: Generate Figure 3 (summary boxplot)
 
 ```{r}
-jpeg("../Figures/Monthly correlations - sum long concept v2 surf bot.jpg", width = 3.5, height = 3, res = 600, units = "in")
+jpeg("../Figures/Figure 3.jpg", width = 3.5, height = 3, res = 600, units = "in")
 memory %>%
   filter(!var == "Summer\nepi. DO sat") %>%
   group_by(var) %>%

@@ -227,46 +227,11 @@ c <- bot %>%
   theme(axis.title.x = element_blank(),
         axis.text.x = element_text(size = 8))
 
-jpeg("../Figures/temp_mismatch2.jpg", width = 6, height = 4, units = "in", res = 300)
+jpeg("../Figures/Figure 6.jpg", width = 6, height = 4, units = "in", res = 600)
 ggarrange(ggarrange(a, b, 
                     heights = c(1, .6), labels = c("a", "b"), 
                     ncol = 1, nrow = 2, align = "v"), 
           ggarrange(c, 
-                    ncol = 1, heights = c(1)),
-          labels = c(NA, "c"), ncol = 2)
-dev.off()
-
-#Plot continuous trends by category
-d <- bot %>%
-  left_join(surf) %>%
-  left_join(dif_rf) %>%
-  mutate(M_binary = ifelse(M>0, "CSEM > 0", "CSEM ≤ 0"),
-         air_binary = ifelse(spring > summer, 
-                             "Spring warming\nfaster than summer",
-                             "Summer warming\nfaster than spring"),
-         summer_binary = ifelse(summer_dif > 0,
-                                "Increasing difference",
-                                "Decreasing difference")) %>%
-  #filter(M_binary == "SEM > 0") %>%
-  ggplot(aes(x = air_binary, y = summer_dif))+
-  geom_hline(yintercept = 0, color = "grey80")+
-  geom_boxplot()+
-  #ylim(c(0, 100))+
-  ylab("Trend in thermal difference between\nsurface and bottom")+
-  scale_x_discrete(guide = "axis_nested")+
-  facet_wrap(~M_binary, ncol = 1)+
-  scale_fill_manual(name = "Trend in thermal difference between\nsurface and bottom waters",
-                    values = c("black", "#876BDB"))+
-  theme_bw(base_size = 10)+
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(size = 9))+
-  ggpubr::stat_compare_means()
-
-jpeg("../Figures/temp_mismatch3.jpg", width = 6, height = 4, units = "in", res = 300)
-ggarrange(ggarrange(a, b, 
-                    heights = c(1, .6), labels = c("a", "b"), 
-                    ncol = 1, nrow = 2, align = "v"), 
-          ggarrange(d, 
                     ncol = 1, heights = c(1)),
           labels = c(NA, "c"), ncol = 2)
 dev.off()
@@ -363,7 +328,7 @@ air_trends_wide_blank <- air_trends_wide_data %>%
         panel.grid = element_blank(),
         panel.border = element_blank())
 
-jpeg("../Figures/simple_Fig5.jpg", res = 300, units = "in", width = 5, height = 3)
+jpeg("../Figures/Figure 5.jpg", res = 600, units = "in", width = 5, height = 3)
 ggpubr::ggarrange(air_trends_wide_blank + theme(plot.margin = unit(c(.2,.2,0,1), 'lines')), 
                     cor_plot + theme(plot.margin = unit(c(0,.2,.2,1), 'lines')), 
                     heights = c(0.2, 1), nrow = 2)

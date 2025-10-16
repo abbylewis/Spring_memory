@@ -13,7 +13,7 @@ An analysis of how spring air temperatures influence summer bottom-water tempera
 
 -   In-lake data for this study published on the Environmental Data Initative data portal: <https://doi.org/10.6073/pasta/2cd6628a942de2a8b12d2b19962712a0>
 -   Additional data are presented in `./External data`:
-    -   `files_gotm/` includes modeled water temperature for n = 42 lakes in our dataset that have been modeled through the Intersectoral Model Intercomparison Project lakes sector (ISIMIP global lakes v3a). For this analysis we used the General Ocean Turbulence Model (GOTM) hydrodynamic model output and the ERA5 climate reanalysis.
+    -   `files_gotm/` includes modeled water temperature for n = 43 lakes in our dataset that have been modeled through the Intersectoral Model Intercomparison Project lakes sector (ISIMIP global lakes v3a). For this analysis we used the General Ocean Turbulence Model (GOTM) hydrodynamic model output and the ERA5 climate reanalysis.
     -   `lake_tas/` includes air temperature data from ERA5 that corresponds with ISIMIP outputs.
 
 ## Repo content information
